@@ -85,6 +85,8 @@ const ReportTable = ({ data, reportType }) => {
                   <th>Payment Mode</th>
                   <th>Amount</th>
                   <th>Status</th>
+                  <th>CP</th>
+                  <th>profit/Loss</th>
                 </tr>
               ) : (
                 <tr>

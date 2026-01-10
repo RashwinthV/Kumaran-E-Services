@@ -315,6 +315,7 @@ const Reports = () => {
         { header: "Line Total", key: "lineTotal", width: 18 },
         { header: "Mode", key: "paymentMode", width: 15 },
         { header: "Status", key: "status", width: 12 },
+        { header: "cp", key: "cp", width: 12 },
       ];
       worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
 
