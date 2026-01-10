@@ -20,6 +20,7 @@ import Products from "./Pages/Products";
 // Components
 import SidebarNav from "./Components/Navigation/SidebarNav";
 import LoadingPage from "./Components/Loading/LoadingPage";
+import UniversalLoader from "./Components/Loading/UniversalLoader";
 import Header from "./Components/Header";
 import Footer from "./Components/Footer";
 // import AddEmployee from "./Components/Employee/AddEmployee";
@@ -29,6 +30,7 @@ import BranchProducts from "./Pages/Branch/BranchProducts";
 import AddEmployeeModal from "./Components/Employee/AddEmployee";
 import AccountManagement from "./Pages/Branch/Accounts";
 import BranchAccountDetail from "./Pages/Branch/BranchAccountDetail";
+import { useAuth } from "./Context/AuthContext";
 
 // Protected Route Component (fixed)
 
@@ -39,9 +41,21 @@ import BranchReport from "./Pages/Branch/BranchReport";
 // Layout wrapper to conditionally show Header and Sidebar
 const Layout = ({ children }) => {
   const location = useLocation();
+  const { loading } = useAuth();
   const noHeaderRoutes = ["/", "/login", "/register"];
 
   const hideHeader = noHeaderRoutes.includes(location.pathname);
+
+  // Show global loader for all pages EXCEPT the root loading page and login
+  if (loading && !hideHeader) {
+    return (
+      <UniversalLoader
+        title="Initializing..."
+        message="Checking authentication..."
+        status="checking"
+      />
+    );
+  }
 
   if (hideHeader) {
     return <div className="main-content">{children}</div>;

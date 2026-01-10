@@ -164,7 +164,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
+  padding: 0.55rem;
   background: #f8fafc;
   border-radius: 12px;
 }
@@ -213,10 +213,25 @@
   padding: 1.25rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-card {
   grid-column: span 1;
+  min-width: 0; /* Prevents grid items from overflowing */
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-container {
+  width: 100%;
+  flex: 1;
+  min-height: 280px;
+  margin-top: 1rem;
+  position: relative;
+  overflow: visible;
+  transition: all 0.3s ease-in-out;
 }
 
 .revenue-card {
@@ -253,6 +268,24 @@
   color: #0f172a;
 }
 
+.view-all-button {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6366f1;
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  background: #f5f3ff;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.view-all-button:hover {
+  background: #6366f1;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+}
+
 /* Lists Styling */
 .transaction-list,
 .low-stock-list,
@@ -272,6 +305,15 @@
   background: #f8fafc;
   border-radius: 12px;
   border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.low-stock-item:hover,
+.transaction-item:hover {
+  background: white;
+  transform: translateX(4px);
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .tx-bill,

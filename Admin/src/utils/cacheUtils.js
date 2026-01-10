@@ -18,6 +18,8 @@ export const CACHE_KEYS = {
   SUBCATEGORIES: "/cache/api/sub_categories",
   BRANCHES: "/cache/api/branches",
   INVENTORY: "/cache/api/inventory",
+  DASHBOARD: "/cache/api/dashboard",
+  ACCOUNTS: "/cache/api/accounts",
 };
 
 /**

@@ -9,6 +9,8 @@ import { useAuth } from "../Context/AuthContext";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
+import { setCache, getCache, CACHE_KEYS, TTL } from "../utils/cacheUtils";
+
 const formatDateStr = (dateStr, format) => {
   if (!dateStr || !dateStr.includes("-")) return dateStr;
   const [y, m, d] = dateStr.split("-");
@@ -44,11 +46,24 @@ const Reports = () => {
     getBranches();
   }, [accessToken]); // Add accessToken dependency to retry fetch when token is available
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
     if (!accessToken) return;
+
+    const cacheKey = "/cache/api/reports_sales";
 
     try {
       setLoading(true);
+
+      if (!forceRefresh) {
+        const cachedData = await getCache(cacheKey);
+        if (cachedData) {
+          setData(cachedData);
+          applyFilters(cachedData, filters);
+          setLoading(false);
+          return;
+        }
+      }
+
       // Fetch sales data for both Sales Report and Branch Performance
       if (filters.type === "sales" || filters.type === "branch-performance") {
         const response = await axios.get(`${baseURL}/sales`, {
@@ -89,6 +104,7 @@ const Reports = () => {
             };
           });
           setData(rawData);
+          await setCache(cacheKey, rawData, TTL.SHORT);
           applyFilters(rawData, filters);
         }
       }
@@ -106,7 +122,7 @@ const Reports = () => {
   }, [filters, data]);
 
   const handleGenerate = () => {
-    fetchData();
+    fetchData(true);
   };
 
   const applyFilters = (sourceData, currentFilters) => {

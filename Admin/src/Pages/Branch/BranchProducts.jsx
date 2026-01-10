@@ -39,9 +39,32 @@ const BranchProducts = () => {
   }, [id, getInventory]);
 
   // Helper function to determine status
-  function getStatus(qty, threshold) {
-    if (qty === 0) return "Out of Stock";
-    if (qty <= threshold) return "Low Stock";
+  function getStatus(item) {
+    if (!item || !item.product) return "Unknown";
+
+    const catName = (item.product.category?.name || "").toLowerCase();
+    const productName = (item.product.name || "").toLowerCase();
+
+    const serviceKeywords = [
+      "other",
+      "service",
+      "xerox",
+      "scan",
+      "photograph",
+      "internet",
+      "printing",
+      "typing",
+      "online",
+    ];
+
+    const isService = serviceKeywords.some(
+      (key) => catName.includes(key) || productName.includes(key)
+    );
+
+    if (isService) return "N/A";
+
+    if (item.quantity === 0) return "Out of Stock";
+    if (item.quantity <= item.lowStockThreshold) return "Low Stock";
     return "In Stock";
   }
   console.log(branchInventory);
@@ -57,27 +80,42 @@ const BranchProducts = () => {
     ),
   ];
 
-  const filteredProducts = safeInventory.filter((item) => {
-    // Inventory item structure: { product: { name, ... }, quantity, ... }
-    const productName = item.product?.name || "";
-    const categoryName = item.product?.category?.name || "General";
-    const status = getStatus(item.quantity, item.lowStockThreshold);
+  const filteredProducts = safeInventory
+    .filter((item) => {
+      // Inventory item structure: { product: { name, ... }, quantity, ... }
+      const productName = item.product?.name || "";
+      const categoryName = item.product?.category?.name || "General";
+      const status = getStatus(item);
 
-    const matchesSearch = productName
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+      const matchesSearch = productName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
-    const matchesCategory =
-      filterCategory === "All" || categoryName === filterCategory;
+      const matchesCategory =
+        filterCategory === "All" || categoryName === filterCategory;
 
-    const matchesStatus = filterStatus === "All" || status === filterStatus;
+      const matchesStatus = filterStatus === "All" || status === filterStatus;
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+    .sort((a, b) => {
+      const statusA = getStatus(a);
+      const statusB = getStatus(b);
+
+      const priority = {
+        "Out of Stock": 1,
+        "Low Stock": 2,
+        "In Stock": 3,
+        "N/A": 4,
+      };
+
+      return (priority[statusA] || 5) - (priority[statusB] || 5);
+    });
 
   const getStockClass = (status) => {
     if (status === "In Stock") return "in-stock";
     if (status === "Low Stock") return "low-stock";
+    if (status === "N/A") return "service-badge";
     return "out-of-stock";
   };
 
@@ -260,17 +298,15 @@ const BranchProducts = () => {
           </div>
         ) : (
           filteredProducts.map((item) => {
-            // Helper for easier access
             const product = item.product || {};
-            const status = getStatus(item.quantity, item.lowStockThreshold);
+            const categoryName = product.category?.name || "General";
+            const status = getStatus(item);
 
             return (
               <div key={item._id} className="product-card">
                 <div className="product-info">
                   <h3>{product.name}</h3>
-                  <p className="product-category">
-                    {product.category?.name || "General"}
-                  </p>
+                  <p className="product-category">{categoryName}</p>
                   <p className="product-price">
                     ₹{item.FinalPrice}/{product.unit}
                   </p>
@@ -278,56 +314,60 @@ const BranchProducts = () => {
                 <div className="product-stock">
                   <div className="stock-info-row">
                     <span className={`stock-badge ${getStockClass(status)}`}>
-                      {status}
+                      {status === "N/A" ? "Service" : status}
                     </span>
-                    <p className="stock-quantity">{item.quantity} units</p>
-                  </div>
-
-                  <div className="quick-stock-actions">
-                    {editingStockId === item._id ? (
-                      <div className="quick-stock-form">
-                        <input
-                          type="number"
-                          value={newStockValue}
-                          onChange={(e) => setNewStockValue(e.target.value)}
-                          className="stock-input"
-                          onClick={(e) => e.stopPropagation()}
-                          autoFocus
-                          placeholder="Qty"
-                        />
-                        <button
-                          className="btn-save-stock"
-                          onClick={() => saveQuickStockEdit(item._id)}
-                        >
-                          Save
-                        </button>
-                        <button
-                          className="btn-cancel-stock"
-                          onClick={cancelQuickStockEdit}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        className="btn-quick-update"
-                        onClick={() => startQuickStockEdit(item)}
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                        Update Stock
-                      </button>
+                    {status !== "N/A" && (
+                      <p className="stock-quantity">{item.quantity} units</p>
                     )}
                   </div>
+
+                  {status !== "N/A" && (
+                    <div className="quick-stock-actions">
+                      {editingStockId === item._id ? (
+                        <div className="quick-stock-form">
+                          <input
+                            type="number"
+                            value={newStockValue}
+                            onChange={(e) => setNewStockValue(e.target.value)}
+                            className="stock-input"
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                            placeholder="Qty"
+                          />
+                          <button
+                            className="btn-save-stock"
+                            onClick={() => saveQuickStockEdit(item._id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn-cancel-stock"
+                            onClick={cancelQuickStockEdit}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="btn-quick-update"
+                          onClick={() => startQuickStockEdit(item)}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                          Update Stock
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="product-actions">
                   <button
@@ -370,6 +410,7 @@ const BranchProducts = () => {
         onAdd={handleAddInventory}
         onUpdate={handleUpdateInventory}
         editItem={editItem}
+        existingProductIds={safeInventory.map((item) => item.product?._id)}
       />
     </div>
   );

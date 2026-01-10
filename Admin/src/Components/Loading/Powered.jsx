@@ -2,6 +2,8 @@ import React from "react";
 import "../../Styles/powered.css";
 const Powered = ({ theme, className = "" }) => {
   const isDark = theme === "dark";
+  // console.log(theme,"        ",isDark);
+  
 
   return (
     <div className={`powered-container ${className}`}>
@@ -27,7 +29,7 @@ const Powered = ({ theme, className = "" }) => {
         <span
           className="powered-text"
           style={{
-            color: isDark ? "#000000ff" : "#000000ff",
+            color: isDark ? "#000000ff" : "#ffffffff",
             fontSize: "0.875rem",
           }}
         >

@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { useAuth } from "../../Context/AuthContext";
 import { API_ENDPOINTS } from "../../config/api.jsx";
-import Powered from "./Powered";
-import "../../Styles/Connection.css";
+import UniversalLoader from "./UniversalLoader";
 
 function LoadingPage() {
   const [status, setStatus] = useState("checking");
@@ -34,9 +32,8 @@ function LoadingPage() {
           setStatus("connected");
           setMessage("Connected successfully!");
 
-          // Wait for auth context to finish loading
+          // Redirect based on authentication status
           setTimeout(() => {
-            // Redirect based on authentication status
             if (isAuthenticated) {
               navigate("/dashboard");
             } else {
@@ -76,71 +73,19 @@ function LoadingPage() {
     setRetryCount((prev) => prev + 1);
   };
 
-  // Show loading while auth context is initializing
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-content">
-          <div className="loading-icon-wrapper">
-            <Loader2 className="loading-spinner" size={64} />
-          </div>
-          <h1 className="loading-title">Initializing...</h1>
-          <p className="loading-message">Checking authentication...</p>
-          <div className="loading-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="loading-container">
-      <div className="loading-content">
-        {/* Logo/Icon */}
-        <div className="loading-icon-wrapper">
-          {status === "checking" && (
-            <Loader2 className="loading-spinner" size={64} />
-          )}
-          {status === "connected" && (
-            <CheckCircle2 className="success-icon" size={64} />
-          )}
-          {status === "error" && <XCircle className="error-icon" size={64} />}
-        </div>
-
-        {/* Status Message */}
-        <h1 className="loading-title">
-          {status === "checking" && "Initializing..."}
-          {status === "connected" && "Ready!"}
-          {status === "error" && "Connection Failed"}
-        </h1>
-
-        <p className="loading-message">{message}</p>
-
-        {/* Retry Button */}
-        {status === "error" && (
-          <button id="retry" className="retry-button" onClick={handleRetry}>
-            <RefreshCw size={20} />
-            Retry Connection
-          </button>
-        )}
-
-        {/* Progress Dots */}
-        {status === "checking" && (
-          <div className="loading-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        )}
-      </div>
-
-      <div className="loading-powered">
-        <Powered theme="light" />
-      </div>
-    </div>
+    <UniversalLoader
+      status={status}
+      title={
+        status === "checking"
+          ? "Initializing..."
+          : status === "connected"
+          ? "Ready!"
+          : "Connection Failed"
+      }
+      message={message}
+      onRetry={handleRetry}
+    />
   );
 }
 

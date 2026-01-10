@@ -2,6 +2,13 @@ import { createContext, useContext, useState, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useAuth } from "./AuthContext";
+import {
+  setCache,
+  getCache,
+  removeCache,
+  CACHE_KEYS,
+  TTL,
+} from "../utils/cacheUtils";
 
 const AccountContext = createContext();
 
@@ -20,35 +27,65 @@ export const AccountProvider = ({ children }) => {
   const { accessToken } = useAuth();
 
   // Get all accounts
-  const getAccounts = useCallback(async () => {
-    if (!accessToken) return;
-
-    try {
-      setLoading(true);
-      const response = await axios.get(`${baseURL}/accounts`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (response.data.success) {
-        setAccounts(response.data.data);
-        return response.data.data;
-      }
-    } catch (error) {
-      console.error("Error fetching accounts:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch accounts");
-      throw error; // Re-throw for component handling if needed
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, baseURL]);
-
-  // Get accounts by branch
-  const getAccountsByBranch = useCallback(
-    async (branchId) => {
+  const getAccounts = useCallback(
+    async (forceRefresh = false) => {
       if (!accessToken) return;
 
       try {
         setLoading(true);
+
+        // Check cache
+        if (!forceRefresh) {
+          const cachedAccounts = await getCache(CACHE_KEYS.ACCOUNTS);
+          if (cachedAccounts) {
+            setAccounts(cachedAccounts);
+            setLoading(false);
+            return cachedAccounts;
+          }
+        }
+
+        const response = await axios.get(`${baseURL}/accounts`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (response.data.success) {
+          setAccounts(response.data.data);
+          await setCache(CACHE_KEYS.ACCOUNTS, response.data.data, TTL.SHORT);
+          return response.data.data;
+        }
+      } catch (error) {
+        console.error("Error fetching accounts:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to fetch accounts"
+        );
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [accessToken, baseURL]
+  );
+
+  // Get accounts by branch
+  const getAccountsByBranch = useCallback(
+    async (branchId, forceRefresh = false) => {
+      if (!accessToken) return;
+
+      const cacheKey = `${CACHE_KEYS.ACCOUNTS}/${branchId}`;
+
+      try {
+        setLoading(true);
+
+        // Check cache
+        if (!forceRefresh) {
+          const cachedBranchAccounts = await getCache(cacheKey);
+          if (cachedBranchAccounts) {
+            setAccounts(cachedBranchAccounts);
+            setLoading(false);
+            return cachedBranchAccounts;
+          }
+        }
+
         const response = await axios.get(
           `${baseURL}/accounts/branch/${branchId}`,
           {
@@ -57,13 +94,8 @@ export const AccountProvider = ({ children }) => {
         );
 
         if (response.data.success) {
-          // We might want to setAccounts here? Or just return data?
-          // BranchAccountDetail likely uses this. Let's setAccounts to local state or just return.
-          // BranchContext sets global state. Assuming BranchAccountDetail uses local state or global?
-          // Let's set global accounts state to this branch's accounts since we are "viewing" them.
           setAccounts(response.data.data);
-          console.log(response.data.data);
-          
+          await setCache(cacheKey, response.data.data, TTL.SHORT);
           return response.data.data;
         }
       } catch (error) {
@@ -94,10 +126,11 @@ export const AccountProvider = ({ children }) => {
 
       if (response.data.success) {
         toast.success("Account added successfully");
-        // Optimistic update or refetch? Refetch is safer pattern in BranchContext
-        // But if we are in Branch View, we should refetch by branch?
-        // If accountData contains branch ID, we can refetch by branch or append to state.
-        // Let's append to state for now, assuming current view matches.
+        // Invalidate cache
+        await removeCache(CACHE_KEYS.ACCOUNTS);
+        if (accountData.branch) {
+          await removeCache(`${CACHE_KEYS.ACCOUNTS}/${accountData.branch}`);
+        }
         setAccounts((prev) => [...prev, response.data.data]);
         return response.data.data;
       }
@@ -126,6 +159,15 @@ export const AccountProvider = ({ children }) => {
 
       if (response.data.success) {
         toast.success("Account updated successfully");
+        // Invalidate cache
+        await removeCache(CACHE_KEYS.ACCOUNTS);
+        if (response.data.data.branch) {
+          const branchId =
+            typeof response.data.data.branch === "object"
+              ? response.data.data.branch._id
+              : response.data.data.branch;
+          await removeCache(`${CACHE_KEYS.ACCOUNTS}/${branchId}`);
+        }
         setAccounts((prev) =>
           prev.map((acc) => (acc._id === id ? response.data.data : acc))
         );
@@ -147,6 +189,12 @@ export const AccountProvider = ({ children }) => {
 
       if (response.data.success) {
         toast.success("Account deleted successfully");
+        // Invalidate cache - since we don't have the branch detail easily here without looking up the removed item,
+        // we can just clear all or look it up. For simplicity, clear global and rely on local state filtering.
+        await removeCache(CACHE_KEYS.ACCOUNTS);
+        // We'd ideally need the branchId to specifically clear the branch cache too.
+        // But getAccountsByBranch will just miss the item if we don't clear it,
+        // or we can just clear the whole cache if it's easier.
         setAccounts((prev) => prev.filter((acc) => acc._id !== id));
         return true;
       }

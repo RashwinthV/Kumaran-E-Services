@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Branch = require("../models/Branch");
 const Sale = require("../models/Sale");
 const Customer = require("../models/Customer");
@@ -19,6 +20,14 @@ const calculatePercentageChange = (current, previous) => {
 // @access  Private (Admin/Manager)
 exports.getDashboardStats = async (req, res) => {
   try {
+    let { branchId } = req.query;
+
+    // Aggregations require ObjectId, not strings
+    if (branchId && mongoose.Types.ObjectId.isValid(branchId)) {
+      branchId = new mongoose.Types.ObjectId(branchId);
+    } else {
+      branchId = null;
+    }
     const today = new Date();
     const dateKey = formatDate(today);
 
@@ -35,12 +44,18 @@ exports.getDashboardStats = async (req, res) => {
     const lastMonthStartStr = formatDate(startOfLastMonth);
     const lastMonthEndStr = formatDate(endOfLastMonth);
 
+    // Base queries
+    const customerFilter = branchId ? { branch: branchId } : {};
+    const saleFilter = branchId ? { branch: branchId } : {};
+
     // 1. Core Counts & Growth
-    const totalUsers = await Customer.countDocuments();
+    const totalUsers = await Customer.countDocuments(customerFilter);
     const newUsersThisMonth = await Customer.countDocuments({
+      ...customerFilter,
       createdAt: { $gte: startOfThisMonth },
     });
     const newUsersLastMonth = await Customer.countDocuments({
+      ...customerFilter,
       createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });
     const userGrowth = calculatePercentageChange(
@@ -53,7 +68,12 @@ exports.getDashboardStats = async (req, res) => {
       {
         $facet: {
           thisMonth: [
-            { $match: { date: { $gte: thisMonthStartStr } } },
+            {
+              $match: {
+                ...saleFilter,
+                date: { $gte: thisMonthStartStr },
+              },
+            },
             {
               $group: {
                 _id: null,
@@ -69,6 +89,7 @@ exports.getDashboardStats = async (req, res) => {
           lastMonth: [
             {
               $match: {
+                ...saleFilter,
                 date: { $gte: lastMonthStartStr, $lte: lastMonthEndStr },
               },
             },
@@ -85,6 +106,7 @@ exports.getDashboardStats = async (req, res) => {
             },
           ],
           allTime: [
+            { $match: { ...saleFilter } },
             {
               $group: {
                 _id: null,
@@ -98,6 +120,7 @@ exports.getDashboardStats = async (req, res) => {
             },
           ],
           trend: [
+            { $match: { ...saleFilter } },
             { $sort: { date: -1 } },
             { $limit: 7 },
             { $project: { date: 1, revenue: "$dayGrandTotal" } },
@@ -128,14 +151,19 @@ exports.getDashboardStats = async (req, res) => {
     const branches = await Branch.find({ status: "Active" }).select(
       "name code status"
     );
-    const todaysSales = await Sale.find({ date: dateKey })
+    const todaysSalesFilter = branchId
+      ? { date: dateKey, branch: branchId }
+      : { date: dateKey };
+    const todaysSales = await Sale.find(todaysSalesFilter)
       .populate("branch", "code name")
       .populate({ path: "sales.paymentMethod", select: "type" });
 
     let paymentSplit = { Cash: 0, Online: 0 };
     const branchStats = branches.map((branch) => {
       const branchSale = todaysSales.find(
-        (s) => s.branch && s.branch.code === branch.code
+        (s) =>
+          (s.branch && s.branch.code === branch.code) ||
+          (s.branch && String(s.branch._id) === String(branch._id))
       );
       return {
         id: branch._id,
@@ -166,7 +194,12 @@ exports.getDashboardStats = async (req, res) => {
 
     // 4. Top Products (Monthly)
     const productStats = await Sale.aggregate([
-      { $match: { date: { $gte: thisMonthStartStr } } },
+      {
+        $match: {
+          ...saleFilter,
+          date: { $gte: thisMonthStartStr },
+        },
+      },
       { $unwind: { path: "$sales", preserveNullAndEmptyArrays: false } },
       { $unwind: { path: "$sales.items", preserveNullAndEmptyArrays: false } },
       {
@@ -194,16 +227,78 @@ exports.getDashboardStats = async (req, res) => {
       revenue: p.revenue || 0,
     }));
 
-    // 5. Low Stock
-    const lowStockItems = await Inventory.find({
-      $expr: { $lte: ["$quantity", "$lowStockThreshold"] },
-    })
-      .populate("product", "name sku unit")
-      .populate("branch", "name")
-      .limit(5);
+    // 5. Low Stock - Exclude Service Categories
+    const serviceCategories = [
+      "Other",
+      "Services",
+      "Xerox",
+      "Scan",
+      "Scanning",
+      "Photography",
+      "Photograph",
+      "Internet",
+    ];
 
-    // 5. Recent Transactions
-    const recentSalesRecords = await Sale.find()
+    const lowStockItems = await Inventory.aggregate([
+      {
+        $match: branchId
+          ? {
+              branch: branchId,
+              $expr: { $lte: ["$quantity", "$lowStockThreshold"] },
+            }
+          : { $expr: { $lte: ["$quantity", "$lowStockThreshold"] } },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "productInfo",
+        },
+      },
+      { $unwind: "$productInfo" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productInfo.category",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: "$categoryInfo" },
+      {
+        $match: {
+          "categoryInfo.name": { $nin: serviceCategories },
+        },
+      },
+      {
+        $lookup: {
+          from: "branches",
+          localField: "branch",
+          foreignField: "_id",
+          as: "branchInfo",
+        },
+      },
+      { $unwind: { path: "$branchInfo", preserveNullAndEmptyArrays: true } },
+      { $limit: 5 },
+      {
+        $project: {
+          _id: 1,
+          quantity: 1,
+          lowStockThreshold: 1,
+          product: {
+            name: "$productInfo.name",
+          },
+          branch: {
+            name: "$branchInfo.name",
+            _id: "$branchInfo._id",
+          },
+        },
+      },
+    ]);
+
+    // 6. Recent Transactions
+    const recentSalesRecords = await Sale.find({ ...saleFilter })
       .sort({ createdAt: -1 })
       .limit(5)
       .populate("sales.customer", "name")
@@ -225,9 +320,14 @@ exports.getDashboardStats = async (req, res) => {
     });
     recentTransactions.sort((a, b) => new Date(b.time) - new Date(a.time));
 
-    // 6. Top Staff (Monthly)
+    // 7. Top Staff (Monthly)
     const staffStats = await Sale.aggregate([
-      { $match: { date: { $gte: thisMonthStartStr } } },
+      {
+        $match: {
+          ...saleFilter,
+          date: { $gte: thisMonthStartStr },
+        },
+      },
       { $unwind: { path: "$sales", preserveNullAndEmptyArrays: false } },
       {
         $group: {
@@ -271,8 +371,10 @@ exports.getDashboardStats = async (req, res) => {
         topProducts,
         lowStockCount: lowStockItems.length,
         lowStockItems: lowStockItems.map((i) => ({
+          inventoryId: i._id?.toString(),
           name: i.product?.name,
           branch: i.branch?.name,
+          branchId: i.branch?._id?.toString(),
           qty: i.quantity,
           threshold: i.lowStockThreshold,
         })),

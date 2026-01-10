@@ -9,6 +9,7 @@ const AddInventoryModal = ({
   onAdd,
   onUpdate,
   editItem,
+  existingProductIds = [],
 }) => {
   const { products, getProducts } = useProduct();
   const [step, setStep] = useState(1); // 1: Select Product, 2: Add Details
@@ -54,7 +55,32 @@ const AddInventoryModal = ({
     }
   }, [isOpen, editItem]);
 
+  const isServiceProduct = (product) => {
+    if (!product) return false;
+    const catName = (product.category?.name || "").toLowerCase();
+    const productName = (product.name || "").toLowerCase();
+
+    const serviceKeywords = [
+      "other",
+      "service",
+      "xerox",
+      "scan",
+      "photograph",
+      "internet",
+      "printing",
+      "typing",
+      "online",
+    ];
+
+    return serviceKeywords.some(
+      (key) => catName.includes(key) || productName.includes(key)
+    );
+  };
+
   const filteredProducts = products.filter((p) => {
+    // Exclude already added products if they exist in this branch
+    if (existingProductIds.includes(p._id)) return false;
+
     const term = searchTerm.toLowerCase();
     return (
       p.name.toLowerCase().includes(term) ||
@@ -86,6 +112,17 @@ const AddInventoryModal = ({
       }
     }
 
+    // Auto-calculate Margin based on Final Price and CP
+    if (name === "finalPrice") {
+      const fp = Number(value);
+      const cp = Number(formData.costPrice);
+
+      if (!isNaN(fp) && !isNaN(cp) && cp !== 0) {
+        const calculatedMargin = ((fp - cp) / cp) * 100;
+        newFormData.sellingPrice = Number(calculatedMargin.toFixed(2));
+      }
+    }
+
     setFormData(newFormData);
   };
 
@@ -113,11 +150,15 @@ const AddInventoryModal = ({
       branch: branchId,
       product: selectedProduct._id,
       productDetails: selectedProduct,
-      quantity: Number(formData.quantity),
+      quantity: isServiceProduct(selectedProduct)
+        ? 999999
+        : Number(formData.quantity),
       costPrice: Number(formData.costPrice),
       sellingPrice: Number(formData.sellingPrice),
       FinalPrice: Number(formData.finalPrice),
-      lowStockThreshold: Number(formData.lowStockThreshold),
+      lowStockThreshold: isServiceProduct(selectedProduct)
+        ? 0
+        : Number(formData.lowStockThreshold),
     };
 
     if (editItem && onUpdate) {
@@ -311,31 +352,35 @@ const AddInventoryModal = ({
                 )}
               </div>
 
-              <div className="section-divider">Stock & Quantity</div>
+              {!isServiceProduct(selectedProduct) && (
+                <>
+                  <div className="section-divider">Stock & Quantity</div>
 
-              <div className="form-group">
-                <label>Inventory Quantity</label>
-                <input
-                  type="number"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  min="0"
-                  required
-                />
-              </div>
+                  <div className="form-group">
+                    <label>Inventory Quantity</label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      min="0"
+                      required
+                    />
+                  </div>
 
-              <div className="form-group">
-                <label>Low Stock Alert Threshold</label>
-                <input
-                  type="number"
-                  name="lowStockThreshold"
-                  value={formData.lowStockThreshold}
-                  onChange={handleChange}
-                  min="0"
-                  required
-                />
-              </div>
+                  <div className="form-group">
+                    <label>Low Stock Alert Threshold</label>
+                    <input
+                      type="number"
+                      name="lowStockThreshold"
+                      value={formData.lowStockThreshold}
+                      onChange={handleChange}
+                      min="0"
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="section-divider">
                 Pricing ({selectedProduct.unit}) - MRP: ₹{selectedProduct.mrp}
@@ -386,12 +431,13 @@ const AddInventoryModal = ({
               </div>
 
               <div className="form-group full-width">
-                <label>Final Selling Price (Calculated)</label>
+                <label>Final Selling Price</label>
                 <input
                   type="number"
                   name="finalPrice"
                   value={formData.finalPrice}
-                  readOnly
+                  onChange={handleChange}
+                  step="0.01"
                   style={{
                     fontSize: "1.1rem",
                     fontWeight: "bold",
@@ -403,7 +449,6 @@ const AddInventoryModal = ({
                       Number(formData.finalPrice) > selectedProduct.mrp
                         ? "#fff5f5"
                         : "#f0fff4",
-                    cursor: "not-allowed",
                   }}
                 />
                 {Number(formData.finalPrice) > selectedProduct.mrp ? (

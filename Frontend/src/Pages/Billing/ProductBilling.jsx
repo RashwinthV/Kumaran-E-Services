@@ -51,6 +51,7 @@ const ProductBilling = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [selectedCustomerName, setSelectedCustomerName] = useState("");
   const [selectedCustomerPhone, setSelectedCustomerPhone] = useState("");
+  const [selectedCustomerCredit, setSelectedCustomerCredit] = useState(0);
 
   // Payment State
   const [accounts, setAccounts] = useState([]);
@@ -209,12 +210,18 @@ const ProductBilling = () => {
     setSelectedCustomerId(customer._id);
     setSelectedCustomerName(customer.name);
     setSelectedCustomerPhone(customer.phone);
+    const totalCredit = (customer.credits || []).reduce(
+      (sum, c) => sum + (c.totalAmount || 0),
+      0
+    );
+    setSelectedCustomerCredit(totalCredit);
   };
 
   const handleCustomerAdded = (newCustomer) => {
     setSelectedCustomerId(newCustomer._id);
     setSelectedCustomerName(newCustomer.name);
     setSelectedCustomerPhone(newCustomer.phone);
+    setSelectedCustomerCredit(0); // New customers start with 0 credit
     refreshCustomers();
   };
 
@@ -386,6 +393,7 @@ const ProductBilling = () => {
     setSelectedCustomerId(null);
     setSelectedCustomerName("");
     setSelectedCustomerPhone("");
+    setSelectedCustomerCredit(0);
     searchInputRef.current?.focus();
   };
 
@@ -526,6 +534,17 @@ const ProductBilling = () => {
                             <i className="bi bi-telephone-outbound me-2"></i>
                             {selectedCustomerPhone}
                           </div>
+                          <div
+                            className={`badge ${
+                              selectedCustomerCredit > 0
+                                ? "bg-danger-subtle text-danger"
+                                : "bg-success-subtle text-success"
+                            } border p-2`}
+                          >
+                            <i className="bi bi-credit-card me-2"></i>
+                            Credit: {getCurrencySymbol(appSettings?.currency)}
+                            {selectedCustomerCredit.toFixed(2)}
+                          </div>
                         </div>
                         <button
                           className="btn btn-sm btn-link text-danger p-0"
@@ -533,6 +552,7 @@ const ProductBilling = () => {
                             setSelectedCustomerId(null);
                             setSelectedCustomerName("");
                             setSelectedCustomerPhone("");
+                            setSelectedCustomerCredit(0);
                           }}
                           title="Clear Customer"
                         >

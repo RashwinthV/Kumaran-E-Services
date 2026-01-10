@@ -15,7 +15,7 @@ function Footer() {
         </div>
 
         <div className="footer-right">
-          <Powered theme="light" />
+          <Powered theme="dark" />
         </div>
       </div>
     </footer>

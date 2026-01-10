@@ -14,27 +14,65 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  getCache,
+  setCache,
+  removeCache,
+  CACHE_KEYS,
+  TTL,
+} from "../utils/cacheUtils";
 
 const Dashboard = () => {
   const { user, accessToken } = useAuth();
   const { branches, getBranches } = useBranch();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [isChartReady, setIsChartReady] = useState(false);
+
+  useEffect(() => {
+    // Small delay to ensure grid layout is finished before rendering Recharts
+    const timer = setTimeout(() => setIsChartReady(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     getBranches();
-    fetchDashboardStats();
-  }, [getBranches]);
+    fetchDashboardStats(selectedBranch);
+  }, [getBranches, selectedBranch]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async (
+    branchId = "all",
+    forceRefresh = false
+  ) => {
     try {
       if (!accessToken) return;
+
+      const cacheKey = `${CACHE_KEYS.DASHBOARD}_${branchId}`;
+
+      // Check cache
+      if (!forceRefresh) {
+        const cachedStats = await getCache(cacheKey);
+        if (cachedStats) {
+          setStats(cachedStats);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setLoading(true);
       const baseURL = `${import.meta.env.VITE_BACKEND_BASE_URI}/admin`;
-      const response = await axios.get(`${baseURL}/dashboard/stats`, {
+      const url =
+        branchId === "all"
+          ? `${baseURL}/dashboard/stats`
+          : `${baseURL}/dashboard/stats?branchId=${branchId}`;
+
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (response.data.success) {
         setStats(response.data.data);
+        await setCache(cacheKey, response.data.data, TTL.SHORT);
       }
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -59,6 +97,41 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-content">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 className="h3 mb-0 text-gray-800">Admin Dashboard</h1>
+            <p className="text-muted small mb-0">
+              {selectedBranch === "all"
+                ? "Across all branches"
+                : `Viewing stats for ${
+                    branches.find((b) => b._id === selectedBranch)?.name
+                  }`}
+            </p>
+          </div>
+          <div className="d-flex gap-2">
+            <select
+              className="form-select form-select-sm shadow-sm"
+              style={{ width: "200px", borderRadius: "8px" }}
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+            >
+              <option value="all">All Branches</option>
+              {branches?.map((branch) => (
+                <option key={branch._id} value={branch._id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+            <button
+              className="btn btn-sm btn-light border shadow-sm"
+              style={{ borderRadius: "8px" }}
+              onClick={() => fetchDashboardStats(selectedBranch, true)}
+              title="Refresh Stats"
+            >
+              <i className="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
         {loading ? (
           <div className="text-center py-5">
             <div className="spinner-border text-primary" role="status">
@@ -231,17 +304,13 @@ const Dashboard = () => {
                 <div className="card-header">
                   <h2>Revenue Trend (Last 7 Days)</h2>
                 </div>
-                <div
-                  className="chart-container"
-                  style={{
-                    height: "300px",
-                    minHeight: "300px",
-                    marginTop: "1rem",
-                  }}
-                >
-                  {trendData && trendData.length > 0 ? (
-                    <ResponsiveContainer width="99%" height="100%">
-                      <AreaChart data={trendData}>
+                <div className="chart-container">
+                  {isChartReady && trendData && trendData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={trendData}
+                        margin={{ top: 10, right: 10, left: 0, bottom: 25 }}
+                      >
                         <defs>
                           <linearGradient
                             id="colorRev"
@@ -271,12 +340,14 @@ const Dashboard = () => {
                           dataKey="name"
                           axisLine={false}
                           tickLine={false}
-                          tick={{ fontSize: 12, fill: "#64748b" }}
+                          tick={{ fontSize: 10, fill: "#64748b" }}
+                          dy={10}
                         />
                         <YAxis
                           axisLine={false}
                           tickLine={false}
-                          tick={{ fontSize: 12, fill: "#64748b" }}
+                          tick={{ fontSize: 10, fill: "#64748b" }}
+                          width={60}
                           tickFormatter={(value) =>
                             `₹${
                               value >= 1000
@@ -303,6 +374,15 @@ const Dashboard = () => {
                           strokeWidth={3}
                           fillOpacity={1}
                           fill="url(#colorRev)"
+                          animationDuration={1500}
+                          activeDot={{
+                            r: 6,
+                            style: {
+                              fill: "#6366f1",
+                              stroke: "#fff",
+                              strokeWidth: 2,
+                            },
+                          }}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -349,15 +429,30 @@ const Dashboard = () => {
               {/* Low Stock Alerts */}
               <div className="dashboard-card">
                 <div className="card-header">
-                  <h2>Inventory Alerts</h2>
-                  <span className="badge bg-danger rounded-pill">
-                    {stats?.lowStockCount || 0}
-                  </span>
+                  <div className="d-flex align-items-center gap-2">
+                    <h2>Inventory Alerts</h2>
+                    <span className="badge bg-danger rounded-pill">
+                      {stats?.lowStockCount || 0}
+                    </span>
+                  </div>
+                  {selectedBranch !== "all" && (
+                    <Link
+                      to={`/branch/${selectedBranch}/products`}
+                      className="view-all-button mb-2"
+                    >
+                      View All
+                    </Link>
+                  )}
                 </div>
                 <div className="low-stock-list">
                   {stats?.lowStockItems?.length > 0 ? (
                     stats.lowStockItems.map((item, idx) => (
-                      <div key={idx} className="low-stock-item">
+                      <Link
+                        key={idx}
+                        to={`/branch/${item.branchId}/products`}
+                        className="low-stock-item text-decoration-none"
+                        style={{ color: "inherit" }}
+                      >
                         <div className="item-info">
                           <p className="item-name">{item.name}</p>
                           <p className="item-branch">{item.branch}</p>
@@ -368,7 +463,7 @@ const Dashboard = () => {
                           </span>
                           <span className="qty-label">pcs</span>
                         </div>
-                      </div>
+                      </Link>
                     ))
                   ) : (
                     <p className="text-muted text-center py-3">All clear!</p>
@@ -467,7 +562,7 @@ const Dashboard = () => {
                           title="Account & Billing"
                         >
                           <div className="qa-icon bg-soft-purple">
-                            <i className="bi bi-building-columns"></i>
+                            <i className="bi bi-bank2"></i>
                           </div>
                           <span>Accounts</span>
                         </Link>

@@ -216,6 +216,12 @@
   color: #991b1b;
 }
 
+.products-container .stock-badge.service-badge {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
 .products-container .stock-quantity {
   font-size: 0.875rem;
   color: #64748b;
