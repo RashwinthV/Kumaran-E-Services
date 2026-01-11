@@ -182,7 +182,8 @@ exports.getDashboardStats = async (req, res) => {
     todaysSales.forEach((dayRecord) => {
       if (Array.isArray(dayRecord.sales)) {
         dayRecord.sales.forEach((s) => {
-          const amount = Number(s.grandTotal) || 0;
+          const amount =
+            (Number(s.grandTotal) || 0) - (Number(s.totalRefundedAmount) || 0);
           if (s.paymentMethod?.type === "Cash") {
             paymentSplit.Cash += amount;
           } else {
@@ -205,8 +206,38 @@ exports.getDashboardStats = async (req, res) => {
       {
         $group: {
           _id: "$sales.items.product",
-          totalQty: { $sum: "$sales.items.qty" },
-          revenue: { $sum: "$sales.items.lineTotal" },
+          totalQty: {
+            $sum: {
+              $subtract: [
+                "$sales.items.qty",
+                { $ifNull: ["$sales.items.refundedQty", 0] },
+              ],
+            },
+          },
+          revenue: {
+            $sum: {
+              $subtract: [
+                "$sales.items.lineTotal",
+                {
+                  $cond: [
+                    { $gt: ["$sales.items.qty", 0] },
+                    {
+                      $multiply: [
+                        {
+                          $divide: [
+                            "$sales.items.lineTotal",
+                            "$sales.items.qty",
+                          ],
+                        },
+                        { $ifNull: ["$sales.items.refundedQty", 0] },
+                      ],
+                    },
+                    0,
+                  ],
+                },
+              ],
+            },
+          },
         },
       },
       { $sort: { totalQty: -1 } },
@@ -311,7 +342,7 @@ exports.getDashboardStats = async (req, res) => {
           recentTransactions.push({
             billNumber: s.billNumber || "N/A",
             customer: s.customer?.name || "Walk-in",
-            amount: s.grandTotal || 0,
+            amount: (s.grandTotal || 0) - (s.totalRefundedAmount || 0),
             branch: dayRecord.branch?.name || "Unknown",
             time: s.createdAt,
           });
@@ -332,7 +363,14 @@ exports.getDashboardStats = async (req, res) => {
       {
         $group: {
           _id: "$sales.staff",
-          totalSales: { $sum: "$sales.grandTotal" },
+          totalSales: {
+            $sum: {
+              $subtract: [
+                { $ifNull: ["$sales.grandTotal", 0] },
+                { $ifNull: ["$sales.totalRefundedAmount", 0] },
+              ],
+            },
+          },
           billCount: { $sum: 1 },
         },
       },

@@ -19,7 +19,7 @@ const generateRefreshToken = (id, tokenVersion) => {
 
 exports.login = async (req, res) => {
   try {
-    const { identifier, password, portal } = req.body;
+    const { identifier, password, portal, branchCode } = req.body;
 
     if (!identifier || !password) {
       return res.status(400).json({
@@ -65,6 +65,14 @@ exports.login = async (req, res) => {
         return res.status(403).json({
           success: false,
           message: "Access denied. This portal is for staff members only.",
+        });
+      }
+
+      // Verify branch
+      if (branchCode && user.branchCode !== branchCode.toUpperCase()) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied. You are not assigned to branch ${branchCode}.`,
         });
       }
     } else if (portal === "admin") {

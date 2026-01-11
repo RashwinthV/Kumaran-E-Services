@@ -26,6 +26,7 @@ export const BillingProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [sales, setSales] = useState([]);
+  const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchProducts = useCallback(
@@ -115,19 +116,25 @@ export const BillingProvider = ({ children }) => {
         setLoading(true);
 
         if (!force) {
-          const cached = await getCache(CACHE_KEYS.SALES);
-          if (cached) {
-            setSales(cached);
-          }
+          const cachedSales = await getCache(CACHE_KEYS.SALES);
+          const cachedRefunds = await getCache("KES_REFUNDS_CACHE");
+          if (cachedSales) setSales(cachedSales);
+          if (cachedRefunds) setRefunds(cachedRefunds);
         }
 
-        const res = await axios.get(API_ENDPOINTS.SALES, {
+        const res = await axios.get(API_ENDPOINTS.SALES.BASE, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         if (res.data.success) {
           setSales(res.data.data);
+          setRefunds(res.data.refunds || []);
           await setCache(CACHE_KEYS.SALES, res.data.data, TTL.SHORT);
+          await setCache(
+            "KES_REFUNDS_CACHE",
+            res.data.refunds || [],
+            TTL.SHORT
+          );
         }
       } catch (error) {
         console.error("Error fetching sales:", error);
@@ -151,10 +158,31 @@ export const BillingProvider = ({ children }) => {
     products,
     customers,
     sales,
+    refunds,
     loading,
     refreshProducts: () => fetchProducts(true),
     refreshCustomers: () => fetchCustomers(true),
     refreshSales: () => fetchSales(true),
+    refundSale: async (refundData) => {
+      if (!accessToken) return { success: false, message: "No access token" };
+      try {
+        const res = await axios.post(API_ENDPOINTS.SALES.REFUND, refundData, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.data.success) {
+          await fetchSales(true);
+          await fetchProducts(true);
+          return { success: true, message: res.data.message };
+        }
+        return { success: false, message: res.data.message };
+      } catch (error) {
+        console.error("Refund error:", error);
+        return {
+          success: false,
+          message: error.response?.data?.message || "Error processing refund",
+        };
+      }
+    },
   };
 
   return (

@@ -1,6 +1,11 @@
 import React from "react";
 
-const SaleHistoryTable = ({ data, onViewSale, currencySymbol = "₹" }) => {
+const SaleHistoryTable = ({
+  data,
+  onViewSale,
+  onRefundSale,
+  currencySymbol = "₹",
+}) => {
   return (
     <div className="bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 overflow-hidden">
       <div className="table-responsive">
@@ -75,16 +80,42 @@ const SaleHistoryTable = ({ data, onViewSale, currencySymbol = "₹" }) => {
                       className="d-flex flex-wrap gap-1"
                       style={{ maxWidth: "300px" }}
                     >
-                      {sale.products?.map((p, idx) => (
-                        <div
-                          key={idx}
-                          className="small text-muted bg-light px-2 py-0 rounded border w-100 text-truncate"
-                          title={`${p.sku} - ${p.name}`}
-                        >
-                          <span className="fw-bold text-dark">{p.sku}</span> -{" "}
-                          {p.name}
-                        </div>
-                      ))}
+                      {sale.products?.map((p, idx) => {
+                        const isFullyRefunded = p.refundedQty >= p.qty;
+                        const isPartiallyRefunded =
+                          p.refundedQty > 0 && p.refundedQty < p.qty;
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`small px-2 py-0 rounded border w-100 text-truncate ${
+                              isFullyRefunded
+                                ? "bg-secondary bg-opacity-10 text-muted text-decoration-line-through"
+                                : isPartiallyRefunded
+                                ? "bg-danger bg-opacity-10 border-danger border-opacity-25"
+                                : "bg-light text-muted"
+                            }`}
+                            title={`${p.sku} - ${p.name}`}
+                          >
+                            <span
+                              className={`fw-bold ${
+                                isFullyRefunded ? "text-muted" : "text-dark"
+                              }`}
+                            >
+                              {p.sku}
+                            </span>{" "}
+                            - {p.name}
+                            {isPartiallyRefunded && (
+                              <span
+                                className="ms-1 text-danger fw-bold"
+                                style={{ fontSize: "0.65rem" }}
+                              >
+                                (-{p.refundedQty} ref.)
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </td>
                   <td className="text-center">
@@ -94,7 +125,15 @@ const SaleHistoryTable = ({ data, onViewSale, currencySymbol = "₹" }) => {
                   </td>
                   <td className="text-end fw-bold text-dark">
                     {currencySymbol}
-                    {sale.amount.toFixed(2)}
+                    {(sale.amount - (sale.totalRefundedAmount || 0)).toFixed(2)}
+                    {sale.totalRefundedAmount > 0 && (
+                      <div
+                        className="text-danger small fw-normal"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        (-{sale.totalRefundedAmount.toFixed(2)})
+                      </div>
+                    )}
                   </td>
                   <td className="text-center">
                     <span className="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10">
@@ -108,6 +147,8 @@ const SaleHistoryTable = ({ data, onViewSale, currencySymbol = "₹" }) => {
                           ? "bg-success bg-opacity-10 text-success border border-success border-opacity-10"
                           : sale.status === "Cancelled"
                           ? "bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10"
+                          : sale.status === "Refunded"
+                          ? "bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10"
                           : "bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10"
                       }`}
                     >
@@ -122,6 +163,16 @@ const SaleHistoryTable = ({ data, onViewSale, currencySymbol = "₹" }) => {
                     >
                       <i className="bi bi-eye text-primary"></i>
                     </button>
+                    {sale.status !== "Refunded" &&
+                      sale.status !== "Cancelled" && (
+                        <button
+                          className="btn btn-sm btn-light border me-2"
+                          onClick={() => onRefundSale(sale)}
+                          title="Refund"
+                        >
+                          <i className="bi bi-arrow-counterclockwise text-danger"></i>
+                        </button>
+                      )}
                     <button
                       className="btn btn-sm btn-light border"
                       title="Print Invoice"

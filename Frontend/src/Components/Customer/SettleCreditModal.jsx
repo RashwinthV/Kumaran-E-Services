@@ -273,33 +273,43 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                               </div>
 
                               <div className="d-flex justify-content-between align-items-center ps-4">
-                                <div className="text-muted small">
-                                  Total:{" "}
+                                <div
+                                  className={`small ${
+                                    credit.totalAmount < 0
+                                      ? "text-success"
+                                      : "text-muted"
+                                  }`}
+                                >
+                                  {credit.totalAmount < 0
+                                    ? "(Store Credit): "
+                                    : "Total: "}
                                   <span className="fw-bold">
-                                    ₹{credit.totalAmount.toFixed(2)}
+                                    ₹{Math.abs(credit.totalAmount).toFixed(2)}
                                   </span>
                                 </div>
-                                <div className="input-group input-group-sm w-50">
-                                  <span className="input-group-text bg-white border-end-0">
-                                    ₹
-                                  </span>
-                                  <input
-                                    type="number"
-                                    className="form-control border-start-0 text-end fw-bold"
-                                    placeholder="0.00"
-                                    value={billAmounts[credit._id] || ""}
-                                    onChange={(e) =>
-                                      handleAmountChange(
-                                        credit._id,
-                                        e.target.value,
-                                        credit.totalAmount
-                                      )
-                                    }
-                                    onFocus={(e) => e.target.select()}
-                                    step="0.01"
-                                    min="0"
-                                  />
-                                </div>
+                                {credit.totalAmount > 0 && (
+                                  <div className="input-group input-group-sm w-50">
+                                    <span className="input-group-text bg-white border-end-0">
+                                      ₹
+                                    </span>
+                                    <input
+                                      type="number"
+                                      className="form-control border-start-0 text-end fw-bold"
+                                      placeholder="0.00"
+                                      value={billAmounts[credit._id] || ""}
+                                      onChange={(e) =>
+                                        handleAmountChange(
+                                          credit._id,
+                                          e.target.value,
+                                          credit.totalAmount
+                                        )
+                                      }
+                                      onFocus={(e) => e.target.select()}
+                                      step="0.01"
+                                      min="0"
+                                    />
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>

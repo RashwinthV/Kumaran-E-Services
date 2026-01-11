@@ -37,7 +37,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const result = await login(formData.identifier.trim(), formData.password);
+      const result = await login(
+        formData.identifier.trim(),
+        formData.password,
+        branchCode
+      );
 
       if (result.success) {
         toast.success("Login successful!");

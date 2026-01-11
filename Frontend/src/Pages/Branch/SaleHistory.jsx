@@ -5,8 +5,10 @@ import SaleHistoryStats from "../../Components/SaleHistory/SaleHistoryStats";
 import SaleHistoryFilters from "../../Components/SaleHistory/SaleHistoryFilters";
 import SaleHistoryTable from "../../Components/SaleHistory/SaleHistoryTable";
 import SaleHistoryDetailModal from "../../Components/SaleHistory/SaleHistoryDetailModal";
+import RefundModal from "../../Components/SaleHistory/RefundModal";
 import SaleHistoryPagination from "../../Components/SaleHistory/SaleHistoryPagination";
 import { useBilling } from "../../Context/BillingContext";
+import { toast } from "react-toastify";
 import Loader from "../../Components/Loading/universalLoader";
 import { getDecrypted } from "../../utils/storage";
 
@@ -25,7 +27,12 @@ const formatDate = (dateStr, format) => {
 };
 
 const SaleHistory = () => {
-  const { sales, loading: billingLoading, refreshSales } = useBilling();
+  const {
+    sales,
+    refunds,
+    loading: billingLoading,
+    refreshSales,
+  } = useBilling();
 
   const today = new Date().toISOString().split("T")[0];
   const currentMonth = (new Date().getMonth() + 1).toString();
@@ -33,8 +40,8 @@ const SaleHistory = () => {
 
   const [filters, setFilters] = useState({
     search: "",
-    startDate: today,
-    endDate: today,
+    startDate: "", // Default to empty to allow Month/Year filter to work
+    endDate: "",
     paymentMode: "All",
     status: "All",
     sortBy: "Newest",
@@ -44,6 +51,7 @@ const SaleHistory = () => {
 
   const [selectedSale, setSelectedSale] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [appSettings, setAppSettings] = useState(() =>
     getDecrypted("app_settings")
   );
@@ -113,6 +121,8 @@ const SaleHistory = () => {
                 ? item.product.gst.cgst + item.product.gst.sgst
                 : 0,
               gstType: item.product?.gstType || "NotIncluded",
+              refundedQty: item.refundedQty || 0,
+              discount: item.discount || 0,
             };
           }) || [],
         // Extra info for the detail modal if needed
@@ -122,6 +132,9 @@ const SaleHistory = () => {
         sgstTotal: Number((sale.totalTax - sale.totalTax / 2).toFixed(2)),
         discount:
           sale.items?.reduce((acc, item) => acc + (item.discount || 0), 0) || 0,
+        totalRefundedAmount: sale.totalRefundedAmount || 0,
+        // Carry internal IDs and field for the refund logic
+        items: sale.items || [],
       };
     });
   }, [sales, appSettings]);
@@ -132,15 +145,29 @@ const SaleHistory = () => {
   }, [sales]);
 
   const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page on filter change
+    setFilters((prev) => {
+      const newFilters = { ...prev, [key]: value };
+
+      if (key === "month" || key === "year") {
+        // If interacting with Month/Year, clear specific dates
+        newFilters.startDate = "";
+        newFilters.endDate = "";
+      } else if (key === "startDate" || key === "endDate") {
+        // If interacting with Dates, set Month/Year to All
+        newFilters.month = "All";
+        newFilters.year = "All";
+      }
+
+      return newFilters;
+    });
+    setCurrentPage(1);
   };
 
   const handleReset = () => {
     setFilters({
       search: "",
-      startDate: today,
-      endDate: today,
+      startDate: "",
+      endDate: "",
       paymentMode: "All",
       status: "All",
       sortBy: "Newest",
@@ -153,6 +180,24 @@ const SaleHistory = () => {
   const handleViewSale = (sale) => {
     setSelectedSale(sale);
     setIsModalOpen(true);
+  };
+
+  const handleOpenRefund = (sale) => {
+    setSelectedSale(sale);
+    setIsRefundModalOpen(true);
+  };
+
+  const { refundSale } = useBilling();
+
+  const handleProcessRefund = async (refundData) => {
+    const result = await refundSale(refundData);
+    if (result.success) {
+      toast.success(result.message);
+      setIsRefundModalOpen(false);
+      setIsModalOpen(false); // Close detail modal too if it was open
+    } else {
+      toast.error(result.message);
+    }
   };
 
   const handleExport = async () => {
@@ -199,7 +244,7 @@ const SaleHistory = () => {
       { header: "Product Name", key: "name", width: 30 },
       { header: "Qty", key: "qty", width: 10 },
       { header: "Rate", key: "price", width: 15 },
-      { header: "Taxable Value", key: "taxableValue", width: 15 },
+      { header: "Taxable Value", key: "taxableValue", width: 40 },
       { header: "CGST", key: "cgst", width: 12 },
       { header: "SGST", key: "sgst", width: 12 },
       { header: "Line Total", key: "lineTotal", width: 18 },
@@ -270,6 +315,17 @@ const SaleHistory = () => {
 
     filteredData.forEach((sale) => {
       sale.products.forEach((p) => {
+        // Determine item-level status for the row
+        let itemStatus = sale.status;
+        if (p.refundedQty >= p.qty) {
+          itemStatus = "Refunded";
+        } else if (p.refundedQty > 0) {
+          itemStatus = "Partially Refunded";
+        } else if (["Refunded", "Partially Refunded"].includes(sale.status)) {
+          // If the bill has refunds but THIS item doesn't, it's effectively Paid
+          itemStatus = "Paid";
+        }
+
         const rowData = [
           sale.billNo,
           sale.formattedDate,
@@ -284,7 +340,7 @@ const SaleHistory = () => {
           p.sgst,
           p.lineTotal,
           sale.paymentMode,
-          sale.status,
+          itemStatus,
         ];
         if (p.gstType === "Included") {
           inclusiveRows.push(rowData);
@@ -296,10 +352,116 @@ const SaleHistory = () => {
       });
     });
 
+    // === REFUND SECTION ===
+    const refundRows = refunds
+      .filter((r) => {
+        const rDate = new Date(r.createdAt).toISOString().split("T")[0];
+        const matchesDate =
+          (!filters.startDate || rDate >= filters.startDate) &&
+          (!filters.endDate || rDate <= filters.endDate);
+
+        const saleDate = new Date(rDate);
+        const matchesMonth =
+          filters.month === "All" ||
+          (saleDate.getMonth() + 1).toString() === filters.month;
+        const matchesYear =
+          filters.year === "All" ||
+          saleDate.getFullYear().toString() === filters.year;
+
+        const matchesSearch =
+          !filters.search ||
+          r.originalSale?.billNumber
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          r.reason?.toLowerCase().includes(filters.search.toLowerCase());
+
+        return matchesDate && matchesMonth && matchesYear && matchesSearch;
+      })
+      .map((r) => {
+        const itemNames = r.items
+          .map((i) => i.product?.name || "Product")
+          .join(", ");
+        const skus = r.items.map((i) => i.product?.sku || "N/A").join(", ");
+        const rDate = new Date(r.createdAt);
+        return [
+          r.originalSale?.billNumber || r.billNumber || "N/A",
+          rDate.toLocaleDateString(),
+          r.customer?.name || "Walk-in",
+          r.customer?.phone || "N/A",
+          skus,
+          itemNames,
+          r.items.reduce((acc, i) => acc + i.qty, 0),
+          r.totalRefundedAmount,
+          r.reason || "N/A",
+          r.staff?.name || "Staff",
+        ];
+      });
+
     // Generate Sections
     addTableSection("=== GST INCLUSIVE SALES ===", inclusiveRows);
     addTableSection("=== GST EXCLUSIVE SALES ===", exclusiveRows);
     addTableSection("=== GST NOT APPLICABLE / NON-GST SALES ===", nonGstRows);
+
+    if (refundRows.length > 0) {
+      // Define specific headers for Refund section
+      const refundHeaders = [
+        "Bill Number",
+        "Date",
+        "Customer",
+        "Phone",
+        "Product Code",
+        "Product Name",
+        "Qty",
+        "Total Refunded",
+        "Reason",
+        "Processed By",
+      ];
+
+      const refundTitleRow = worksheet.addRow(["=== REFUND TRANSACTIONS ==="]);
+      refundTitleRow.font = {
+        bold: true,
+        size: 16,
+        color: { argb: "FFFF0000" },
+      };
+      worksheet.mergeCells(
+        `A${refundTitleRow.number}:J${refundTitleRow.number}`
+      );
+      refundTitleRow.alignment = { horizontal: "center" };
+      worksheet.addRow([]);
+
+      const rHead = worksheet.addRow(refundHeaders);
+      rHead.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 14 };
+      rHead.eachCell((c) => {
+        c.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFC00000" },
+        };
+        c.alignment = { vertical: "middle", horizontal: "center" };
+        c.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      refundRows.forEach((row) => {
+        const rRow = worksheet.addRow(row);
+        rRow.font = { size: 13 };
+        // Total Refunded is at index 8 (1-indexed based on row array starting at 0)
+        const totalCell = rRow.getCell(8);
+        totalCell.numFmt = `"${currencySymbol}"#,##0.00`;
+        rRow.eachCell((cell) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      });
+    }
 
     // Generate Dynamic Filename
     const monthNames = [
@@ -436,6 +598,7 @@ const SaleHistory = () => {
       <SaleHistoryTable
         data={paginatedData}
         onViewSale={handleViewSale}
+        onRefundSale={handleOpenRefund}
         currencySymbol={currencySymbol}
       />
 
@@ -451,6 +614,18 @@ const SaleHistory = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         sale={selectedSale}
+        currencySymbol={currencySymbol}
+        onOpenRefund={() => {
+          setIsModalOpen(false);
+          setIsRefundModalOpen(true);
+        }}
+      />
+
+      <RefundModal
+        isOpen={isRefundModalOpen}
+        onClose={() => setIsRefundModalOpen(false)}
+        sale={selectedSale}
+        onRefund={handleProcessRefund}
         currencySymbol={currencySymbol}
       />
     </div>

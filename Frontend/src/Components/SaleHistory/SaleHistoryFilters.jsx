@@ -155,6 +155,9 @@ const SaleHistoryFilters = ({
             <option value="All">All Status</option>
             <option value="Paid">Paid</option>
             <option value="Pending">Pending</option>
+            <option value="Refunded">Refunded</option>
+            <option value="Partially Refunded">Partially Refunded</option>
+            <option value="Held">Held</option>
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>

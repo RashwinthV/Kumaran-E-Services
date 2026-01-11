@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
       async (error) => {
         const originalRequest = error.config;
 
-        if (originalRequest.skipAuthRefresh) {
+        if (originalRequest && originalRequest.skipAuthRefresh) {
           return Promise.reject(error);
         }
 
@@ -143,13 +143,14 @@ export const AuthProvider = ({ children }) => {
   }, [accessToken, refreshAccessToken]);
 
   // Login function
-  const login = async (identifier, password) => {
+  const login = async (identifier, password, branchCode) => {
     try {
       const response = await axios.post(
         API_ENDPOINTS.AUTH.LOGIN,
         {
           identifier,
           password,
+          branchCode,
           portal: "frontend",
         },
         { skipAuthRefresh: true }

@@ -31,10 +31,11 @@ const BranchReport = () => {
   const [loading, setLoading] = useState(false);
   const [currentBranch, setCurrentBranch] = useState(null);
   const [stats, setStats] = useState({
-    totalSales: 0,
-    totalBills: 0,
     totalCustomers: 0,
+    totalRefunds: 0,
   });
+
+  const [refunds, setRefunds] = useState([]);
 
   const [filters, setFilters] = useState({
     type: "sales",
@@ -85,6 +86,7 @@ const BranchReport = () => {
       });
 
       if (response.data.success) {
+        setRefunds(response.data.refunds || []);
         const rawData = response.data.data.map((item) => {
           const createdDate = new Date(item.createdAt);
           const dateStr =
@@ -237,10 +239,16 @@ const BranchReport = () => {
     );
     const uniqueCustomers = new Set(uniqueSales.map((i) => i.customerName))
       .size;
+    const totalRefunded = dataSet.reduce((sum, item) => {
+      // If paymentMode is Credits, it's not a financial refund (no cash out)
+      if (item.paymentMode === "Credits") return sum;
+      return sum + (item.totalRefundedAmount || 0);
+    }, 0);
     setStats({
-      totalSales,
+      totalSales: totalSales - totalRefunded,
       totalBills: uniqueSales.length,
       totalCustomers: uniqueCustomers,
+      totalRefunds: totalRefunded,
     });
   };
 
@@ -292,7 +300,7 @@ const BranchReport = () => {
       worksheet.addRow([]); // Spacer
     }
 
-    // Define Base Columns
+    // Define Base Columns (17 columns matching Standard Admin Excel)
     const columns = [
       { header: "Bill Number", key: "billNo", width: 25 },
       { header: "Date", key: "date", width: 15 },
@@ -301,13 +309,15 @@ const BranchReport = () => {
       { header: "Product Code", key: "sku", width: 15 },
       { header: "Product Name", key: "name", width: 30 },
       { header: "Qty", key: "qty", width: 10 },
-      { header: "Rate", key: "price", width: 15 },
-      { header: "Taxable Value", key: "taxableValue", width: 15 },
+      { header: "Rate", key: "price", width: 20 },
+      { header: "Taxable Value", key: "taxableValue", width: 40 },
       { header: "CGST", key: "cgst", width: 12 },
       { header: "SGST", key: "sgst", width: 12 },
       { header: "Line Total", key: "lineTotal", width: 18 },
       { header: "Mode", key: "paymentMode", width: 15 },
-      { header: "Status", key: "status", width: 12 },
+      { header: "Status", key: "status", width: 18 },
+      { header: "CP", key: "cp", width: 12 },
+      { header: "Profit/Loss", key: "profit", width: 15 },
     ];
     worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
 
@@ -316,7 +326,7 @@ const BranchReport = () => {
 
       const sTitleRow = worksheet.addRow([title]);
       sTitleRow.font = { bold: true, size: 16, color: { argb: "FF1F4E78" } };
-      worksheet.mergeCells(`A${sTitleRow.number}:N${sTitleRow.number}`);
+      worksheet.mergeCells(`A${sTitleRow.number}:Q${sTitleRow.number}`);
       sTitleRow.alignment = { horizontal: "center" };
       worksheet.addRow([]); // Spacer
 
@@ -340,8 +350,8 @@ const BranchReport = () => {
       rowData.forEach((row) => {
         const excelRow = worksheet.addRow(row);
         excelRow.font = { size: 13 };
-        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12)
-        [8, 9, 10, 11, 12].forEach((colIndex) => {
+        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(15), Profit(16) [Adjusted Indices]
+        [8, 9, 10, 11, 12, 15, 16].forEach((colIndex) => {
           const cell = excelRow.getCell(colIndex);
           cell.numFmt = `"₹"#,##0.00`;
         });
@@ -364,6 +374,19 @@ const BranchReport = () => {
 
     displayData.forEach((sale) => {
       (sale.items || []).forEach((p) => {
+        // Status mapping
+        let itemStatus = sale.status;
+        if (p.refundedQty >= p.qty) {
+          itemStatus = "Refunded";
+        } else if (p.refundedQty > 0) {
+          itemStatus = "Partially Refunded";
+        } else if (["Refunded", "Partially Refunded"].includes(sale.status)) {
+          itemStatus = "Paid";
+        }
+
+        const cpValue = p.resolvedCP * p.qty;
+        const profitValue = p.lineTotal - cpValue;
+
         const rowData = [
           sale.billNumber,
           sale.formattedDate,
@@ -378,7 +401,9 @@ const BranchReport = () => {
           p.taxAmount - p.taxAmount / 2,
           p.lineTotal,
           sale.paymentMethod,
-          sale.status,
+          itemStatus,
+          cpValue,
+          profitValue,
         ];
         const gstType = p.product?.gstType || p.gstType;
         if (gstType === "Included") inclusiveRows.push(rowData);
@@ -390,6 +415,90 @@ const BranchReport = () => {
     addTableSection("=== GST INCLUSIVE SALES ===", inclusiveRows);
     addTableSection("=== GST EXCLUSIVE SALES ===", exclusiveRows);
     addTableSection("=== NON-GST / EXEMPT SALES ===", nonGstRows);
+
+    // === REFUND SECTION ===
+    const filteredRefunds = (refunds || []).filter((r) => {
+      if (String(r.branch) !== String(id)) return false;
+      const rDate = new Date(r.createdAt).toISOString().split("T")[0];
+      if (filters.dateRange === "custom") {
+        if (filters.startDate && rDate < filters.startDate) return false;
+        if (filters.endDate && rDate > filters.endDate) return false;
+      }
+      return true;
+    });
+
+    if (filteredRefunds.length > 0) {
+      const refundRows = filteredRefunds.map((r) => {
+        const itemNames = r.items
+          .map((i) => i.product?.name || "Product")
+          .join(", ");
+        const skus = r.items.map((i) => i.product?.sku || "N/A").join(", ");
+
+        return [
+          r.originalSale?.billNumber || r.billNumber || "N/A",
+          new Date(r.createdAt).toLocaleDateString(),
+          r.customer?.name || "Walk-in",
+          r.customer?.phone || "N/A",
+          skus,
+          itemNames,
+          r.items.reduce((acc, i) => acc + i.qty, 0),
+          r.totalRefundedAmount,
+          r.reason || "N/A",
+          r.staff?.name || "Staff",
+        ];
+      });
+
+      const rTitleRow = worksheet.addRow(["=== REFUND TRANSACTIONS ==="]);
+      rTitleRow.font = { bold: true, size: 16, color: { argb: "FFFF0000" } };
+      worksheet.mergeCells(`A${rTitleRow.number}:J${rTitleRow.number}`);
+      rTitleRow.alignment = { horizontal: "center" };
+      worksheet.addRow([]);
+
+      const refundHeaders = [
+        "Bill Number",
+        "Date",
+        "Customer",
+        "Phone",
+        "Product Code",
+        "Product Name",
+        "Qty",
+        "Total Refunded",
+        "Reason",
+        "Processed By",
+      ];
+
+      const rHead = worksheet.addRow(refundHeaders);
+      rHead.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 14 };
+      rHead.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFC00000" },
+        };
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      refundRows.forEach((row) => {
+        const excelRow = worksheet.addRow(row);
+        excelRow.font = { size: 13 };
+        const totalCell = excelRow.getCell(8);
+        totalCell.numFmt = `"₹"#,##0.00`;
+        excelRow.eachCell((cell) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      });
+    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(

@@ -174,7 +174,38 @@ const ProductBilling = () => {
   };
 
   const updateDiscount = (id, val) => {
-    const discount = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    const item = cart.find((i) => i._id === id);
+    if (!item) return;
+
+    let discount = Math.min(100, Math.max(0, parseFloat(val) || 0));
+
+    // Cap discount so effective price doesn't go below cost price
+    const costPrice = item.costPrice || 0;
+    const sellingPrice = item.price;
+
+    if (costPrice > 0) {
+      if (sellingPrice > costPrice) {
+        const maxDiscountPercent =
+          ((sellingPrice - costPrice) / sellingPrice) * 100;
+        if (discount > maxDiscountPercent) {
+          toast.warning(
+            `Discount capped at ${maxDiscountPercent.toFixed(
+              2
+            )}% to maintain cost price (₹${costPrice.toFixed(2)})`
+          );
+          discount = maxDiscountPercent;
+        }
+      } else {
+        // Selling price is already at or below CP
+        if (discount > 0) {
+          toast.warning(
+            "Cannot apply discount: selling price is already at/below cost price."
+          );
+          discount = 0;
+        }
+      }
+    }
+
     setCart((prev) =>
       prev.map((item) => (item._id === id ? { ...item, discount } : item))
     );
@@ -348,7 +379,7 @@ const ProductBilling = () => {
         paymentMethod: selectedAccountId,
       };
 
-      const res = await axios.post(API_ENDPOINTS.SALES, saleData, {
+      const res = await axios.post(API_ENDPOINTS.SALES.BASE, saleData, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 

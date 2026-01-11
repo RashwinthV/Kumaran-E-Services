@@ -11,8 +11,9 @@ const saleItemSchema = new Schema({
   price: { type: Number, required: true },
   discount: { type: Number, default: 0 },
   taxAmount: { type: Number, required: true },
-  taxableValue: { type: Number, required: true }, // New: for GST reporting
+  taxableValue: { type: Number, default: 0 }, // New: for GST reporting
   lineTotal: { type: Number, required: true },
+  refundedQty: { type: Number, default: 0 },
 });
 
 const individualSaleSchema = new Schema({
@@ -52,8 +53,12 @@ const individualSaleSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["Completed", "Held", "Cancelled", "Pending"],
+    enum: ["Completed", "Pending", "Refunded", "Partially Refunded"],
     default: "Completed",
+  },
+  totalRefundedAmount: {
+    type: Number,
+    default: 0,
   },
   createdAt: {
     type: Date,

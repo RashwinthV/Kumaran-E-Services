@@ -9,7 +9,10 @@ export const API_ENDPOINTS = {
     VERIFY_BRANCH: `${API_BASE}/api/auth/branches/verify`,
     REGISTER: `${API_BASE}/api/auth/register`,
   },
-  SALES: `${API_BASE}/api/staff`,
+  SALES: {
+    BASE: `${API_BASE}/api/staff`,
+    REFUND: `${API_BASE}/api/staff/refund`,
+  },
   BRANCH_ACCOUNTS: `${API_BASE}/api/staff/accounts/my-branch`,
   CLOSE_ACCOUNT: (id) => `${API_BASE}/api/staff/accounts/${id}/close`,
 

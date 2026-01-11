@@ -135,8 +135,18 @@ const CustomerDetailModal = ({ isOpen, onClose, customer }) => {
                               </div>
                             </div>
                             <div className="text-end">
-                              <h5 className="fw-bold text-danger mb-0">
-                                ₹{credit.totalAmount.toFixed(2)}
+                              <h5
+                                className={`fw-bold mb-0 ${
+                                  credit.totalAmount < 0
+                                    ? "text-success"
+                                    : "text-danger"
+                                }`}
+                              >
+                                {credit.totalAmount < 0
+                                  ? `(Store Credit) ₹${Math.abs(
+                                      credit.totalAmount
+                                    ).toFixed(2)}`
+                                  : `₹${credit.totalAmount.toFixed(2)}`}
                               </h5>
                             </div>
                           </div>
@@ -161,7 +171,6 @@ const CustomerDetailModal = ({ isOpen, onClose, customer }) => {
               >
                 Close
               </button>
-              
             </div>
           </div>
         </div>

@@ -29,7 +29,9 @@ const Reports = () => {
     totalSales: 0,
     totalBills: 0,
     totalCustomers: 0,
+    totalRefunds: 0,
   });
+  const [refunds, setRefunds] = useState([]);
 
   const [filters, setFilters] = useState({
     type: "sales", // Always default to sales report
@@ -55,10 +57,11 @@ const Reports = () => {
       setLoading(true);
 
       if (!forceRefresh) {
-        const cachedData = await getCache(cacheKey);
-        if (cachedData) {
-          setData(cachedData);
-          applyFilters(cachedData, filters);
+        const cached = await getCache(cacheKey);
+        if (cached && cached.sales) {
+          setData(cached.sales);
+          setRefunds(cached.refunds || []);
+          applyFilters(cached.sales, filters, cached.refunds || []);
           setLoading(false);
           return;
         }
@@ -92,8 +95,14 @@ const Reports = () => {
                   ? ` (${item.paymentMethod.upiAccountName})`
                   : ""),
               amount: item.grandTotal,
+              totalRefundedAmount: item.totalRefundedAmount || 0,
               status: item.status === "Completed" ? "Paid" : item.status,
-              items: item.items || [],
+              items: (item.items || []).map((p) => ({
+                ...p,
+                costPrice: p.costPrice || 0,
+                // If it's a nested product object from populate, check there too
+                resolvedCP: p.costPrice || p.product?.costPrice || 0,
+              })),
               cgstTotal: item.totalTax
                 ? Number((item.totalTax / 2).toFixed(2))
                 : 0,
@@ -104,8 +113,14 @@ const Reports = () => {
             };
           });
           setData(rawData);
-          await setCache(cacheKey, rawData, TTL.SHORT);
-          applyFilters(rawData, filters);
+          const refundData = response.data.refunds || [];
+          setRefunds(refundData);
+          await setCache(
+            cacheKey,
+            { sales: rawData, refunds: refundData },
+            TTL.SHORT
+          );
+          applyFilters(rawData, filters, refundData);
         }
       }
     } catch (error) {
@@ -117,15 +132,15 @@ const Reports = () => {
 
   useEffect(() => {
     if (data.length > 0) {
-      applyFilters(data, filters);
+      applyFilters(data, filters, refunds);
     }
-  }, [filters, data]);
+  }, [filters, data, refunds]);
 
   const handleGenerate = () => {
     fetchData(true);
   };
 
-  const applyFilters = (sourceData, currentFilters) => {
+  const applyFilters = (sourceData, currentFilters, sourceRefunds = []) => {
     let result = [...sourceData];
 
     // Branch Filter (using rawBranchId)
@@ -234,13 +249,15 @@ const Reports = () => {
 
     // Stats calc needs full sales list for totals, even if view is grouped
     // But for Branch perf view, stats should reflect total sales of all branches in view
+    // Stats calc
     if (currentFilters.type === "branch-performance") {
       const totalSales = result.reduce((acc, b) => acc + b.totalSales, 0);
       const totalBills = result.reduce((acc, b) => acc + b.totalBills, 0);
       setStats({
         totalSales,
         totalBills,
-        totalCustomers: 0, // Hard to count unique across branches aggregated
+        totalCustomers: 0,
+        totalRefunds: 0, // Not calculated for branch perf yet
       });
     } else {
       calculateStats(result);
@@ -258,12 +275,18 @@ const Reports = () => {
       (sum, item) => sum + (item.amount || 0),
       0
     );
+    const totalRefunded = uniqueSales.reduce((sum, item) => {
+      // If paymentMode is Credits, it's not a financial refund (no cash out)
+      if (item.paymentMode === "Credits") return sum;
+      return sum + (item.totalRefundedAmount || 0);
+    }, 0);
     const uniqueCustomers = new Set(uniqueSales.map((i) => i.customerName))
       .size;
     setStats({
-      totalSales,
+      totalSales: totalSales - totalRefunded,
       totalBills: uniqueSales.length,
       totalCustomers: uniqueCustomers,
+      totalRefunds: totalRefunded,
     });
   };
 
@@ -302,20 +325,21 @@ const Reports = () => {
       const columns = [
         { header: "Bill Number", key: "billNo", width: 25 },
         { header: "Date", key: "date", width: 15 },
-        { header: "Branch", key: "branch", width: 20 },
         { header: "Customer", key: "customerName", width: 20 },
         { header: "Phone", key: "customerPhone", width: 15 },
         { header: "Product Code", key: "sku", width: 15 },
         { header: "Product Name", key: "name", width: 30 },
         { header: "Qty", key: "qty", width: 10 },
-        { header: "Rate", key: "price", width: 15 },
-        { header: "Taxable Value", key: "taxableValue", width: 15 },
+        { header: "Rate", key: "price", width: 20 },
+        { header: "Taxable Value", key: "taxableValue", width: 40 },
         { header: "CGST", key: "cgst", width: 12 },
         { header: "SGST", key: "sgst", width: 12 },
         { header: "Line Total", key: "lineTotal", width: 18 },
         { header: "Mode", key: "paymentMode", width: 15 },
-        { header: "Status", key: "status", width: 12 },
-        { header: "cp", key: "cp", width: 12 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Branch", key: "branch", width: 20 },
+        { header: "CP", key: "cp", width: 12 },
+        { header: "Profit/Loss", key: "profit", width: 15 },
       ];
       worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
 
@@ -325,7 +349,7 @@ const Reports = () => {
         // Section Title
         const sTitleRow = worksheet.addRow([title]);
         sTitleRow.font = { bold: true, size: 16, color: { argb: "FF1F4E78" } };
-        worksheet.mergeCells(`A${sTitleRow.number}:O${sTitleRow.number}`);
+        worksheet.mergeCells(`A${sTitleRow.number}:Q${sTitleRow.number}`);
         sTitleRow.alignment = { horizontal: "center" };
         worksheet.addRow([]); // Spacer
 
@@ -351,8 +375,8 @@ const Reports = () => {
         rowData.forEach((row) => {
           const excelRow = worksheet.addRow(row);
           excelRow.font = { size: 13 };
-          // Currency formatting for Rate(9), Taxable(10), CGST(11), SGST(12), Total(13)
-          [9, 10, 11, 12, 13].forEach((colIndex) => {
+          // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(16), Profit(17)
+          [8, 9, 10, 11, 12, 16, 17].forEach((colIndex) => {
             const cell = excelRow.getCell(colIndex);
             cell.numFmt = `"₹"#,##0.00`;
           });
@@ -375,10 +399,23 @@ const Reports = () => {
 
       displayData.forEach((sale) => {
         (sale.items || []).forEach((p) => {
+          // Determine item-level status
+          let itemStatus = sale.status;
+          if (p.refundedQty >= p.qty) {
+            itemStatus = "Refunded";
+          } else if (p.refundedQty > 0) {
+            itemStatus = "Partially Refunded";
+          } else if (["Refunded", "Partially Refunded"].includes(sale.status)) {
+            // Item is untouched but bill has refunds
+            itemStatus = "Paid";
+          }
+
+          const cpValue = p.resolvedCP * p.qty;
+          const profitValue = p.lineTotal - cpValue;
+
           const rowData = [
             sale.billNumber,
             sale.formattedDate,
-            sale.branchName,
             sale.customerName,
             sale.customerPhone,
             p.product?.sku || p.sku || "N/A",
@@ -390,7 +427,10 @@ const Reports = () => {
             p.taxAmount - p.taxAmount / 2,
             p.lineTotal,
             sale.paymentMethod,
-            sale.status,
+            itemStatus,
+            sale.branchName,
+            cpValue,
+            profitValue,
           ];
           const gstType = p.product?.gstType || p.gstType;
           if (gstType === "Included") inclusiveRows.push(rowData);
@@ -402,6 +442,102 @@ const Reports = () => {
       addTableSection("=== GST INCLUSIVE SALES ===", inclusiveRows);
       addTableSection("=== GST EXCLUSIVE SALES ===", exclusiveRows);
       addTableSection("=== NON-GST / EXEMPT SALES ===", nonGstRows);
+
+      // === REFUND SECTION ===
+      const filteredRefunds = (refunds || []).filter((r) => {
+        // Simple branch check for admin view
+        if (
+          filters.branch !== "all" &&
+          String(r.branch) !== String(filters.branch)
+        )
+          return false;
+
+        const rDate = new Date(r.createdAt).toISOString().split("T")[0];
+        // Note: Admin Reports uses its own logic for dateRange, but if it's 'custom', it uses filters.startDate
+        if (filters.dateRange === "custom") {
+          if (filters.startDate && rDate < filters.startDate) return false;
+          if (filters.endDate && rDate > filters.endDate) return false;
+        }
+
+        return true;
+      });
+
+      if (filteredRefunds.length > 0) {
+        const refundRows = filteredRefunds.map((r) => {
+          const itemNames = r.items
+            .map((i) => i.product?.name || "Product")
+            .join(", ");
+          const skus = r.items.map((i) => i.product?.sku || "N/A").join(", ");
+          const bName =
+            branches.find((b) => b._id === r.branch)?.name || "Branch";
+          return [
+            r.originalSale?.billNumber || r.billNumber || "N/A",
+            new Date(r.createdAt).toLocaleDateString(),
+            r.customer?.name || "Walk-in",
+            r.customer?.phone || "N/A",
+            skus,
+            itemNames,
+            r.items.reduce((acc, i) => acc + i.qty, 0),
+            r.totalRefundedAmount,
+            r.reason || "N/A",
+            r.staff?.name || "Staff",
+            bName,
+          ];
+        });
+
+        const rTitleRow = worksheet.addRow(["=== REFUND TRANSACTIONS ==="]);
+        rTitleRow.font = { bold: true, size: 16, color: { argb: "FFFF0000" } };
+        worksheet.mergeCells(`A${rTitleRow.number}:K${rTitleRow.number}`);
+        rTitleRow.alignment = { horizontal: "center" };
+        worksheet.addRow([]);
+
+        const refundHeaders = [
+          "Bill Number",
+          "Date",
+          "Customer",
+          "Phone",
+          "Product Code",
+          "Product Name",
+          "Qty",
+          "Total Refunded",
+          "Reason",
+          "Processed By",
+          "Branch",
+        ];
+
+        const rHead = worksheet.addRow(refundHeaders);
+        rHead.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 14 };
+        rHead.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFC00000" },
+          };
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+
+        refundRows.forEach((row) => {
+          const excelRow = worksheet.addRow(row);
+          excelRow.font = { size: 13 };
+          // Total Refunded is at column 8
+          const totalCell = excelRow.getCell(8);
+          totalCell.numFmt = `"₹"#,##0.00`;
+          excelRow.eachCell((cell) => {
+            cell.border = {
+              top: { style: "thin" },
+              left: { style: "thin" },
+              bottom: { style: "thin" },
+              right: { style: "thin" },
+            };
+          });
+        });
+      }
     } else {
       // Branch Performance Report
       worksheet.columns = [
