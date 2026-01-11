@@ -521,7 +521,10 @@ const ProductBilling = () => {
   }
 
   return (
-    <div className="d-flex flex-column vh-100 bg-light overflow-hidden">
+    <div
+      className="d-flex flex-column h-100 bg-light overflow-hidden"
+      style={{ minHeight: 0 }}
+    >
       {/* Customer Modal */}
       <CustomerModal
         isOpen={showCustomerModal}
@@ -531,9 +534,12 @@ const ProductBilling = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-grow-1 p-3 overflow-hidden d-flex flex-column">
+      <div
+        className="flex-grow-1 p-2 overflow-hidden d-flex flex-column"
+        style={{ minHeight: 0 }}
+      >
         {/* Customer Section - Horizontal at Top */}
-        <div className="card shadow-sm mb-3">
+        <div className="card shadow-sm mb-2">
           <div className="card-body p-2">
             <div className="row g-2 align-items-center">
               <div className="col-md-5">
@@ -618,11 +624,17 @@ const ProductBilling = () => {
         </div>
 
         {/* Lower Section - Row with 2 columns */}
-        <div className="row g-3 flex-grow-1 overflow-hidden">
+        <div
+          className="row g-2 flex-grow-1 overflow-hidden m-0"
+          style={{ height: 0 }}
+        >
           {/* Left Column - Cart */}
-          <div className="col-8 h-100 d-flex flex-column">
+          <div className="col-8 d-flex flex-column" style={{ height: "100%" }}>
             <div className="card shadow-sm flex-grow-1 overflow-hidden d-flex flex-column">
-              <div className="card-body p-0 d-flex flex-column h-100">
+              <div
+                className="card-body p-0 d-flex flex-column flex-grow-1"
+                style={{ height: 0 }}
+              >
                 {/* Search Bar */}
                 <div className="p-3 border-bottom bg-white">
                   <ProductSearch
@@ -634,7 +646,10 @@ const ProductBilling = () => {
                 </div>
 
                 {/* Cart Table Container */}
-                <div className="flex-grow-1 overflow-auto">
+                <div
+                  className="flex-grow-1 overflow-auto"
+                  style={{ height: 0 }}
+                >
                   <table className="table table-hover mb-0">
                     <thead
                       className="table-light sticky-top"
@@ -843,37 +858,43 @@ const ProductBilling = () => {
           </div>
 
           {/* Right Column - Payment Summary */}
-          <div className="col-4 h-100 d-flex flex-column">
-            <div className="card shadow-sm h-100 overflow-hidden d-flex flex-column">
-              <div className="card-body p-3 d-flex flex-column overflow-auto">
-                <div className="d-flex align-items-center gap-2 mb-2">
+          <div className="col-4 d-flex flex-column" style={{ height: "100%" }}>
+            <div
+              className="card shadow-sm overflow-hidden flex-grow-1 d-flex flex-column"
+              style={{ height: "100%" }}
+            >
+              <div
+                className="card-body p-3 d-flex flex-column overflow-auto"
+                style={{ height: 0 }}
+              >
+                <div className="d-flex align-items-center gap-2 mb-1">
                   <i className="bi bi-wallet2 text-primary"></i>
                   <h6 className="fw-bold mb-0">BILLING SUMMARY</h6>
                 </div>
 
                 <div className="bg-light p-3 rounded-3 mb-4 flex-shrink-0">
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted small">Subtotal</span>
                     <span className="fw-bold small">
                       {getCurrencySymbol(appSettings?.currency)}
                       {subtotal.toFixed(2)}
                     </span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted small">Tax (GST)</span>
                     <span className="fw-bold small">
                       {getCurrencySymbol(appSettings?.currency)}
                       {totalTax.toFixed(2)}
                     </span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between">
                     <span className="text-muted small">Total Discount</span>
                     <span className="fw-bold small text-danger">
                       - {getCurrencySymbol(appSettings?.currency)}
                       {totalDiscount.toFixed(2)}
                     </span>
                   </div>
-                  <hr className="my-2 opacity-10" />
+                  <hr className="my-1 opacity-10" />
                   <div className="d-flex justify-content-between align-items-end">
                     <div>
                       <span
@@ -895,9 +916,9 @@ const ProductBilling = () => {
                   </div>
                 </div>
 
-                <div className="mb-4 flex-shrink-0">
+                <div className="mb-3 flex-shrink-0">
                   <label
-                    className="fw-bold small mb-2 text-uppercase text-muted"
+                    className="fw-bold small text-uppercase text-muted"
                     style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
                   >
                     Payment Account
@@ -936,7 +957,7 @@ const ProductBilling = () => {
                 </div>
 
                 {selectedAccountId && (
-                  <div className="alert alert-secondary border-0 bg-light p-2 mb-2 rounded-3 flex-shrink-0">
+                  <div className="alert alert-secondary border-0 bg-light p-2 rounded-3 flex-shrink-0">
                     <div className="d-flex justify-content-between mb-1">
                       <small className="text-muted">Account Balance:</small>
                       <small className="fw-bold">
@@ -949,11 +970,11 @@ const ProductBilling = () => {
                   </div>
                 )}
 
-                <div className="mt-auto flex-shrink-0 pt-3 border-top">
+                <div className=" flex-shrink-0  border-top">
                   <div className="d-flex flex-column gap-2">
                     <div className="d-flex gap-2">
                       <button
-                        className="btn btn-primary flex-fill py-2"
+                        className="btn btn-primary flex-fill "
                         onClick={() => handlePayment(false)}
                         disabled={
                           isProcessing ||
@@ -975,7 +996,7 @@ const ProductBilling = () => {
                         )}
                       </button>
                       <button
-                        className="btn btn-success flex-fill py-2"
+                        className="btn btn-success flex-fill "
                         onClick={() => handlePayment(true)}
                         disabled={
                           isProcessing ||

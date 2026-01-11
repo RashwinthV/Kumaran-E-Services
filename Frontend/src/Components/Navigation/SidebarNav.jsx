@@ -13,9 +13,15 @@ const SidebarNav = () => {
   const navItems = [
     {
       id: "billing",
-      label: " Billing",
+      label: "Product Billing",
       icon: "bi-receipt",
       path: "/billing",
+    },
+    {
+      id: "service-billing",
+      label: "Service Billing",
+      icon: "bi-ticket-perforated",
+      path: "/service-billing",
     },
     {
       id: "product-catalog",

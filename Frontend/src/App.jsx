@@ -15,7 +15,8 @@ import "./App.css";
 import Login from "./Pages/User/Login";
 import BranchLogin from "./Pages/Branch/BranchLogin";
 import AutoLogin from "./Pages/User/AutoLogin";
-import ProductBilling from "./Pages/Billing/productBilling";
+import ProductBilling from "./Pages/Billing/ProductBilling";
+import ServiceBilling from "./Pages/Billing/ServiceBilling";
 import Loader from "./Components/Loading/universalLoader";
 import LoadingPage from "./Components/Loading/LoadingPage";
 
@@ -72,10 +73,18 @@ const Layout = ({ children }) => {
     <div className="app-container">
       <div className="app-main-layout">
         <SidebarNav />
-        <div className="main-content-area">
+        <div
+          className={`main-content-area ${
+            isBillingPage || location.pathname === "/service-billing"
+              ? "overflow-hidden h-100"
+              : ""
+          }`}
+        >
           <GlobalHeader />
           <div className="content-viewport">{children}</div>
-          {!isBillingPage && <Footer />}
+          {!isBillingPage && location.pathname !== "/service-billing" && (
+            <Footer />
+          )}
         </div>
       </div>
     </div>
@@ -111,6 +120,7 @@ function AppContent() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/billing" element={<ProductBilling />} />
+            <Route path="/service-billing" element={<ServiceBilling />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/product-catalog" element={<ProductsCatalog />} />
             <Route path="/investors" element={<Investors />} />

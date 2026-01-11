@@ -60,11 +60,16 @@
   flex-direction: column;
   overflow-y: auto;
   background-color: #f8fafc;
+  min-height: 0;
 }
 
 .content-viewport {
   padding: 0;
   flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Sidebar behavior inside the middle section */
