@@ -115,9 +115,17 @@ export const AccountProvider = ({ children }) => {
   const addAccount = async (accountData) => {
     try {
       // Validate in frontend too
-      if (accountData.type === "Upi" && !accountData.upiAccountName) {
-        toast.error("UPI account name is required");
-        throw new Error("UPI account name is required");
+      if (accountData.type === "Upi") {
+        if (
+          !accountData.upiAccountName ||
+          !accountData.upiAccountNumber ||
+          !accountData.upiId
+        ) {
+          toast.error(
+            "UPI account name, account number, and UPI ID are required"
+          );
+          throw new Error("Missing required UPI information");
+        }
       }
 
       const response = await axios.post(`${baseURL}/accounts`, accountData, {
@@ -144,9 +152,17 @@ export const AccountProvider = ({ children }) => {
   // Update account
   const updateAccount = async (id, accountData) => {
     try {
-      if (accountData.type === "Upi" && !accountData.upiAccountName) {
-        toast.error("UPI account name is required");
-        throw new Error("UPI account name is required");
+      if (accountData.type === "Upi") {
+        if (
+          !accountData.upiAccountName ||
+          !accountData.upiAccountNumber ||
+          !accountData.upiId
+        ) {
+          toast.error(
+            "UPI account name, account number, and UPI ID are required"
+          );
+          throw new Error("Missing required UPI information");
+        }
       }
 
       const response = await axios.put(

@@ -56,7 +56,15 @@ const individualSaleSchema = new Schema({
     enum: ["Completed", "Pending", "Refunded", "Partially Refunded"],
     default: "Completed",
   },
+  paidAmount: {
+    type: Number,
+    default: 0,
+  },
   totalRefundedAmount: {
+    type: Number,
+    default: 0,
+  },
+  cashRefundAmount: {
     type: Number,
     default: 0,
   },

@@ -1,4 +1,5 @@
 import React from "react";
+import { handlePrint } from "../../utils/printUtils";
 
 const SaleHistoryTable = ({
   data,
@@ -126,6 +127,17 @@ const SaleHistoryTable = ({
                   <td className="text-end fw-bold text-dark">
                     {currencySymbol}
                     {(sale.amount - (sale.totalRefundedAmount || 0)).toFixed(2)}
+
+                    {sale.status !== "Paid" && sale.paidAmount > 0 && (
+                      <div
+                        className="text-success small fw-normal mt-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        Paid: {currencySymbol}
+                        {sale.paidAmount.toFixed(2)}
+                      </div>
+                    )}
+
                     {sale.totalRefundedAmount > 0 && (
                       <div
                         className="text-danger small fw-normal"
@@ -175,6 +187,7 @@ const SaleHistoryTable = ({
                       )}
                     <button
                       className="btn btn-sm btn-light border"
+                      onClick={() => handlePrint(sale)}
                       title="Print Invoice"
                     >
                       <i className="bi bi-printer text-secondary"></i>

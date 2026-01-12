@@ -149,14 +149,25 @@ exports.getAccountById = async (req, res) => {
 // @access  Private (Admin)
 exports.createAccount = async (req, res) => {
   try {
-    const { type, upiAccountName, branch, balanceHistory, status } = req.body;
+    const {
+      type,
+      upiAccountName,
+      upiAccountNumber,
+      upiId,
+      branch,
+      balanceHistory,
+      status,
+    } = req.body;
 
-    // Validate UPI account name if type is Upi
-    if (type === "Upi" && !upiAccountName) {
-      return res.status(400).json({
-        success: false,
-        message: "UPI account name is required for UPI accounts",
-      });
+    // Validate UPI fields if type is Upi
+    if (type === "Upi") {
+      if (!upiAccountName || !upiAccountNumber || !upiId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "UPI account name, account number, and UPI ID are required for UPI accounts",
+        });
+      }
     }
 
     // Check for existing Cash or Credits account in this branch
@@ -173,6 +184,8 @@ exports.createAccount = async (req, res) => {
     const account = new Account({
       type,
       upiAccountName: type === "Upi" ? upiAccountName : undefined,
+      upiAccountNumber: type === "Upi" ? upiAccountNumber : undefined,
+      upiId: type === "Upi" ? upiId : undefined,
       branch,
       balanceHistory:
         balanceHistory && balanceHistory.length > 0
@@ -218,13 +231,24 @@ exports.createAccount = async (req, res) => {
 // @access  Private (Admin)
 exports.updateAccount = async (req, res) => {
   try {
-    const { type, upiAccountName, branch, balanceHistory, status } = req.body;
+    const {
+      type,
+      upiAccountName,
+      upiAccountNumber,
+      upiId,
+      branch,
+      balanceHistory,
+      status,
+    } = req.body;
 
-    if (type === "Upi" && !upiAccountName) {
-      return res.status(400).json({
-        success: false,
-        message: "UPI account name is required for UPI accounts",
-      });
+    if (type === "Upi") {
+      if (!upiAccountName || !upiAccountNumber || !upiId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "UPI account name, account number, and UPI ID are required for UPI accounts",
+        });
+      }
     }
 
     // Check for existing Cash or Credits account if type is changing
@@ -246,8 +270,10 @@ exports.updateAccount = async (req, res) => {
       type,
       branch,
       status,
-      // Only set upiAccountName if type is Upi
+      // Only set UPI fields if type is Upi
       upiAccountName: type === "Upi" ? upiAccountName : undefined,
+      upiAccountNumber: type === "Upi" ? upiAccountNumber : undefined,
+      upiId: type === "Upi" ? upiId : undefined,
     };
 
     if (balanceHistory) {
@@ -266,8 +292,14 @@ exports.updateAccount = async (req, res) => {
 
     let updateOp = { $set: updateData };
     if (type !== "Upi") {
-      updateOp.$unset = { upiAccountName: 1 };
-      delete updateData.upiAccountName; // Remove from $set
+      updateOp.$unset = {
+        upiAccountName: 1,
+        upiAccountNumber: 1,
+        upiId: 1,
+      };
+      delete updateData.upiAccountName;
+      delete updateData.upiAccountNumber;
+      delete updateData.upiId;
     }
 
     // Simpler: Just pass updateData. If Mongoose doesn't unset, the field remains but is ignored by app logic. The Schema definition for required is conditional, so it won't complain if missing for Cash. If present, it's just extra data.

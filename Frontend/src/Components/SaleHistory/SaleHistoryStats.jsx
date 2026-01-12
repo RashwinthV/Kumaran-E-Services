@@ -1,16 +1,43 @@
 import React from "react";
 
 const SaleHistoryStats = ({ data }) => {
-  const totalRevenue = data.reduce(
-    (sum, item) => sum + (item.amount - (item.totalRefundedAmount || 0)),
-    0
-  );
-  const totalRefunded = data.reduce((sum, item) => {
-    // If paymentMode is Credits, it's not a financial refund (no cash out)
-    if (item.paymentMode === "Credits") return sum;
-    return sum + (item.totalRefundedAmount || 0);
+  // Revenue is now tracked by paidAmount on every sale (including partial credit payments)
+  const totalRevenue = (data || []).reduce((sum, item) => {
+    const s = (item.status || "").toLowerCase();
+    const isPaid = s === "paid" || s === "completed" || s === "success";
+    const amt = Number(item.amount || 0);
+    const p = Number(item.paidAmount || 0);
+    const r = Number(item.totalRefundedAmount || 0);
+
+    let val = 0;
+    if (isPaid) {
+      val = p > 0 ? p : amt - r;
+    } else {
+      val = p;
+    }
+    return sum + (isNaN(val) ? 0 : val);
   }, 0);
-  const totalTransactions = data.length;
+
+  const totalRefunded = (data || []).reduce((sum, item) => {
+    // 1. Use cashRefundAmount if available (newest records)
+    if (item.cashRefundAmount > 0) return sum + Number(item.cashRefundAmount);
+
+    // 2. Legacy Fallback:
+    const paymentMode = (item.paymentMode || "").toLowerCase();
+    const isCredits = paymentMode === "credits";
+
+    // For credit sales without cashRefundAmount, we can't be 100% sure of the cash impact
+    // from legacy data, but usually it's 0 if not explicitly tracked.
+    if (isCredits) return sum;
+
+    // For standard sales, the full refund amount is the cash impact
+    return sum + Number(item.totalRefundedAmount || 0);
+  }, 0);
+
+  const countActiveSales = data.filter(
+    (item) => item.status !== "Refunded" && item.status !== "Cancelled"
+  );
+  const totalTransactions = countActiveSales.length;
   const averageValue =
     totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 

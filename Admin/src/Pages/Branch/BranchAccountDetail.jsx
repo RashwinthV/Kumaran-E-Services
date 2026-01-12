@@ -194,6 +194,8 @@ const BranchAccountDetail = () => {
   const [formData, setFormData] = useState({
     type: "",
     upiAccountName: "",
+    upiAccountNumber: "",
+    upiId: "",
     balance: "",
     status: "Active",
   });
@@ -273,6 +275,8 @@ const BranchAccountDetail = () => {
       setFormData({
         type: account.type,
         upiAccountName: account.upiAccountName || "",
+        upiAccountNumber: account.upiAccountNumber || "",
+        upiId: account.upiId || "",
         balance:
           account.balanceHistory?.length > 0
             ? account.balanceHistory[account.balanceHistory.length - 1]
@@ -284,6 +288,8 @@ const BranchAccountDetail = () => {
       setFormData({
         type: activeTab, // Default to current tab
         upiAccountName: "",
+        upiAccountNumber: "",
+        upiId: "",
         balance: "",
         status: "Active",
       });
@@ -298,6 +304,9 @@ const BranchAccountDetail = () => {
         type: formData.type,
         upiAccountName:
           formData.type === "Upi" ? formData.upiAccountName : undefined,
+        upiAccountNumber:
+          formData.type === "Upi" ? formData.upiAccountNumber : undefined,
+        upiId: formData.type === "Upi" ? formData.upiId : undefined,
         status: formData.status,
         branch: id,
       };
@@ -448,6 +457,19 @@ const BranchAccountDetail = () => {
                           ? account.upiAccountName
                           : `${activeTab} Account`}
                       </h4>
+                      {activeTab === "Upi" && (
+                        <div
+                          className="upi-details-mini"
+                          style={{
+                            fontSize: "0.8rem",
+                            opacity: 0.8,
+                            marginTop: "4px",
+                          }}
+                        >
+                          <div>Acc: {account.upiAccountNumber}</div>
+                          <div>ID: {account.upiId}</div>
+                        </div>
+                      )}
                       <span
                         className={`status-badge ${account.status.toLowerCase()}`}
                       >
@@ -572,18 +594,44 @@ const BranchAccountDetail = () => {
               </div>
 
               {formData.type === "Upi" && (
-                <div className="form-group">
-                  <label>Provider Name</label>
-                  <input
-                    type="text"
-                    name="upiAccountName"
-                    placeholder="GooglePay, PhonePe..."
-                    value={formData.upiAccountName}
-                    onChange={handleInputChange}
-                    className="glass-input"
-                    required
-                  />
-                </div>
+                <>
+                  <div className="form-group">
+                    <label>Provider Name</label>
+                    <input
+                      type="text"
+                      name="upiAccountName"
+                      placeholder="GooglePay, PhonePe..."
+                      value={formData.upiAccountName}
+                      onChange={handleInputChange}
+                      className="glass-input"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Account Number</label>
+                    <input
+                      type="text"
+                      name="upiAccountNumber"
+                      placeholder="Enter account number"
+                      value={formData.upiAccountNumber}
+                      onChange={handleInputChange}
+                      className="glass-input"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>UPI ID</label>
+                    <input
+                      type="text"
+                      name="upiId"
+                      placeholder="e.g., example@okicici"
+                      value={formData.upiId}
+                      onChange={handleInputChange}
+                      className="glass-input"
+                      required
+                    />
+                  </div>
+                </>
               )}
 
               <div className="form-group">

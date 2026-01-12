@@ -28,6 +28,32 @@
   margin: 0;
 }
 
+.products-container .header-right {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.products-container .export-excel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.products-container .export-excel-btn:hover {
+  background: #d1fae5;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
 .products-container .add-product-btn {
   display: flex;
   align-items: center;
@@ -129,6 +155,34 @@
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.products-container .filter-actions {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+.products-container .reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.products-container .reset-filters-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
 }
 
 .products-container .products-grid {
@@ -300,11 +354,23 @@
     padding: 1rem;
   }
 
-  .products-container .products-header {
+  .products-container .header-right {
     flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
   }
 
-  .products-container .add-product-btn {
+  .products-container .filter-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+
+  .products-container .export-excel-btn,
+  .products-container .add-product-btn,
+  .products-container .reset-filters-btn {
     width: 100%;
     justify-content: center;
   }

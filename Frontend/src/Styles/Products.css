@@ -29,11 +29,10 @@
 
 .products-container {
   padding: 2rem;
-  max-width: 1600px;
   margin: 0 auto;
-  min-height: 100vh;
   background-color: var(--bg-color);
   font-family: "Inter", system-ui, -apple-system, sans-serif;
+  width: 100%;
 }
 
 /* Header Section */
@@ -138,11 +137,77 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+.filter-actions {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+  align-items: center;
+}
+
+.reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: white;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-filters-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.export-excel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 1.25rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.export-excel-btn:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.reset-filters-btn svg,
+.export-excel-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.reset-filters-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.reset-filters-btn:hover svg {
+  transform: rotate(-180deg);
+}
+
 /* Products Grid */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+  align-items: start;
 }
 
 /* Product Card */
@@ -150,13 +215,15 @@
   background: var(--card-bg);
   border-radius: 16px;
   border: 1px solid var(--border-color);
-  padding: 1.25rem;
+  padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 380px;
 }
 
 .product-card:hover {
@@ -170,7 +237,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
 }
 
 .product-header h3 {
@@ -179,8 +247,10 @@
   color: var(--text-dark);
   margin: 0;
   line-height: 1.4;
+  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -190,9 +260,11 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 0.25rem 0.6rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 20px;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .status-badge.active {
@@ -208,8 +280,8 @@
 /* Compatible Section */
 .compatible-section {
   margin-bottom: 1rem;
-  min-height: 120px;
-  max-height: 120px;
+  min-height: 100px;
+  max-height: 140px;
   display: flex;
   flex-direction: column;
 }
@@ -219,7 +291,7 @@
   font-weight: 600;
   color: var(--text-medium);
   text-transform: uppercase;
-  margin: 0 0 0.4rem 0;
+  margin: 0 0 0.5rem 0;
   letter-spacing: 0.025em;
   flex-shrink: 0;
 }
@@ -227,8 +299,8 @@
 .compatible-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  max-height: 95px;
+  gap: 0.5rem;
+  max-height: 110px;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -256,10 +328,17 @@
   background: var(--bg-color);
   color: var(--text-dark);
   font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
   font-weight: 500;
+  transition: all 0.2s;
+}
+
+.model-tag:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 /* Stock Info */
@@ -312,13 +391,15 @@
 
 /* Pricing Section */
 .pricing-section {
-  background: linear-gradient(to right, #f8fafc, #f1f5f9);
-  margin: 0 -1.25rem -1.25rem -1.25rem;
-  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  margin: 0 -1.5rem -1.5rem -1.5rem;
+  padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
 }
 
 .price-row {
@@ -388,8 +469,17 @@
     width: 100%;
   }
 
-  .filter-group {
+  .filter-actions {
     flex-direction: column;
-    align-items: stretch;
+    width: 100%;
+    gap: 0.75rem;
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+
+  .reset-filters-btn,
+  .export-excel-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

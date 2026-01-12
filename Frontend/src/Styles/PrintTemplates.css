@@ -1,0 +1,264 @@
+/* Base Container */
+.print-container {
+  font-family: "Inter", -apple-system, sans-serif;
+  background: #fff;
+  color: #1a1a1a;
+  box-sizing: border-box;
+}
+
+.print-container.a4 {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+}
+.print-container.a5 {
+  width: 148mm;
+  min-height: 210mm;
+  padding: 10mm;
+}
+
+/* Color Modes */
+.print-container.color-bw {
+  filter: grayscale(100%);
+}
+.print-container.color-bw .professional-style .pro-header {
+  background: #333 !important;
+}
+.print-container.color-bw .modern-style .modern-logo,
+.print-container.color-bw .modern-style .modern-top-bar {
+  background: #666 !important;
+}
+
+/* Utilities */
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.text-muted {
+  color: #666;
+}
+.d-block {
+  display: block;
+}
+.mb-0 {
+  margin-bottom: 0;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mt-5 {
+  margin-top: 3rem;
+}
+
+/* Standard Style */
+.standard-style .invoice-header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid #333;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+.standard-style h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+.standard-style h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+.standard-style p {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+}
+.standard-style .customer-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.standard-style .items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+.standard-style .items-table th {
+  background: #f8f9fa;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+.standard-style .items-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Professional Style */
+.professional-style .pro-header {
+  background: #1e293b;
+  color: white;
+  padding: 2rem;
+  margin: -15mm -15mm 2rem -15mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.professional-style .pro-logo-section h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+.professional-style .pro-tagline {
+  margin: 0;
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
+.professional-style .title-accent {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.professional-style .pro-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.professional-style .pro-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+}
+.professional-style .pro-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.professional-style .pro-table th {
+  background: #f1f5f9;
+  padding: 12px;
+  font-size: 0.8rem;
+  color: #475569;
+}
+.professional-style .pro-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.professional-style .pro-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3rem;
+}
+
+/* Modern Style */
+.modern-style .modern-top-bar {
+  height: 8px;
+  background: linear-gradient(to right, #6366f1, #a855f7);
+  margin: -15mm -15mm 2rem -15mm;
+}
+.modern-style .modern-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+}
+.modern-style .modern-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.modern-style .modern-logo {
+  width: 48px;
+  height: 48px;
+  background: #6366f1;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.modern-style .modern-bill-badge {
+  background: #eef2ff;
+  color: #6366f1;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-weight: 700;
+}
+.modern-style .modern-contacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+.modern-style .modern-contact-card h5 {
+  margin: 0 0 0.5rem 0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+}
+.modern-style .modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+.modern-style .modern-table td {
+  background: #f8fafc;
+  padding: 16px;
+  font-weight: 600;
+}
+.modern-style .modern-table td:first-child {
+  border-radius: 12px 0 0 12px;
+}
+.modern-style .modern-table td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+.modern-style .modern-summary {
+  width: 300px;
+  margin-left: auto;
+  margin-top: 2rem;
+}
+.modern-style .modern-summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  color: #64748b;
+}
+.modern-style .modern-total {
+  border-top: 2px solid #e2e8f0;
+  margin-top: 10px;
+  padding-top: 15px;
+  color: #1e293b;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+/* Global Footer Styles */
+.totals-box .total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+.grand-total {
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-top: 1px solid #333;
+  margin-top: 5px;
+  padding-top: 10px !important;
+}
+
+@media print {
+  @page {
+    margin: 0;
+  }
+  body {
+    margin: 0;
+  }
+  .print-container {
+    padding: 15mm;
+  }
+  .professional-style .pro-header {
+    margin: -15mm -15mm 2rem -15mm !important;
+  }
+}

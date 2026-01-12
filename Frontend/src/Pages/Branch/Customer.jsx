@@ -5,10 +5,12 @@ import CustomerFilters from "../../Components/Customer/CustomerFilters";
 import CustomerTable from "../../Components/Customer/CustomerTable";
 import CustomerDetailModal from "../../Components/Customer/CustomerDetailModal";
 import SettleCreditModal from "../../Components/Customer/SettleCreditModal";
+import { useBilling } from "../../Context/BillingContext";
 
 const Customer = () => {
   const { customers, loading, error, fetchCustomers, settleCustomerCredit } =
     useCustomer();
+  const { refreshSales } = useBilling();
 
   const [filters, setFilters] = useState({
     search: "",
@@ -49,6 +51,8 @@ const Customer = () => {
     );
 
     if (result.success) {
+      // Refresh sales history as settling credits updates individual sale paidAmounts
+      await refreshSales();
       // Close modal on success
       setIsSettleModalOpen(false);
       setSelectedCustomer(null);
@@ -147,9 +151,7 @@ const Customer = () => {
   }
 
   return (
-    <div
-      className="p-4"
-    >
+    <div className="p-4">
       <CustomerStats data={filteredData} />
 
       <CustomerFilters

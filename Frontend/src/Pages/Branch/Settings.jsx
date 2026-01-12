@@ -13,6 +13,7 @@ import HardwareSettings from "../../Components/Settings/HardwareSettings";
 import SyncSettings from "../../Components/Settings/SyncSettings";
 import AboutSettings from "../../Components/Settings/AboutSettings";
 import { saveEncrypted, getDecrypted } from "../../utils/storage";
+import PrintTemplate from "../../Components/Billing/PrintTemplate";
 
 function Settings() {
   const { user } = useAuth();
@@ -44,9 +45,7 @@ function Settings() {
         localStorage.getItem("setting_date_format") ||
         "DD/MM/YYYY",
       paperSize:
-        saved?.paperSize ||
-        localStorage.getItem("setting_paper_size") ||
-        "80mm",
+        saved?.paperSize || localStorage.getItem("setting_paper_size") || "A4",
       autoPrint:
         saved?.autoPrint ??
         localStorage.getItem("setting_auto_print") === "true",
@@ -58,6 +57,9 @@ function Settings() {
         localStorage.getItem("setting_barcode_enabled") === "true",
       rounding: saved?.rounding || "none",
       roundingValue: saved?.roundingValue || 10,
+      billTemplate: saved?.billTemplate || "standard",
+      selectedPrinter: saved?.selectedPrinter || "System Default Printer",
+      colorMode: saved?.colorMode || "color",
     };
   });
 
@@ -78,6 +80,7 @@ function Settings() {
           storedBranch.address?.city || ""
         }`,
         contact: storedBranch.contact?.phone || "N/A",
+        gstNumber: storedBranch.gstNumber || "",
       });
     }
   }, [user]);
@@ -151,6 +154,7 @@ function Settings() {
               settings={settings}
               handleChange={handleChange}
               handleToggle={handleToggle}
+              branchInfo={branchInfo}
             />
           )}
 

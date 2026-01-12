@@ -35,9 +35,6 @@ export const SERVICE_MODULES = {
     label: "Government",
     icon: "bi-building",
     services: [
-      "Property Tax",
-      "Municipal Tax",
-      "Water Charges",
       "Traffic Challan",
       "Passport Fees",
       "Exam Fees",
@@ -60,8 +57,6 @@ export const SERVICE_MODULES = {
     services: [
       "OTT Subscription",
       "Music App",
-      "Software License",
-      "Cloud Storage",
     ],
   },
   TRAVEL: {
@@ -72,8 +67,6 @@ export const SERVICE_MODULES = {
       "Bus Ticket",
       "Flight Ticket",
       "FASTag Recharge",
-      "Metro Card",
-      "Toll Payment",
     ],
   },
   LOCAL: {

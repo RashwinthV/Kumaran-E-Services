@@ -32,7 +32,7 @@ const addInventory = async (req, res) => {
       });
     }
 
-    if (sellingPrice > productData.mrp) {
+    if (FinalPrice > productData.mrp) {
       return res.status(400).json({
         success: false,
         message: `Selling Price (₹${sellingPrice}) cannot exceed MRP (₹${productData.mrp})`,
@@ -252,7 +252,7 @@ const deleteInventory = async (req, res) => {
         .json({ success: false, message: "Inventory item not found" });
     }
 
-    await inventory.remove();
+    await inventory.deleteOne();
     res.status(200).json({ success: true, message: "Inventory item removed" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -11,6 +11,22 @@ const RefundModal = ({
   const [itemsToRefund, setItemsToRefund] = useState([]);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [surplusConfirmed, setSurplusConfirmed] = useState(false);
+
+  const totalRefundAmount = itemsToRefund.reduce((acc, item) => {
+    if (item.qtyToRefund <= 0) return acc;
+    return acc + (item.lineTotal / item.originalQty) * item.qtyToRefund;
+  }, 0);
+
+  // Calculate surplus for confirmation
+  const remainingValue = Math.max(
+    0,
+    Number(sale?.amount || 0) -
+      Number(sale?.totalRefundedAmount || 0) -
+      totalRefundAmount
+  );
+  const surplus = Math.max(0, Number(sale?.paidAmount || 0) - remainingValue);
+  const hasSurplus = surplus > 0.01;
 
   useEffect(() => {
     if (isOpen && sale) {
@@ -28,6 +44,7 @@ const RefundModal = ({
       }));
       setItemsToRefund(initialItems);
       setReason("");
+      setSurplusConfirmed(false);
     }
   }, [isOpen, sale]);
 
@@ -44,11 +61,6 @@ const RefundModal = ({
     item.qtyToRefund = qty;
     setItemsToRefund(updated);
   };
-
-  const totalRefundAmount = itemsToRefund.reduce((acc, item) => {
-    if (item.qtyToRefund <= 0) return acc;
-    return acc + (item.lineTotal / item.originalQty) * item.qtyToRefund;
-  }, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +82,13 @@ const RefundModal = ({
       return;
     }
 
+    if (hasSurplus && !surplusConfirmed) {
+      toast.error("Please confirm that you have returned the surplus cash");
+      return;
+    }
+
     setLoading(true);
+
     try {
       await onRefund({
         saleId: sale.id,
@@ -182,6 +200,53 @@ const RefundModal = ({
                 required
               ></textarea>
             </div>
+
+            {/* Surplus Warning with Checkbox */}
+            {hasSurplus && (
+              <div className="alert alert-warning mt-4 border-warning border-opacity-25 bg-warning bg-opacity-10 rounded-3 p-4">
+                <div className="d-flex align-items-start gap-3 mb-3">
+                  <div
+                    className="bg-warning text-white rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                    style={{ width: "35px", height: "35px" }}
+                  >
+                    <i className="bi bi-exclamation-triangle-fill"></i>
+                  </div>
+                  <div>
+                    <div className="fw-bold text-warning-emphasis fs-6">
+                      Surplus Return Required
+                    </div>
+                    <div className="small text-muted">
+                      The customer has already paid more than the new bill
+                      total. Please return{" "}
+                      <strong className="text-dark">
+                        {currencySymbol}
+                        {surplus.toFixed(2)}
+                      </strong>{" "}
+                      in physical cash to the customer.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-check bg-white p-3 rounded-3 border border-warning border-opacity-50">
+                  <input
+                    className="form-check-input ms-0 me-2"
+                    type="checkbox"
+                    id="confirmSurplus"
+                    checked={surplusConfirmed}
+                    onChange={(e) => setSurplusConfirmed(e.target.checked)}
+                    style={{ cursor: "pointer", transform: "scale(1.2)" }}
+                  />
+                  <label
+                    className="form-check-label small fw-bold text-dark"
+                    htmlFor="confirmSurplus"
+                    style={{ cursor: "pointer" }}
+                  >
+                    I confirm that I've returned {currencySymbol}
+                    {surplus.toFixed(2)} to the customer in physical cash.
+                  </label>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="px-4 py-3 bg-light border-top d-flex justify-content-between align-items-center">
@@ -203,7 +268,11 @@ const RefundModal = ({
               <button
                 type="submit"
                 className="btn btn-danger px-4"
-                disabled={loading || totalRefundAmount === 0}
+                disabled={
+                  loading ||
+                  totalRefundAmount === 0 ||
+                  (hasSurplus && !surplusConfirmed)
+                }
               >
                 {loading ? (
                   <span className="spinner-border spinner-border-sm"></span>

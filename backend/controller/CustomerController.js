@@ -214,15 +214,44 @@ exports.settleCustomerCredit = async (req, res) => {
         const settleAmt = parseFloat(item.amount);
         if (settleAmt <= 0) continue;
 
+        const amountBefore = creditItem.totalAmount;
         creditItem.totalAmount -= settleAmt;
+        const amountAfter = Math.max(0, creditItem.totalAmount);
 
-        // If fully settled
-        if (
-          creditItem.totalAmount <= 0.01 &&
-          creditItem.sale &&
-          creditItem.billNumber
-        ) {
-          creditItem.totalAmount = 0;
+        // Initialize originalAmount if not set
+        if (!creditItem.originalAmount) {
+          creditItem.originalAmount = amountBefore;
+        }
+
+        // Initialize paymentHistory array if not exists
+        if (!creditItem.paymentHistory) {
+          creditItem.paymentHistory = [];
+        }
+
+        // Get payment method name
+        let paymentMethodName = "Unknown";
+        if (destAccount.type === "Upi" && destAccount.upiAccountName) {
+          paymentMethodName = destAccount.upiAccountName;
+        } else {
+          paymentMethodName = destAccount.type;
+        }
+
+        // Record payment history
+        creditItem.paymentHistory.push({
+          date: new Date(),
+          amount: settleAmt,
+          paymentMethod: paymentMethod,
+          paymentMethodName: paymentMethodName,
+          creditItem: creditItem._id,
+          billNumber: creditItem.billNumber,
+          amountBefore: amountBefore,
+          amountAfter: amountAfter,
+          notes: notes || `Partial payment of ₹${settleAmt}`,
+          recordedBy: req.user._id,
+        });
+
+        // 4. Update Sale History with partial/full payment
+        if (creditItem.sale && creditItem.billNumber) {
           let saleRecord = saleRecordsToUpdate.get(creditItem.sale.toString());
           if (!saleRecord) {
             saleRecord = await Sale.findById(creditItem.sale).session(session);
@@ -231,14 +260,43 @@ exports.settleCustomerCredit = async (req, res) => {
           }
 
           if (saleRecord) {
+            // Find sale by bill number (trim and case-insensitive for robustness)
+            const targetBill = (creditItem.billNumber || "").trim();
             const individualSale = saleRecord.sales.find(
-              (s) => s.billNumber === creditItem.billNumber
+              (s) => (s.billNumber || "").trim() === targetBill
             );
-            if (individualSale && individualSale.status === "Pending") {
-              individualSale.status = "Completed";
-              saleRecord.daySubtotal += individualSale.subtotal;
-              saleRecord.dayTotalTax += individualSale.totalTax;
-              saleRecord.dayGrandTotal += individualSale.grandTotal;
+
+            // Update if found, regardless of status (though usually it's Pending)
+            if (individualSale) {
+              // Calculate proportional subtotal and tax for this partial payment
+              const taxRatio =
+                (individualSale.totalTax || 0) /
+                (individualSale.grandTotal || 1);
+              const taxPart = settleAmt * taxRatio;
+              const subtotalPart = settleAmt - taxPart;
+
+              // Save the update even if status is already completed (for robustness)
+              const alreadyPaid = individualSale.status === "Completed";
+
+              if (!alreadyPaid) {
+                // Update Sale History Totals (Real-time realization of revenue)
+                // Only if not already counted (to prevent double counting)
+                saleRecord.daySubtotal += subtotalPart;
+                saleRecord.dayTotalTax += taxPart;
+                saleRecord.dayGrandTotal += settleAmt;
+              }
+
+              // Update individual sale tracking
+              individualSale.paidAmount =
+                (individualSale.paidAmount || 0) + settleAmt;
+
+              // If fully settled, mark as Completed
+              if (creditItem.totalAmount <= 0.01) {
+                creditItem.totalAmount = 0;
+                individualSale.status = "Completed";
+              }
+
+              saleRecord.markModified("sales");
             }
           }
         }
@@ -267,15 +325,45 @@ exports.settleCustomerCredit = async (req, res) => {
           remainingToSettle
         );
 
+        const amountBefore = creditItem.totalAmount;
         creditItem.totalAmount -= settlementFromThisItem;
+        const amountAfter = Math.max(0, creditItem.totalAmount);
         remainingToSettle -= settlementFromThisItem;
 
-        if (
-          creditItem.totalAmount <= 0.01 &&
-          creditItem.sale &&
-          creditItem.billNumber
-        ) {
-          creditItem.totalAmount = 0;
+        // Initialize originalAmount if not set
+        if (!creditItem.originalAmount) {
+          creditItem.originalAmount = amountBefore;
+        }
+
+        // Initialize paymentHistory array if not exists
+        if (!creditItem.paymentHistory) {
+          creditItem.paymentHistory = [];
+        }
+
+        // Get payment method name
+        let paymentMethodName = "Unknown";
+        if (destAccount.type === "Upi" && destAccount.upiAccountName) {
+          paymentMethodName = destAccount.upiAccountName;
+        } else {
+          paymentMethodName = destAccount.type;
+        }
+
+        // Record payment history
+        creditItem.paymentHistory.push({
+          date: new Date(),
+          amount: settlementFromThisItem,
+          paymentMethod: paymentMethod,
+          paymentMethodName: paymentMethodName,
+          creditItem: creditItem._id,
+          billNumber: creditItem.billNumber,
+          amountBefore: amountBefore,
+          amountAfter: amountAfter,
+          notes: notes || `Payment of ₹${settlementFromThisItem}`,
+          recordedBy: req.user._id,
+        });
+
+        // Update Sale History with partial/full payment
+        if (creditItem.sale && creditItem.billNumber) {
           let saleRecord = saleRecordsToUpdate.get(creditItem.sale.toString());
           if (!saleRecord) {
             saleRecord = await Sale.findById(creditItem.sale).session(session);
@@ -284,14 +372,37 @@ exports.settleCustomerCredit = async (req, res) => {
           }
 
           if (saleRecord) {
+            const targetBill = (creditItem.billNumber || "").trim();
             const individualSale = saleRecord.sales.find(
-              (s) => s.billNumber === creditItem.billNumber
+              (s) => (s.billNumber || "").trim() === targetBill
             );
-            if (individualSale && individualSale.status === "Pending") {
-              individualSale.status = "Completed";
-              saleRecord.daySubtotal += individualSale.subtotal;
-              saleRecord.dayTotalTax += individualSale.totalTax;
-              saleRecord.dayGrandTotal += individualSale.grandTotal;
+
+            if (individualSale) {
+              // Calculate proportional subtotal and tax for this partial payment
+              const taxRatio =
+                (individualSale.totalTax || 0) /
+                (individualSale.grandTotal || 1);
+              const taxPart = settlementFromThisItem * taxRatio;
+              const subtotalPart = settlementFromThisItem - taxPart;
+
+              // Only increment daily totals if not already fully paid
+              if (individualSale.status !== "Completed") {
+                saleRecord.daySubtotal += subtotalPart;
+                saleRecord.dayTotalTax += taxPart;
+                saleRecord.dayGrandTotal += settlementFromThisItem;
+              }
+
+              // Update individual sale tracking
+              individualSale.paidAmount =
+                (individualSale.paidAmount || 0) + settlementFromThisItem;
+
+              // If fully settled, mark as Completed
+              if (creditItem.totalAmount <= 0.01) {
+                creditItem.totalAmount = 0;
+                individualSale.status = "Completed";
+              }
+
+              saleRecord.markModified("sales");
             }
           }
         }
@@ -324,5 +435,63 @@ exports.settleCustomerCredit = async (req, res) => {
     });
   } finally {
     session.endSession();
+  }
+};
+
+// @desc    Get payment history for a customer
+// @route   GET /api/customers/:customerId/payment-history
+// @access  Private (Staff/Admin)
+exports.getCustomerPaymentHistory = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    const customer = await Customer.findById(customerId)
+      .populate("credits.paymentHistory.paymentMethod", "type upiAccountName")
+      .populate("credits.paymentHistory.recordedBy", "name email")
+      .populate("credits.products", "name code");
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    // Collect all payment history from all credit items
+    const allPayments = [];
+    customer.credits.forEach((creditItem) => {
+      if (creditItem.paymentHistory && creditItem.paymentHistory.length > 0) {
+        creditItem.paymentHistory.forEach((payment) => {
+          allPayments.push({
+            ...payment.toObject(),
+            creditItemId: creditItem._id,
+            billNumber: creditItem.billNumber,
+            products: creditItem.products,
+          });
+        });
+      }
+    });
+
+    // Sort by date (most recent first)
+    allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.status(200).json({
+      success: true,
+      count: allPayments.length,
+      data: {
+        customer: {
+          _id: customer._id,
+          name: customer.name,
+          phone: customer.phone,
+        },
+        paymentHistory: allPayments,
+      },
+    });
+  } catch (error) {
+    console.error("Get payment history error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Server error while fetching payment history",
+    });
   }
 };

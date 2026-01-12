@@ -145,6 +145,28 @@ export const CustomerProvider = ({ children }) => {
     [accessToken, fetchCustomers]
   );
 
+  const fetchCustomerPaymentHistory = useCallback(
+    async (customerId) => {
+      if (!accessToken || !customerId) return null;
+
+      try {
+        const res = await axios.get(
+          `${API_ENDPOINTS.CUSTOMERS}/${customerId}/payment-history`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        if (res.data.success) {
+          return res.data.data;
+        }
+      } catch (error) {
+        console.error("Error fetching payment history:", error);
+        return null;
+      }
+    },
+    [accessToken]
+  );
+
   const value = {
     customers,
     loading,
@@ -153,6 +175,7 @@ export const CustomerProvider = ({ children }) => {
     searchCustomerByPhone,
     upsertCustomer,
     settleCustomerCredit,
+    fetchCustomerPaymentHistory,
   };
 
   return (

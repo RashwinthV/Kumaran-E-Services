@@ -61,19 +61,23 @@ const AddInventoryModal = ({
     const productName = (product.name || "").toLowerCase();
 
     const serviceKeywords = [
-      "other",
-      "service",
       "xerox",
       "scan",
+      "photography",
       "photograph",
       "internet",
       "printing",
       "typing",
       "online",
+      "others",
+      "other",
+      "services",
+      "service",
     ];
 
-    return serviceKeywords.some(
-      (key) => catName.includes(key) || productName.includes(key)
+    return (
+      serviceKeywords.some((key) => catName.includes(key)) ||
+      serviceKeywords.some((key) => productName.includes(key))
     );
   };
 
@@ -92,6 +96,11 @@ const AddInventoryModal = ({
 
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
+    if (isServiceProduct(product)) {
+      setFormData({
+        quantity: 999999,
+      });
+    }
     setStep(2);
   };
 
@@ -146,19 +155,16 @@ const AddInventoryModal = ({
       return;
     }
 
+    const isService = isServiceProduct(selectedProduct);
     const inventoryData = {
       branch: branchId,
       product: selectedProduct._id,
       productDetails: selectedProduct,
-      quantity: isServiceProduct(selectedProduct)
-        ? 999999
-        : Number(formData.quantity),
+      quantity: isService ? 0 : Number(formData.quantity),
       costPrice: Number(formData.costPrice),
       sellingPrice: Number(formData.sellingPrice),
       FinalPrice: Number(formData.finalPrice),
-      lowStockThreshold: isServiceProduct(selectedProduct)
-        ? 0
-        : Number(formData.lowStockThreshold),
+      lowStockThreshold: isService ? 0 : Number(formData.lowStockThreshold),
     };
 
     if (editItem && onUpdate) {
@@ -387,7 +393,11 @@ const AddInventoryModal = ({
               </div>
 
               <div className="form-group">
-                <label>Cost Price (Purchase Price)</label>
+                <label>
+                  {isServiceProduct(selectedProduct)
+                    ? "Production/Buying Cost (Optional for Services)"
+                    : "Cost Price (Purchase Price)"}
+                </label>
                 <input
                   type="number"
                   name="costPrice"
@@ -397,7 +407,11 @@ const AddInventoryModal = ({
                   max={selectedProduct.mrp}
                   step="0.01"
                   required
-                  placeholder="Rate you bought at"
+                  placeholder={
+                    isServiceProduct(selectedProduct)
+                      ? "Set to 0 if no cost involved"
+                      : "Rate you bought at"
+                  }
                   style={{
                     borderColor:
                       Number(formData.costPrice) > selectedProduct.mrp
@@ -406,9 +420,17 @@ const AddInventoryModal = ({
                     backgroundColor:
                       Number(formData.costPrice) > selectedProduct.mrp
                         ? "#fff5f5"
+                        : isServiceProduct(selectedProduct)
+                        ? "#f8fafc"
                         : undefined,
                   }}
                 />
+                {isServiceProduct(selectedProduct) && (
+                  <small style={{ color: "#718096" }}>
+                    Service detected: Cost price defaults to 0 for maximum
+                    profit tracking.
+                  </small>
+                )}
                 {Number(formData.costPrice) > selectedProduct.mrp && (
                   <small style={{ color: "#e53e3e", fontWeight: "bold" }}>
                     ⚠️ Cost Price cannot exceed MRP (₹{selectedProduct.mrp})

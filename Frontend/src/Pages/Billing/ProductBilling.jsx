@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { handlePrint } from "../../utils/printUtils";
 import "../../Styles/dashboard.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { useAuth } from "../../Context/AuthContext";
@@ -376,6 +377,7 @@ const ProductBilling = () => {
         subtotal: Number(subtotal.toFixed(2)),
         totalTax: Number(totalTax.toFixed(2)),
         grandTotal: Number(grandTotal.toFixed(2)),
+        discount: Number(totalDiscount.toFixed(2)),
         paymentMethod: selectedAccountId,
       };
 
@@ -389,9 +391,30 @@ const ProductBilling = () => {
         );
 
         if (shouldPrint) {
-          // Placeholder for actual print logic
-          // window.print() or redirect to a print view
-          console.log("Printing invoice...");
+          handlePrint(
+            {
+              ...saleData,
+              billNo: res.data.sale.billNumber,
+              formattedDate: new Date().toLocaleDateString(),
+              time: new Date().toLocaleTimeString(),
+              customerName: selectedCustomerName,
+              customerPhone: selectedCustomerPhone,
+              amount: saleData.grandTotal,
+              staffName: res.data.staff?.name || user?.name || "Staff",
+              paymentMode:
+                accounts.find(
+                  (a) => a._id.toString() === selectedAccountId.toString()
+                )?.type || "N/A",
+              products: cartWithTotals.map((item) => ({
+                name: item.name,
+                qty: item.qty,
+                price: item.price,
+                lineTotal: item.lineTotal,
+                sku: item.sku,
+              })),
+            },
+            { silent: true }
+          );
         }
 
         // Clear browser cache for products and inventory to ensure consistency

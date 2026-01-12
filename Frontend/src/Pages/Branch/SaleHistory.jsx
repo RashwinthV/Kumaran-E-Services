@@ -133,6 +133,10 @@ const SaleHistory = () => {
         discount:
           sale.items?.reduce((acc, item) => acc + (item.discount || 0), 0) || 0,
         totalRefundedAmount: sale.totalRefundedAmount || 0,
+        cashRefundAmount: sale.cashRefundAmount || 0,
+        paidAmount:
+          sale.status === "Completed" ? sale.grandTotal : sale.paidAmount || 0,
+        staffName: sale.staff?.name || "Staff",
         // Carry internal IDs and field for the refund logic
         items: sale.items || [],
       };

@@ -1,4 +1,5 @@
 import React from "react";
+import { handlePrint } from "../../utils/printUtils";
 
 const SaleHistoryDetailModal = ({
   isOpen,
@@ -38,14 +39,14 @@ const SaleHistoryDetailModal = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1050,
+        zIndex: 2050,
       }}
     >
       <div
         className="bg-white rounded-4 shadow-lg overflow-hidden"
         style={{
           width: "90%",
-          maxWidth: "700px",
+          maxWidth: "900px",
           maxHeight: "90vh",
           display: "flex",
           flexDirection: "column",
@@ -291,6 +292,78 @@ const SaleHistoryDetailModal = ({
                   {(sale.amount - (sale.totalRefundedAmount || 0)).toFixed(2)}
                 </span>
               </div>
+
+              {/* Payment Summary for Credits */}
+              {sale.status !== "Paid" && sale.status !== "Refunded" && (
+                <div className="bg-success bg-opacity-10 border border-success border-opacity-25 rounded-4 p-4 mt-3">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <span className="small text-success fw-bold text-uppercase">
+                      Payment Progress
+                    </span>
+                    <span className="badge bg-success text-white px-2 py-1">
+                      {(
+                        (Number(sale.paidAmount || 0) /
+                          (Number(sale.amount || 0) -
+                            Number(sale.totalRefundedAmount || 0))) *
+                        100
+                      ).toFixed(0)}
+                      %
+                    </span>
+                  </div>
+                  <div
+                    className="progress mb-3"
+                    style={{ height: "10px", borderRadius: "5px" }}
+                  >
+                    <div
+                      className="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                      role="progressbar"
+                      style={{
+                        width: `${
+                          (Number(sale.paidAmount || 0) /
+                            (Number(sale.amount || 0) -
+                              Number(sale.totalRefundedAmount || 0))) *
+                          100
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+                  <div className="row g-2">
+                    <div className="col-6">
+                      <div className="bg-white bg-opacity-50 p-2 rounded-3 text-center border border-success border-opacity-10">
+                        <div className="small text-muted">Paid</div>
+                        <div className="fw-bold text-success">
+                          {currencySymbol}
+                          {Number(sale.paidAmount || 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="bg-white bg-opacity-50 p-2 rounded-3 text-center border border-danger border-opacity-10">
+                        <div className="small text-muted">Pending</div>
+                        <div className="fw-bold text-danger">
+                          {currencySymbol}
+                          {(
+                            Number(sale.amount || 0) -
+                            Number(sale.totalRefundedAmount || 0) -
+                            Number(sale.paidAmount || 0)
+                          ).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {Number(sale.paidAmount || 0) === 0 && (
+                    <div className="mt-2 small text-muted text-center italic">
+                      <i
+                        className="bi bi-info-circle me-1"
+                        style={{ fontStyle: "normal" }}
+                      ></i>
+                      Payments made via ledger update this progress
+                      automatically.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -312,7 +385,10 @@ const SaleHistoryDetailModal = ({
             <button onClick={onClose} className="btn btn-light border px-4">
               Close
             </button>
-            <button className="btn btn-primary px-4 d-flex align-items-center gap-2">
+            <button
+              onClick={() => handlePrint(sale)}
+              className="btn btn-primary px-4 d-flex align-items-center gap-2"
+            >
               <i className="bi bi-printer"></i> Print Bill
             </button>
           </div>

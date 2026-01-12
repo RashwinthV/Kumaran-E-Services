@@ -26,6 +26,20 @@ const accountSchema = new Schema(
       },
       trim: true,
     },
+    upiAccountNumber: {
+      type: String,
+      required: function () {
+        return this.type === "Upi";
+      },
+      trim: true,
+    },
+    upiId: {
+      type: String,
+      required: function () {
+        return this.type === "Upi";
+      },
+      trim: true,
+    },
     branch: {
       type: Schema.Types.ObjectId,
       ref: "Branch",

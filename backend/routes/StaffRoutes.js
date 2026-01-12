@@ -14,6 +14,7 @@ const {
   upsertCustomer,
   searchByPhone,
   settleCustomerCredit,
+  getCustomerPaymentHistory,
 } = require("../controller/CustomerController");
 const {
   getInventoryByBranchStaff,
@@ -43,6 +44,11 @@ router.post(
   "/customers/:customerId/settle-credit",
   protect,
   settleCustomerCredit
+);
+router.get(
+  "/customers/:customerId/payment-history",
+  protect,
+  getCustomerPaymentHistory
 );
 
 //get brabch products

@@ -12,7 +12,7 @@ const useGlobalShortcuts = () => {
       // For these specific modifier keys (Alt+S, Alt+L), it's usually safe to override.
 
       // Alt+S: Settings
-      if (e.altKey && e.key === "s") {
+      if (e.altKey && e.key === "a") {
         e.preventDefault();
         navigate("/settings");
       }

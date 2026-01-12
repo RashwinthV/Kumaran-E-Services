@@ -18,7 +18,7 @@ const ShortcutGuide = ({ isOpen, onClose }) => {
     { key: "Esc", desc: "Cancel / Close Modals" },
     { key: "Ctrl + Z", desc: "Remove Last Item" },
     { key: "Ctrl + Y", desc: "Undo Removal (Redo)" },
-    { key: "Alt + S", desc: "Settings" },
+    { key: "Alt + a", desc: "Settings" },
     { key: "Alt + L", desc: "Logout" },
     { key: "Alt + c", desc: "Credit Customers" },
     { key: "Ctrl + F", desc: "Product Catalog" },

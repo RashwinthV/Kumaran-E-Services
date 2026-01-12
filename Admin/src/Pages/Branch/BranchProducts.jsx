@@ -5,6 +5,8 @@ import UniversalDelete from "../../Modals/UniversalDelete";
 import AddInventoryModal from "../../Modals/Inventory/AddInventoryModal";
 import { useBranch } from "../../Context/BranchContext";
 import BackButton from "../../Components/BackButton";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 const BranchProducts = () => {
   const { id } = useParams();
@@ -46,20 +48,23 @@ const BranchProducts = () => {
     const productName = (item.product.name || "").toLowerCase();
 
     const serviceKeywords = [
-      "other",
-      "service",
       "xerox",
       "scan",
+      "photography",
       "photograph",
       "internet",
       "printing",
       "typing",
       "online",
+      "others",
+      "other",
+      "services",
+      "service",
     ];
 
-    const isService = serviceKeywords.some(
-      (key) => catName.includes(key) || productName.includes(key)
-    );
+    const isService =
+      serviceKeywords.some((key) => catName.includes(key)) ||
+      serviceKeywords.some((key) => productName.includes(key));
 
     if (isService) return "N/A";
 
@@ -67,7 +72,6 @@ const BranchProducts = () => {
     if (item.quantity <= item.lowStockThreshold) return "Low Stock";
     return "In Stock";
   }
-  console.log(branchInventory);
 
   // Ensure branchInventory is an array to prevent crashes
   const safeInventory = Array.isArray(branchInventory) ? branchInventory : [];
@@ -174,6 +178,213 @@ const BranchProducts = () => {
     }
   };
 
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const branchData = safeInventory[0]?.branch || {};
+    const branchName = branchData.name || "Branch";
+    const worksheet = workbook.addWorksheet(`Stock Report - ${branchName}`);
+
+    // Set columns for width
+    const columns = [
+      { header: "S.No", key: "sno", width: 8 },
+      { header: "Product Name", key: "name", width: 35 },
+      { header: "SKU", key: "sku", width: 15 },
+      { header: "Category", key: "category", width: 20 },
+      { header: "Quantity", key: "quantity", width: 15 },
+      { header: "Unit", key: "unit", width: 10 },
+      { header: "Cost Price", key: "costPrice", width: 15 },
+      { header: "Sale Price", key: "sellingPrice", width: 15 },
+      { header: "Final Price", key: "finalPrice", width: 15 },
+      { header: "Value (Cost)", key: "totalCost", width: 20 },
+      { header: "Value (Sale)", key: "totalSelling", width: 20 },
+      { header: "Status", key: "status", width: 18 },
+    ];
+    worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
+
+    // 1. Branch Header (Matching Image: Green border box)
+    const bNameRow = worksheet.addRow([branchName.toUpperCase()]);
+    bNameRow.font = { bold: true, size: 16 };
+    bNameRow.height = 30;
+    worksheet.mergeCells(`A${bNameRow.number}:L${bNameRow.number}`);
+    bNameRow.alignment = { horizontal: "center", vertical: "middle" };
+    bNameRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF00B050" } },
+        left: { style: "thin", color: { argb: "FF00B050" } },
+        bottom: { style: "thin", color: { argb: "FF00B050" } },
+        right: { style: "thin", color: { argb: "FF00B050" } },
+      };
+    });
+
+    const contactStr = `Contact: ${
+      branchData.contact?.phone || branchData.contact || "N/A"
+    }`;
+    const bContactRow = worksheet.addRow([contactStr]);
+    bContactRow.font = { size: 10 };
+    worksheet.mergeCells(`A${bContactRow.number}:L${bContactRow.number}`);
+    bContactRow.alignment = { horizontal: "center", vertical: "middle" };
+
+    worksheet.addRow([]); // Spacer
+
+    // Grouping Logic
+    const groups = {
+      "Out of Stock": [],
+      "Low Stock": [],
+      "In Stock": [],
+      Service: [],
+    };
+
+    filteredProducts.forEach((item) => {
+      const status = getStatus(item);
+      const key = status === "N/A" ? "Service" : status;
+      if (groups[key]) groups[key].push(item);
+    });
+
+    const statusConfig = {
+      "Out of Stock": { bg: "FFFEE2E2", text: "FF991B1B" },
+      "Low Stock": { bg: "FFFFF3C7", text: "FF92400E" },
+      "In Stock": { bg: "FFD1FAE5", text: "FF065F46" },
+      Service: { bg: "FFF5F3FF", text: "FF5B21B6" },
+    };
+
+    let globalSno = 1;
+    let totalStockValueCost = 0;
+    let totalStockValueSelling = 0;
+
+    // 2. Iterate through groups
+    Object.entries(groups).forEach(([statusName, items]) => {
+      if (items.length === 0) return;
+
+      // Section Title Row (e.g., === IN STOCK ITEMS ===)
+      const sectionHeader = worksheet.addRow([
+        `=== ${statusName.toUpperCase()} ITEMS ===`,
+      ]);
+      worksheet.mergeCells(`A${sectionHeader.number}:L${sectionHeader.number}`);
+      sectionHeader.font = {
+        bold: true,
+        size: 12,
+        color: { argb: statusConfig[statusName].text },
+      };
+      sectionHeader.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.addRow([]); // Spacer before table
+
+      // Table Header for this section
+      const headerRow = worksheet.addRow(columns.map((c) => c.header));
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      headerRow.height = 25;
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4F81BD" }, // Matching image Indigo
+        };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      // Data Rows
+      items.forEach((item) => {
+        const product = item.product || {};
+        const cost = item.costPrice || 0;
+        const selling = item.FinalPrice || 0;
+        const qty = statusName === "Service" ? 0 : item.quantity || 0;
+        const rowTotalCost = cost * qty;
+        const rowTotalSelling = selling * qty;
+
+        totalStockValueCost += rowTotalCost;
+        totalStockValueSelling += rowTotalSelling;
+
+        const row = worksheet.addRow({
+          sno: globalSno++,
+          name: product.name,
+          sku: product.sku,
+          category: product.category?.name || "General",
+          quantity: statusName === "Service" ? "N/A" : qty,
+          unit: product.unit,
+          costPrice: cost,
+          sellingPrice: item.sellingPrice || 0,
+          finalPrice: selling,
+          totalCost: rowTotalCost,
+          totalSelling: rowTotalSelling,
+          status: statusName,
+        });
+
+        row.eachCell((cell, colNumber) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+          cell.alignment = { vertical: "middle" };
+
+          // Color code status text
+          if (columns[colNumber - 1].key === "status") {
+            cell.font = {
+              color: { argb: statusConfig[statusName].text },
+              bold: true,
+            };
+          }
+        });
+      });
+
+      worksheet.addRow([]); // Spacer after table
+      worksheet.addRow([]); // Extra Spacer
+    });
+
+    // 3. Grand Totals
+    const summaryRow = worksheet.addRow({
+      name: "GRAND TOTAL INVENTORY VALUE",
+      totalCost: totalStockValueCost,
+      totalSelling: totalStockValueSelling,
+    });
+    summaryRow.font = { bold: true, size: 12 };
+    summaryRow.height = 25;
+    worksheet.mergeCells(`B${summaryRow.number}:I${summaryRow.number}`);
+    summaryRow.getCell("name").alignment = {
+      horizontal: "right",
+      vertical: "middle",
+    };
+
+    summaryRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF1F5F9" },
+      };
+      cell.border = {
+        top: { style: "medium" },
+        left: { style: "thin" },
+        bottom: { style: "medium" },
+        right: { style: "thin" },
+      };
+    });
+
+    // 4. Currency Formatting
+    [
+      "costPrice",
+      "sellingPrice",
+      "finalPrice",
+      "totalCost",
+      "totalSelling",
+    ].forEach((key) => {
+      worksheet.getColumn(key).numFmt = "₹#,##0.00";
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer]),
+      `Stock_Report_${branchName.replace(/\s+/g, "_")}_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`
+    );
+  };
+
   return (
     <div className="products-container">
       <div className="products-header">
@@ -184,28 +395,30 @@ const BranchProducts = () => {
             {filteredProducts.length} products found
           </p>
         </div>
-        <button
-          className="add-product-btn"
-          onClick={() => {
-            setEditItem(null);
-            setAddModalOpen(true);
-          }}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+        <div className="header-right">
+          <button
+            className="add-product-btn"
+            onClick={() => {
+              setEditItem(null);
+              setAddModalOpen(true);
+            }}
           >
-            <path
-              d="M12 5V19M5 12H19"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Add New Product
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 5V19M5 12H19"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Add New Product
+          </button>
+        </div>
       </div>
 
       <div className="products-filters">
@@ -256,6 +469,53 @@ const BranchProducts = () => {
             <option value="Low Stock">Low Stock</option>
             <option value="Out of Stock">Out of Stock</option>
           </select>
+        </div>
+
+        <div className="filter-actions">
+          <button
+            className="reset-filters-btn"
+            onClick={() => {
+              setSearchTerm("");
+              setFilterCategory("All");
+              setFilterStatus("All");
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+            >
+              <path
+                d="M4 4V9H4.58152M19.9381 11C19.446 7.05361 16.0796 4 12 4C8.65685 4 5.82083 6.01509 4.58152 9M4.58152 9H9M20 20V15H19.4185M19.4185 15C18.1792 17.9849 15.3432 20 12 20C7.92038 20 4.55399 16.9464 4.06189 13M19.4185 15H15"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Reset
+          </button>
+
+          <button className="export-excel-btn" onClick={exportToExcel}>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+            >
+              <path
+                d="M4 12V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V12M12 3V15M12 15L8 11M12 15L16 11"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Export Report
+          </button>
         </div>
       </div>
 
