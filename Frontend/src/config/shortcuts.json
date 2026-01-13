@@ -1,0 +1,57 @@
+[
+  {
+    "id": "nav_settings",
+    "description": "Go to Settings",
+    "key": "a",
+    "altKey": true,
+    "ctrlKey": false,
+    "shiftKey": false,
+    "metaKey": false,
+    "action": "navigate",
+    "target": "/settings"
+  },
+  {
+    "id": "auth_logout",
+    "description": "Logout",
+    "key": "l",
+    "altKey": true,
+    "ctrlKey": false,
+    "shiftKey": false,
+    "metaKey": false,
+    "action": "logout",
+    "target": null
+  },
+  {
+    "id": "nav_customers",
+    "description": "Go to Customers",
+    "key": "c",
+    "altKey": true,
+    "ctrlKey": false,
+    "shiftKey": false,
+    "metaKey": false,
+    "action": "navigate",
+    "target": "/customers"
+  },
+  {
+    "id": "nav_product_catalog",
+    "description": "Go to Product Catalog",
+    "key": "f",
+    "altKey": false,
+    "ctrlKey": true,
+    "shiftKey": false,
+    "metaKey": false,
+    "action": "navigate",
+    "target": "/product-catalog"
+  },
+  {
+    "id": "nav_reports",
+    "description": "Go to Reports",
+    "key": "F11",
+    "altKey": false,
+    "ctrlKey": false,
+    "shiftKey": false,
+    "metaKey": false,
+    "action": "navigate",
+    "target": "/sale-history"
+  }
+]

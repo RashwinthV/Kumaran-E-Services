@@ -197,12 +197,12 @@ const ProductSearch = ({
                 background: "#f8fafc",
                 borderTopRightRadius: "0",
                 borderBottomRightRadius: "0",
-                width:"45px",
+                width: "45px",
                 padding: isTable ? "0 8px" : "inherit",
               }}
             >
               <i
-                className={`bi bi-qr-code-scan text-muted ${
+                className={`bi bi-upc-scan text-primary text-muted ${
                   isTable ? "small" : ""
                 }`}
               ></i>

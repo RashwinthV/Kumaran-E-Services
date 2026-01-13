@@ -129,6 +129,29 @@ const HardwareSettings = ({
           <h3 className="settings-section-title mb-4">
             Hardware & POS Settings
           </h3>
+          <div className="mt-4 pt-3 border-top">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <label className="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <i className="bi bi-upc-scan text-primary"></i>
+                    Barcode Scanner Support
+                  </label>
+                  <p className="text-muted small mb-0">
+                    Enable automatic detection of barcode scanner input
+                  </p>
+                </div>
+                <div className="form-check form-switch fs-4">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={settings.barcodeScanner}
+                    onChange={() => handleToggle("barcodeScanner")}
+                  />
+                </div>
+              </div>
+            </div>
+                        <hr className="my-4 opacity-50" />
+
 
           <div className="settings-card bg-white p-4 rounded-4 shadow-sm border mb-4">
             <h5 className="fw-bold mb-3 border-bottom pb-2">
@@ -242,7 +265,8 @@ const HardwareSettings = ({
               </div>
             </div>
 
-            <hr className="my-4 opacity-50" />
+            
+
 
             <div className="setting-row-v2 mb-4">
               <div className="setting-info">

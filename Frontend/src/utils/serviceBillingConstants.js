@@ -19,6 +19,8 @@ export const SERVICE_MODULES = {
       "Mobile Postpaid",
       "DTH Recharge",
       "Data Card",
+      "OTT Subscription",
+      "Music App",
     ],
   },
   FINANCIAL: {
@@ -29,6 +31,7 @@ export const SERVICE_MODULES = {
       "Loan EMI",
       "Insurance Premium",
       "NBFC Payment",
+      "Fund Transfer",
     ],
   },
   GOVT: {
@@ -41,6 +44,18 @@ export const SERVICE_MODULES = {
       "Police Verification",
     ],
   },
+  AADHAR: {
+    label: "Aadhar Services",
+    icon: "bi-fingerprint",
+    services: [
+      "Aadhar ATM",
+      "Update Aadhar",
+      "Order PVC Card",
+      "Download Aadhar",
+      // "Bio-Metric Unlock",
+      "Link PAN-Aadhar",
+    ],
+  },
   EDUCATION: {
     label: "Education",
     icon: "bi-mortarboard",
@@ -49,14 +64,6 @@ export const SERVICE_MODULES = {
       "College Fees",
       "Online Exam Fees",
       "Coaching Fees",
-    ],
-  },
-  SUBSCRIPTION: {
-    label: "Subscriptions",
-    icon: "bi-play-btn",
-    services: [
-      "OTT Subscription",
-      "Music App",
     ],
   },
   TRAVEL: {
@@ -72,17 +79,7 @@ export const SERVICE_MODULES = {
   LOCAL: {
     label: "Local Services",
     icon: "bi-shop",
-    services: [
-      "House Maintenance",
-      "Shop Rent",
-      "Local Cable",
-      "Local WiFi",
-    ],
-  },
-  WALLET: {
-    label: "Wallets",
-    icon: "bi-wallet2",
-    services: ["UPI Payment", "E-Wallet Top-up", "Gift Card"],
+    services: ["Xerox", "Scan", "Photograph", "Lamination"],
   },
 };
 
@@ -153,6 +150,17 @@ export const SERVICE_FIELDS_CONFIG = {
     providerName: "Operator",
     showName: false,
   },
+  "OTT Subscription": {
+    consumerId: "User ID",
+    providerName: "Platform",
+    showName: false,
+  },
+  "Music App": {
+    consumerId: "User ID",
+    providerName: "Platform",
+    planDetails: "planDetails",
+    showName: false,
+  },
 
   // --- FINANCIAL ---
   "Credit Card Bill": {
@@ -174,21 +182,65 @@ export const SERVICE_FIELDS_CONFIG = {
     showName: true,
     labelName: "Policy Holder",
   },
-
-  // --- LOCAL ---
-  "House Maintenance": {
-    consumerId: false,
-    providerName: false,
-    description: "Details (Month/Year)",
+  "Fund Transfer": {
+    consumerId: "Account Number / UPI ID",
+    providerName: "Bank / Service Provider",
     showName: true,
-    labelName: "Tenant/Owner Name",
-  },
-  "Shop Rent": {
-    consumerId: "Shop No",
-    providerName: false,
-    description: "Rent Month",
-    showName: true,
-    labelName: "Payer Name",
+    labelName: "Beneficiary Name",
   },
 
+  // --- GOVT ---
+  "Aadhar ATM": {
+    consumerId: "Aadhar Number",
+    providerName: "Bank Name",
+    showName: true,
+    labelName: "Customer Name",
+    planDetails: "Transaction Type",
+  },
+  "Update Aadhar": {
+    consumerId: "Aadhar Number",
+    providerName: "Update details(Mob/Addr)",
+    showName: true,
+    labelName: "Name on Aadhar",
+  },
+  "Order PVC Card": {
+    consumerId: "Aadhar Number",
+    providerName: "Mobile Number",
+    showName: true,
+    labelName: "Name on Aadhar",
+  },
+  "Download Aadhar": {
+    consumerId: "Aadhar Number",
+    providerName: false,
+    showName: true,
+    labelName: "Name on Aadhar",
+  },
+  "Bio-Metric Unlock": {
+    consumerId: "Aadhar Number",
+    providerName: false,
+    showName: true,
+    labelName: "Name on Aadhar",
+  },
+  "Link PAN-Aadhar": {
+    consumerId: "Aadhar Number",
+    providerName: "PAN Number",
+    showName: true,
+    labelName: "Name as per PAN",
+  },
+
+  // // --- LOCAL ---
+  // "House Maintenance": {
+  //   consumerId: false,
+  //   providerName: false,
+  //   description: "Details (Month/Year)",
+  //   showName: true,
+  //   labelName: "Tenant/Owner Name",
+  // },
+  // "Shop Rent": {
+  //   consumerId: "Shop No",
+  //   providerName: false,
+  //   description: "Rent Month",
+  //   showName: true,
+  //   labelName: "Payer Name",
+  // },
 };

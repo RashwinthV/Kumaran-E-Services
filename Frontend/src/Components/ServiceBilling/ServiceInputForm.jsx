@@ -10,6 +10,7 @@ const ServiceInputForm = ({
   formData,
   handleInputChange,
   currency,
+  serviceSettings,
 }) => {
   const renderDynamicInputs = () => {
     // Ticket Special Case
@@ -18,6 +19,15 @@ const ServiceInputForm = ({
     ) {
       return (
         <div className="row g-2 mb-2">
+          {serviceSettings?.showHelperText && (
+            <div className="col-12">
+              <div className="alert alert-info py-2 px-3 small border-0 bg-info-subtle text-info-emphasis mb-2 d-flex align-items-center">
+                <i className="bi bi-info-circle-fill me-2"></i>
+                Enter ticket details accurately. PNR is optional but
+                recommended.
+              </div>
+            </div>
+          )}
           <div className="col-md-2">
             <label className="small text-muted fw-bold">PNR / Ref</label>
             <input
@@ -124,6 +134,12 @@ const ServiceInputForm = ({
     if (svcConfig.description) {
       return (
         <div className="mb-2">
+          {serviceSettings?.showHelperText && (
+            <div className="small text-muted mb-2 fst-italic">
+              <i className="bi bi-lightbulb me-1 text-warning"></i>
+              Tip: Provide a clear description for future reference.
+            </div>
+          )}
           <label className="small text-muted fw-bold">
             {svcConfig.description}
           </label>
@@ -166,20 +182,13 @@ const ServiceInputForm = ({
           showName = true;
           labelPlan = "Fee Details";
           break;
-        case "SUBSCRIPTION":
-          labelConsumer = "User ID";
-          labelProvider = "Platform";
-          labelPlan = "Plan";
-          break;
+    
         case "TRAVEL":
           // Non-ticket travel
           labelConsumer = "Vehicle No";
           labelProvider = "Provider";
           break;
-        case "WALLET":
-          labelConsumer = "Mobile / UPI ID";
-          labelProvider = "Wallet";
-          break;
+    
         case "LOCAL":
           // Should have been caught by description check above, but fallback:
           return (
@@ -204,6 +213,25 @@ const ServiceInputForm = ({
 
     return (
       <div className="row g-2 mb-2">
+        {serviceSettings?.showHelperText && (
+          <div className="col-12">
+            <div className="d-flex gap-3 small text-muted bg-light p-2 rounded mb-1">
+              {labelConsumer !== false && (
+                <span>
+                  <i className="bi bi-1-circle me-1"></i>Enter ID
+                </span>
+              )}
+              {labelProvider !== false && (
+                <span>
+                  <i className="bi bi-2-circle me-1"></i>Select Provider
+                </span>
+              )}
+              <span>
+                <i className="bi bi-check-circle me-1"></i>Verify Details
+              </span>
+            </div>
+          </div>
+        )}
         {/* Consumer ID Field */}
         {labelConsumer !== false && (
           <div className={`col-md-${showName ? "3" : "4"}`}>

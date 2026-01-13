@@ -14,6 +14,7 @@ import SyncSettings from "../../Components/Settings/SyncSettings";
 import AboutSettings from "../../Components/Settings/AboutSettings";
 import { saveEncrypted, getDecrypted } from "../../utils/storage";
 import PrintTemplate from "../../Components/Billing/PrintTemplate";
+import ShortcutsSettings from "../../Components/Settings/ShortcutsSettings";
 
 function Settings() {
   const { user } = useAuth();
@@ -128,12 +129,12 @@ function Settings() {
 
   return (
     <div className="settings-container">
-      <div className="settings-header">
+      {/* <div className="settings-header">
         <div>
           <h1>Branch Settings</h1>
           <p>Configure your workspace and hardware preferences</p>
         </div>
-      </div>
+      </div> */}
 
       <div className="settings-grid">
         <SettingsSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -160,9 +161,11 @@ function Settings() {
 
           {activeTab === "sync" && <SyncSettings handleSync={handleSync} />}
 
+          {activeTab === "shortcuts" && <ShortcutsSettings />}
+
           {activeTab === "about" && <AboutSettings />}
 
-          {!["accounts", "sync", "about"].includes(activeTab) && (
+          {!["accounts", "sync", "shortcuts", "about"].includes(activeTab) && (
             <div className="d-flex justify-content-end">
               <button className="btn-save-settings" onClick={saveSettings}>
                 Save Preferences

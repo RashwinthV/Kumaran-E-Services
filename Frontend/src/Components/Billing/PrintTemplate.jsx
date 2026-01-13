@@ -82,7 +82,7 @@ const StandardInvoice = ({
   <div className="invoice-box standard-style">
     <div className="invoice-header">
       <div className="branch-info">
-        <h2>{branchInfo?.name}</h2>
+        <h2>Kumaran E-Services</h2>
         <p>{formattedAddress}</p>
         <p>Ph: {branchInfo?.contact?.phone || branchInfo?.contact}</p>
         {branchInfo?.gstNumber && (
@@ -204,7 +204,7 @@ const ProfessionalInvoice = ({
   <div className="invoice-box professional-style">
     <div className="pro-header">
       <div className="pro-logo-section">
-        <h1>{branchInfo?.name}</h1>
+        <h1>Kumaran E-Services</h1>
         <p className="pro-tagline">Professional Business Services</p>
       </div>
       <div className="pro-invoice-title">
@@ -216,6 +216,7 @@ const ProfessionalInvoice = ({
     <div className="pro-details-grid">
       <div className="pro-detail-col">
         <h4 className="pro-label">OUR DETAILS</h4>
+        <p className="fs-5 small">Branch : {branchInfo?.name}</p>
         <p>{formattedAddress}</p>
         <p>Contact: {branchInfo?.contact?.phone || branchInfo?.contact}</p>
         {branchInfo?.gstNumber && <p>GSTIN: {branchInfo.gstNumber}</p>}
@@ -337,7 +338,7 @@ const ModernPreviewInvoice = ({
       <div className="modern-header">
         <div className="modern-brand">
           <div className="modern-logo">{branchInfo?.name?.charAt(0)}</div>
-          <h2>{branchInfo?.name}</h2>
+          <h4>Kumaran E-Services</h4>
         </div>
         <div className="modern-meta">
           <span className="modern-bill-badge">INV-{sale.billNo}</span>

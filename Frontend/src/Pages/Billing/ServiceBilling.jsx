@@ -5,6 +5,7 @@ import { useBilling } from "../../Context/BillingContext";
 import axios from "axios";
 import { API_ENDPOINTS } from "../../config/api";
 import { getDecrypted } from "../../utils/storage";
+import { handlePrint } from "../../utils/printUtils";
 import "../../Styles/dashboard.css";
 
 // Import Modular Components
@@ -15,13 +16,18 @@ import ServiceTypeSelector from "../../Components/ServiceBilling/ServiceTypeSele
 import ServiceInputForm from "../../Components/ServiceBilling/ServiceInputForm";
 import ServicePaymentSummary from "../../Components/ServiceBilling/ServicePaymentSummary";
 import ServiceCart from "../../Components/ServiceBilling/ServiceCart";
+import ServiceSettingsModal from "../../Components/ServiceBilling/ServiceSettingsModal";
 
 const ServiceBilling = () => {
   const { accessToken } = useAuth();
   const { refreshSales } = useBilling();
   const [appSettings] = useState(() => getDecrypted("app_settings"));
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // --- COMPONENT STATE ---
+  const [serviceSettings, setServiceSettings] = useState(
+    () => getDecrypted("service_settings") || {}
+  );
   const [selectedModule, setSelectedModule] = useState("UTILITY");
   const [selectedService, setSelectedService] = useState(
     SERVICE_MODULES.UTILITY.services[0]
@@ -31,7 +37,7 @@ const ServiceBilling = () => {
   const [formData, setFormData] = useState({
     // Financials
     baseAmount: "",
-    serviceCharge: "",
+    serviceCharge: serviceSettings.defaultServiceCharge || "",
     qty: 1,
 
     // Identifiers
@@ -66,6 +72,7 @@ const ServiceBilling = () => {
     "Train Ticket",
     "Bus Ticket",
     "Flight Ticket",
+    "Fly Ticket",
   ].includes(selectedService);
 
   // Customer Selection & Checkout State
@@ -85,7 +92,12 @@ const ServiceBilling = () => {
   const currentQty = parseInt(formData.qty) || 1;
   const currentItemTotal = (currentBase + currentCharge) * currentQty;
 
+  const currentTax = serviceSettings.enableServiceTax
+    ? (currentItemTotal * (serviceSettings.serviceTaxRate || 18)) / 100
+    : 0;
+
   const cartTotal = cart.reduce((sum, item) => sum + item.lineTotal, 0);
+  const cartTax = cart.reduce((sum, item) => sum + (item.taxAmount || 0), 0);
 
   // --- INITIAL DATA LOADING ---
   useEffect(() => {
@@ -166,7 +178,7 @@ const ServiceBilling = () => {
       passengerAge: "",
       description: "",
       baseAmount: "",
-      serviceCharge: "",
+      serviceCharge: serviceSettings.defaultServiceCharge || "",
     }));
     // Clear cart on module switch? Maybe safer to clear to avoid mixing types messily
     setCart([]);
@@ -256,8 +268,8 @@ const ServiceBilling = () => {
       serviceCharge: currentCharge,
       price: currentBase + currentCharge,
       qty: currentQty,
-      lineTotal: currentItemTotal,
-      taxAmount: 0,
+      lineTotal: currentItemTotal + currentTax, // Total includes tax
+      taxAmount: currentTax,
       discount: 0,
       details: {
         ...formData,
@@ -292,7 +304,7 @@ const ServiceBilling = () => {
       passengerAge: "",
       passengerGender: "Male",
       baseAmount: "",
-      serviceCharge: "",
+      serviceCharge: serviceSettings.defaultServiceCharge || "",
     }));
   };
 
@@ -328,20 +340,24 @@ const ServiceBilling = () => {
     // Logic Split
     let itemsToProcess = [];
     let finalTotal = 0;
+    let finalTax = 0;
 
     if (isTicketService) {
       if (cart.length === 0) return toast.error("Cart is empty");
       itemsToProcess = cart;
-      finalTotal = cartTotal;
+      finalTotal = cartTotal; // This now includes tax for all items
+      finalTax = cartTax;
     } else {
       if (currentItemTotal <= 0) return toast.error("Enter valid amount");
+      finalTotal = currentItemTotal + currentTax;
+      finalTax = currentTax;
       itemsToProcess = [
         {
           name: getFormattedDescription(),
           price: currentBase + currentCharge,
           qty: currentQty,
-          lineTotal: currentItemTotal,
-          taxAmount: 0,
+          lineTotal: finalTotal,
+          taxAmount: finalTax,
           discount: 0,
           details: {
             ...formData,
@@ -350,7 +366,6 @@ const ServiceBilling = () => {
           },
         },
       ];
-      finalTotal = currentItemTotal;
     }
 
     setIsProcessing(true);
@@ -358,8 +373,8 @@ const ServiceBilling = () => {
       const saleData = {
         customer: selectedCustomerId,
         items: itemsToProcess,
-        subtotal: finalTotal,
-        totalTax: 0,
+        subtotal: finalTotal - finalTax,
+        totalTax: finalTax,
         grandTotal: finalTotal,
         paymentMethod: selectedAccountId,
         isServiceBill: true,
@@ -371,11 +386,33 @@ const ServiceBilling = () => {
 
       if (res.data.success) {
         toast.success("Transaction Successful!");
+
+        if (serviceSettings.autoPrintServiceReceipt) {
+          handlePrint(
+            {
+              ...saleData,
+              billNo: res.data.sale.billNumber,
+              formattedDate: new Date().toLocaleDateString(),
+              time: new Date().toLocaleTimeString(),
+              customerName: selectedCustomerName,
+              customerPhone: selectedCustomerPhone,
+              amount: saleData.grandTotal,
+              // Mock staff/payment mode for print
+              staffName: "Staff",
+              paymentMode:
+                accounts.find((a) => a._id === selectedAccountId)?.type ||
+                "Cash",
+              products: itemsToProcess,
+            },
+            { silent: true }
+          );
+        }
+
         // Reset Logic
         setFormData((prev) => ({
           ...prev,
           baseAmount: "",
-          serviceCharge: "",
+          serviceCharge: serviceSettings.defaultServiceCharge || "",
           description: "",
           consumerId: "",
           referenceId: "",
@@ -400,6 +437,12 @@ const ServiceBilling = () => {
 
   return (
     <div className="d-flex flex-column h-100 bg-light overflow-hidden">
+      <ServiceSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSave={(newSettings) => setServiceSettings(newSettings)}
+      />
+
       {/* Main Content Area */}
       <div className="flex-grow-1 p-2 overflow-hidden d-flex flex-column">
         {/* Customer Section */}
@@ -417,10 +460,22 @@ const ServiceBilling = () => {
           {/* Left Column: Form Only */}
           <div className="col-8 h-100 d-flex flex-column">
             <div className="card shadow-sm border-0 flex-grow-1 d-flex flex-column overflow-hidden">
-              <ServiceCategoryTabs
-                selectedModule={selectedModule}
-                onModuleChange={handleModuleChange}
-              />
+              <div className="d-flex align-items-center bg-white border-bottom pe-3">
+                <div className="flex-grow-1">
+                  <ServiceCategoryTabs
+                    selectedModule={selectedModule}
+                    onModuleChange={handleModuleChange}
+                  />
+                </div>
+                <button
+                  className="btn btn-light bg-light border text-muted px-3 fw-bold rounded-pill d-flex"
+                  onClick={() => setShowSettingsModal(true)}
+                  style={{ height: "35px", fontSize: "0.8rem" }}
+                  title="Service Settings"
+                >
+                  <i className="bi bi-gear-fill me-2"></i>Settings
+                </button>
+              </div>
 
               <ServiceTypeSelector
                 selectedModule={selectedModule}
@@ -435,6 +490,7 @@ const ServiceBilling = () => {
                   formData={formData}
                   handleInputChange={handleInputChange}
                   currency={appSettings?.currency}
+                  serviceSettings={serviceSettings}
                 />
 
                 {/* Add to Cart Button for Tickets */}

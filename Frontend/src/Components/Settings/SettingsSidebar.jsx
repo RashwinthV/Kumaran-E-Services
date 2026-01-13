@@ -9,6 +9,7 @@ const SettingsSidebar = ({ activeTab }) => {
     { id: "accounts", icon: "vault", label: "Accounts" },
     { id: "hardware", icon: "print", label: "Hardware & POS" },
     { id: "sync", icon: "sync", label: "Data & Sync" }, // or 'rotate'
+    { id: "shortcuts", icon: "keyboard", label: "Shortcuts" },
     // { id: "staff", icon: "user-gear", label: "Staff Settings" },
     { id: "about", icon: "info-circle", label: "About" },
   ];
