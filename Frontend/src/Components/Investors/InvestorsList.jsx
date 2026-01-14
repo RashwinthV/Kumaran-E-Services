@@ -8,17 +8,25 @@ const InvestorsList = ({
   onViewDetails,
   onBuyProducts,
   onPayoutPrincipal,
+  onViewHistory,
   calculatePendingInterest,
   calculateAccumulatedInterest,
   calculateUnpaidInterest,
 }) => {
   return (
     <div className="card shadow-sm border-0">
-      <div className="card-header bg-white border-bottom py-3">
+      <div className="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
         <h5 className="mb-0 fw-bold">
           <i className="bi bi-list-ul me-2 text-primary"></i>
           Investors List
         </h5>
+        <button
+          className="btn btn-outline-primary btn-sm fw-bold px-3"
+          onClick={onViewHistory}
+        >
+          <i className="bi bi-clock-history me-2"></i>
+          View History
+        </button>
       </div>
       <div className="card-body p-0">
         <div className="table-responsive">
@@ -27,13 +35,13 @@ const InvestorsList = ({
               <tr>
                 <th className="px-4">#</th>
                 <th>Investor Details</th>
-                <th>Principal Amount</th>
-                <th>Interest Rate</th>
-                <th>Type</th>
-                <th>Accumulated Interest</th>
-                <th>Unpaid Interest</th>
-                <th>Total Paid</th>
-                <th>Status</th>
+                <th className="text-end">Principal Amount</th>
+                <th className="text-center">Interest Rate</th>
+                <th className="text-center">Type</th>
+                <th className="text-end">Accumulated</th>
+                <th className="text-end">Unpaid</th>
+                <th className="text-end">Total Paid</th>
+                <th className="text-center">Status</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
@@ -50,12 +58,10 @@ const InvestorsList = ({
                       </small>
                     </div>
                   </td>
-                  <td>
+                  <td className="text-end">
                     <div>
                       <span className="fw-bold text-success">
-                        ₹
-                        {investor.currentPrincipal?.toLocaleString() ||
-                          investor.principalAmount.toLocaleString()}
+                        ₹{investor.currentPrincipal?.toLocaleString()}
                       </span>
                       {investor.currentPrincipal !==
                         investor.principalAmount && (
@@ -68,12 +74,12 @@ const InvestorsList = ({
                       )}
                     </div>
                   </td>
-                  <td>
+                  <td className="text-center">
                     <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
-                      {investor.interestRate}% p.a.
+                      {investor.interestRate} paise/month
                     </span>
                   </td>
-                  <td>
+                  <td className="text-center">
                     <span
                       className={`badge ${
                         investor.interestType === "simple"
@@ -88,22 +94,22 @@ const InvestorsList = ({
                         : "Compound"}
                     </span>
                   </td>
-                  <td>
+                  <td className="text-end">
                     <span className="fw-bold text-warning">
                       ₹{calculateAccumulatedInterest(investor).toFixed(2)}
                     </span>
                   </td>
-                  <td>
+                  <td className="text-end">
                     <span className="fw-bold text-danger">
                       ₹{calculateUnpaidInterest(investor).toFixed(2)}
                     </span>
                   </td>
-                  <td>
+                  <td className="text-end">
                     <span className="text-muted">
                       ₹{investor.totalInterestPaid.toLocaleString()}
                     </span>
                   </td>
-                  <td>
+                  <td className="text-center">
                     <span
                       className={`badge ${
                         investor.status === "active"

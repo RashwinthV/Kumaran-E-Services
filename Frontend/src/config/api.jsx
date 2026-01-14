@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
 
   BRANCH_INVENTORY: `${API_BASE}/api/staff/inventory/my-branch`,
   CUSTOMERS: `${API_BASE}/api/staff/customers`,
+  INVESTORS: `${API_BASE}/api/staff/customers/investors`,
   CUSTOMER_SEARCH: `${API_BASE}/api/staff/customers/search`,
   BRANCH: `${API_BASE}/api/staff/Branch`,
 };

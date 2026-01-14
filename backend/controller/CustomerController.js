@@ -5,6 +5,28 @@ const Sale = require("../models/Sale");
 const mongoose = require("mongoose");
 const { ensureDailySession } = require("./AccountController");
 
+// @desc    Get all investors for a branch
+// @route   GET /api/customers/investors/my-branch
+// @access  Private (Staff/Admin)
+exports.getBranchInvestors = async (req, res) => {
+  try {
+    const investors = await Customer.find({
+      branchCode: req.user.branchCode,
+      role: { $in: ["Investor", "Customer & investor"] },
+    }).sort({ name: 1 });
+    res.status(200).json({
+      success: true,
+      count: investors.length,
+      data: investors,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // @desc    Get all customers for a branch
 // @route   GET /api/customers/my-branch
 // @access  Private (Staff/Admin)
@@ -33,7 +55,7 @@ exports.getMyBranchCustomers = async (req, res) => {
 // @access  Private (Staff/Admin)
 exports.upsertCustomer = async (req, res) => {
   try {
-    const { name, phone, city } = req.body;
+    const { name, phone, email, city, role, investorDetails } = req.body;
 
     // Find branch
     const branch = await Branch.findOne({ code: req.user.branchCode });
@@ -52,12 +74,32 @@ exports.upsertCustomer = async (req, res) => {
     if (customer) {
       customer.name = name;
       customer.city = city;
+      if (email) customer.email = email;
+
+      // Update role logic:
+      // If adding investor details to a regular customer, set role to "Customer & investor"
+      // Otherwise keep existing role or use the provided one
+      if (role === "Investor" && customer.role === "customer") {
+        customer.role = "Customer & investor";
+      } else if (role) {
+        customer.role = role;
+      }
+
+      if (investorDetails) {
+        customer.investorDetails = {
+          ...customer.investorDetails,
+          ...investorDetails,
+        };
+      }
       await customer.save();
     } else {
       customer = await Customer.create({
         name,
         phone,
+        email,
         city,
+        role: role || "customer",
+        investorDetails,
         branch: branch._id,
         branchCode: req.user.branchCode,
       });

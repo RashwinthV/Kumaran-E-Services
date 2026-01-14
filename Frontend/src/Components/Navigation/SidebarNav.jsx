@@ -4,6 +4,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
 import { toast } from "react-toastify";
+import "../../Styles/Navigation/SidebarNav.css";
 
 const SidebarNav = () => {
   const location = useLocation();
@@ -59,7 +60,6 @@ const SidebarNav = () => {
   const handleLogout = async () => {
     await logout();
     toast.success("Logged out successfully");
-    navigate("/login");
   };
 
   return (
@@ -165,7 +165,7 @@ const SidebarNav = () => {
                   >
                     {/* Fixed Icon Container - exactly 80px/sidebar width minus padding to center the icon */}
                     <div
-                      className="d-flex justify-content-center align-items-center"
+                      className="d-flex justify-content-center align-items-center nav-icon-wrapper"
                       style={{ width: "64px", minWidth: "64px", flexShrink: 0 }}
                     >
                       <i

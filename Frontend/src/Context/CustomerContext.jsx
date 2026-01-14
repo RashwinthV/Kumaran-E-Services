@@ -24,6 +24,7 @@ export const CustomerProvider = ({ children }) => {
   const { accessToken } = useAuth();
 
   const [customers, setCustomers] = useState([]);
+  const [investors, setInvestors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -60,6 +61,27 @@ export const CustomerProvider = ({ children }) => {
     [accessToken]
   );
 
+  const fetchInvestors = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await axios.get(API_ENDPOINTS.INVESTORS + "/my-branch", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.data.success) {
+        setInvestors(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching investors:", error);
+      setError(error.response?.data?.message || "Failed to fetch investors");
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
   const searchCustomerByPhone = useCallback(
     async (phone) => {
       if (!accessToken || !phone) return null;
@@ -93,6 +115,7 @@ export const CustomerProvider = ({ children }) => {
         });
         if (res.data.success) {
           await fetchCustomers(); // Refresh list
+          await fetchInvestors(); // Refresh investors list too
           return res.data.data;
         }
       } catch (error) {
@@ -103,14 +126,15 @@ export const CustomerProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken, fetchCustomers]
+    [accessToken, fetchCustomers, fetchInvestors]
   );
 
   useEffect(() => {
     if (accessToken) {
       fetchCustomers();
+      fetchInvestors();
     }
-  }, [accessToken, fetchCustomers]);
+  }, [accessToken, fetchCustomers, fetchInvestors]);
 
   const settleCustomerCredit = useCallback(
     async (customerId, settlementData) => {
@@ -169,9 +193,11 @@ export const CustomerProvider = ({ children }) => {
 
   const value = {
     customers,
+    investors,
     loading,
     error,
     fetchCustomers,
+    fetchInvestors,
     searchCustomerByPhone,
     upsertCustomer,
     settleCustomerCredit,

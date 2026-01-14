@@ -167,7 +167,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
       <div
         className="modal-backdrop fade show"
         onClick={onClose}
-        style={{ zIndex: 1040 }}
+        style={{ zIndex: 2040 }}
       ></div>
 
       <div
@@ -176,7 +176,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
         style={{ zIndex: 2050 }}
       >
         <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden animate-modal">
             {/* Header */}
             <div className="modal-header bg-success bg-opacity-10 border-0 p-4">
               <div>

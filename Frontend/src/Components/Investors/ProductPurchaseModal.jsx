@@ -100,10 +100,10 @@ const ProductPurchaseModal = ({
     >
       <div
         className="modal-dialog modal-xl"
-        style={{ maxWidth: "95vw", margin: "1rem auto" }}
+        style={{ maxWidth: "80vw", margin: "1rem auto" }}
       >
         <div
-          className="modal-content shadow-lg border-0 rounded-4"
+          className="modal-content shadow-lg border-0 rounded-4 animate-modal"
           style={{
             maxHeight: "95vh",
             display: "flex",

@@ -6,6 +6,7 @@ import InterestPaymentModal from "../../Components/Investors/InterestPaymentModa
 import InvestorDetailsModal from "../../Components/Investors/InvestorDetailsModal";
 import ProductPurchaseModal from "../../Components/Investors/ProductPurchaseModal";
 import PrincipalPayoutModal from "../../Components/Investors/PrincipalPayoutModal";
+import InvestorHistoryModal from "../../Components/Investors/InvestorHistoryModal";
 
 // Hardcoded data for demonstration
 const MOCK_INVESTORS = [
@@ -18,12 +19,32 @@ const MOCK_INVESTORS = [
     panNumber: "ABCDE1234F",
     kycStatus: "verified",
     preferredPayoutMode: "bank",
-    bankDetails: {
-      accountHolderName: "Rajesh Kumar",
-      bankName: "HDFC Bank",
-      accountNumber: "1234567890",
-      ifsc: "HDFC0001234",
-    },
+    bankAccounts: [
+      {
+        id: 1,
+        accountHolderName: "Rajesh Kumar",
+        bankName: "HDFC Bank",
+        accountNumber: "1234567890",
+        ifsc: "HDFC0001234",
+        isDefault: true,
+      },
+      {
+        id: 2,
+        accountHolderName: "Rajesh K",
+        bankName: "SBI",
+        accountNumber: "9876543210",
+        ifsc: "SBIN0001234",
+        isDefault: false,
+      },
+    ],
+    upiAccounts: [
+      {
+        id: 1,
+        upiId: "rajesh@hdfc",
+        upiPhone: "9876543210",
+        isDefault: true,
+      },
+    ],
     principalAmount: 100000,
     currentPrincipal: 100000,
     interestRate: 12,
@@ -132,10 +153,20 @@ const MOCK_INVESTORS = [
       accountNumber: "",
       ifsc: "",
     },
-    upiDetails: {
-      upiId: "arun@upi",
-      upiPhone: "9988776655",
-    },
+    upiAccounts: [
+      {
+        id: 1,
+        upiId: "arun@upi",
+        upiPhone: "9988776655",
+        isDefault: true,
+      },
+      {
+        id: 2,
+        upiId: "arun.secondary@upi",
+        upiPhone: "9988000000",
+        isDefault: false,
+      },
+    ],
     principalAmount: 50000,
     currentPrincipal: 50000,
     interestRate: 15,
@@ -158,26 +189,48 @@ const MOCK_INVESTORS = [
   },
 ];
 
+import { useCustomer } from "../../Context/CustomerContext";
+
 const Investors = () => {
-  const [investors, setInvestors] = useState(MOCK_INVESTORS);
+  const { investors, loading, error, fetchInvestors, upsertCustomer } =
+    useCustomer();
   const [showInvestorModal, setShowInvestorModal] = useState(false);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedInvestor, setSelectedInvestor] = useState(null);
   const [editMode, setEditMode] = useState(false);
+
+  // Map backend structure to frontend expectations if necessary
+  const processedInvestors = investors.map((inv) => {
+    const details = inv.investorDetails || {};
+    // If currentPrincipal is 0 and there's no payout history, it's likely uninitialized
+    const currentPrincipal =
+      details.currentPrincipal === 0 &&
+      (!details.payoutHistory || details.payoutHistory.length === 0)
+        ? details.principalAmount
+        : details.currentPrincipal ?? details.principalAmount;
+
+    return {
+      ...inv,
+      id: inv._id, // Use MongoDB ID as id
+      ...details, // Flatten investorDetails for the list/props
+      currentPrincipal,
+    };
+  });
 
   // Calculate pending interest for current month
   const calculatePendingInterest = (investor) => {
     const principal = investor.principalAmount;
-    const rate = investor.interestRate / 100 / 12; // Monthly rate
+    const rate = investor.interestRate / 100; // Monthly rate (paise per ₹1)
 
     if (investor.interestType === "simple") {
       return principal * rate;
     } else {
       // Compound interest
-      const currentAmount = principal + investor.totalInterestPaid;
+      const currentAmount = principal + (investor.totalInterestPaid || 0);
       return currentAmount * rate;
     }
   };
@@ -191,7 +244,7 @@ const Investors = () => {
     );
 
     const principal = investor.principalAmount;
-    const monthlyRate = investor.interestRate / 100 / 12;
+    const monthlyRate = investor.interestRate / 100; // Treated as monthly rate now
 
     let totalAccumulated = 0;
 
@@ -242,31 +295,41 @@ const Investors = () => {
     setShowDetailsModal(true);
   };
 
-  const handleSaveInvestor = (investorData) => {
-    if (editMode) {
-      setInvestors(
-        investors.map((inv) =>
-          inv.id === selectedInvestor.id ? { ...inv, ...investorData } : inv
-        )
-      );
-    } else {
-      const newInvestor = {
-        ...investorData,
-        id: Math.max(...investors.map((i) => i.id)) + 1,
-        totalInterestPaid: 0,
-        interestHistory: [],
-        investments: [
-          {
-            id: 1,
-            date: investorData.startDate,
-            amount: investorData.principalAmount,
-            type: "initial",
-          },
-        ],
+  const handleSaveInvestor = async (investorData) => {
+    try {
+      // Prepare data for backend
+      const payload = {
+        name: investorData.name,
+        phone: investorData.phone,
+        email: investorData.email || "",
+        city: investorData.city || "",
+        role: "Investor", // Default to investor role when adding from here
+        investorDetails: {
+          ...investorData,
+          currentPrincipal:
+            editMode && selectedInvestor?.currentPrincipal !== undefined
+              ? selectedInvestor.currentPrincipal
+              : investorData.principalAmount,
+          investments:
+            editMode && selectedInvestor?.investments
+              ? selectedInvestor.investments
+              : [
+                  {
+                    date: investorData.startDate,
+                    amount: investorData.principalAmount,
+                    type: "initial",
+                  },
+                ],
+        },
       };
-      setInvestors([...investors, newInvestor]);
+
+      const result = await upsertCustomer(payload);
+      if (result) {
+        setShowInvestorModal(false);
+      }
+    } catch (err) {
+      console.error("Failed to save investor:", err);
     }
-    setShowInvestorModal(false);
   };
 
   const handleInterestPayment = (paymentData) => {
@@ -364,7 +427,11 @@ const Investors = () => {
               amount: payoutData.amount,
               date: payoutData.payoutDate,
               reason: payoutData.reason,
+              mode: payoutData.mode,
+              reference: payoutData.reference,
               notes: payoutData.notes,
+              remainingPrincipal: newCurrentPrincipal, // changed from newPrincipal for clarity if preferred, but existing code used newPrincipal. Let's stick to newPrincipal if that was the convention, or add standard fields. The screenshot showed Status, let's add Status.
+              status: "paid",
               previousPrincipal: inv.currentPrincipal,
               newPrincipal: newCurrentPrincipal,
             },
@@ -377,6 +444,34 @@ const Investors = () => {
     setInvestors(updatedInvestors);
     setShowPayoutModal(false);
   };
+
+  const handleViewHistoryList = () => {
+    setShowHistoryModal(true);
+  };
+
+  if (loading && investors.length === 0) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "calc(100vh - 100px)" }}
+      >
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container p-4">
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid p-4">
@@ -408,7 +503,7 @@ const Investors = () => {
                 <div>
                   <p className="text-muted small mb-1">Total Investors</p>
                   <h3 className="fw-bold text-primary mb-0">
-                    {investors.length}
+                    {processedInvestors.length}
                   </h3>
                 </div>
                 <i className="bi bi-people fs-1 text-primary opacity-25"></i>
@@ -424,8 +519,11 @@ const Investors = () => {
                   <p className="text-muted small mb-1">Total Investment</p>
                   <h3 className="fw-bold text-success mb-0">
                     ₹
-                    {investors
-                      .reduce((sum, inv) => sum + inv.principalAmount, 0)
+                    {processedInvestors
+                      .reduce(
+                        (sum, inv) => sum + (inv.currentPrincipal || 0),
+                        0
+                      )
                       .toLocaleString()}
                   </h3>
                 </div>
@@ -442,8 +540,11 @@ const Investors = () => {
                   <p className="text-muted small mb-1">Interest Paid</p>
                   <h3 className="fw-bold text-warning mb-0">
                     ₹
-                    {investors
-                      .reduce((sum, inv) => sum + inv.totalInterestPaid, 0)
+                    {processedInvestors
+                      .reduce(
+                        (sum, inv) => sum + (inv.totalInterestPaid || 0),
+                        0
+                      )
                       .toLocaleString()}
                   </h3>
                 </div>
@@ -460,7 +561,7 @@ const Investors = () => {
                   <p className="text-muted small mb-1">Pending This Month</p>
                   <h3 className="fw-bold text-info mb-0">
                     ₹
-                    {investors
+                    {processedInvestors
                       .reduce(
                         (sum, inv) => sum + calculatePendingInterest(inv),
                         0
@@ -477,13 +578,14 @@ const Investors = () => {
 
       {/* Investors List */}
       <InvestorsList
-        investors={investors}
+        investors={processedInvestors}
         onEdit={handleEditInvestor}
         onDelete={handleDeleteInvestor}
         onPayInterest={handlePayInterest}
         onViewDetails={handleViewDetails}
         onBuyProducts={handleBuyProducts}
         onPayoutPrincipal={handlePayoutPrincipal}
+        onViewHistory={handleViewHistoryList}
         calculatePendingInterest={calculatePendingInterest}
         calculateAccumulatedInterest={calculateAccumulatedInterest}
         calculateUnpaidInterest={calculateUnpaidInterest}
@@ -537,6 +639,12 @@ const Investors = () => {
         onClose={() => setShowPayoutModal(false)}
         investor={selectedInvestor}
         onSave={handlePrincipalPayout}
+      />
+
+      <InvestorHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        investors={processedInvestors}
       />
     </div>
   );

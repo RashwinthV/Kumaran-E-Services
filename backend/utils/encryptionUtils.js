@@ -1,0 +1,41 @@
+const crypto = require("crypto");
+
+const ALGORITHM = "aes-256-cbc";
+const ENCRYPTION_KEY = Buffer.from(
+  process.env.ENCRYPTION_KEY ||
+    "9a7b3c2e5f1a4d8c0b2e7f9a1c3d5e7f8a2b4c6e8d0a2c4e6f8b0d2e4f6a8c0e",
+  "hex"
+);
+const IV_LENGTH = 16;
+
+const encrypt = (text) => {
+  if (!text) return text;
+  try {
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+    let encrypted = cipher.update(text);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    return iv.toString("hex") + ":" + encrypted.toString("hex");
+  } catch (error) {
+    console.error("Encryption error:", error);
+    return text;
+  }
+};
+
+const decrypt = (text) => {
+  if (!text || !text.includes(":")) return text;
+  try {
+    const textParts = text.split(":");
+    const iv = Buffer.from(textParts.shift(), "hex");
+    const encryptedText = Buffer.from(textParts.join(":"), "hex");
+    const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (error) {
+    console.error("Decryption error:", error);
+    return text;
+  }
+};
+
+module.exports = { encrypt, decrypt };

@@ -66,6 +66,103 @@ const creditItemSchema = new mongoose.Schema({
   paymentHistory: [paymentHistorySchema], // Track payments made against this credit item
 });
 
+const { encrypt, decrypt } = require("../utils/encryptionUtils");
+
+const investorDetailsSchema = new mongoose.Schema(
+  {
+    principalAmount: { type: Number, default: 0 },
+    currentPrincipal: { type: Number, default: 0 },
+    interestRate: { type: Number, default: 0 },
+    interestType: {
+      type: String,
+      enum: ["simple", "compound"],
+      default: "simple",
+    },
+    startDate: { type: Date },
+    lastInterestPaid: { type: Date },
+    totalInterestPaid: { type: Number, default: 0 },
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
+    paymentMode: { type: String },
+    investorType: {
+      type: String,
+      enum: ["individual", "business"],
+      default: "individual",
+    },
+    panNumber: {
+      type: String,
+      get: decrypt,
+      set: encrypt,
+    },
+    kycStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
+    },
+    preferredPayoutMode: { type: String },
+    bankAccounts: [
+      {
+        accountHolderName: String,
+        bankName: String,
+        accountNumber: {
+          type: String,
+          get: decrypt,
+          set: encrypt,
+        },
+        ifsc: {
+          type: String,
+          get: decrypt,
+          set: encrypt,
+        },
+        isDefault: Boolean,
+      },
+    ],
+    upiAccounts: [
+      {
+        upiId: {
+          type: String,
+          get: decrypt,
+          set: encrypt,
+        },
+        upiPhone: String,
+        isDefault: Boolean,
+      },
+    ],
+    investments: [
+      {
+        date: Date,
+        amount: Number,
+        type: { type: String }, // e.g., 'initial', 'additional'
+      },
+    ],
+    payoutHistory: [
+      {
+        date: Date,
+        amount: Number,
+        type: { type: String }, // e.g., 'interest', 'principal'
+        mode: String,
+        reference: String,
+        status: String,
+        notes: String,
+        remainingPrincipal: Number,
+      },
+    ],
+    interestHistory: [
+      {
+        month: String,
+        amount: Number,
+        paidDate: Date,
+        mode: String,
+        status: String,
+        products: String,
+      },
+    ],
+  },
+  {
+    toJSON: { getters: true },
+    toObject: { getters: true },
+  }
+);
+
 const customerSchema = new mongoose.Schema(
   {
     name: {
@@ -77,6 +174,11 @@ const customerSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
     },
     city: {
       type: String,
@@ -93,10 +195,19 @@ const customerSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-
+    role: {
+      type: String,
+      enum: ["customer", "Investor", "Customer & investor"],
+      default: "customer",
+    },
+    investorDetails: investorDetailsSchema,
     credits: [creditItemSchema],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
+  }
 );
 
 module.exports =

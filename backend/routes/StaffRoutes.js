@@ -11,6 +11,7 @@ const {
 } = require("../controller/AccountController");
 const {
   getMyBranchCustomers,
+  getBranchInvestors,
   upsertCustomer,
   searchByPhone,
   settleCustomerCredit,
@@ -38,6 +39,7 @@ router.post("/accounts/:id/close", protect, closeAccount);
 
 // Customer routes for staff
 router.get("/customers/my-branch", protect, getMyBranchCustomers);
+router.get("/customers/investors/my-branch", protect, getBranchInvestors);
 router.post("/customers", protect, upsertCustomer);
 router.get("/customers/search/:phone", protect, searchByPhone);
 router.post(

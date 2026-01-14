@@ -96,7 +96,7 @@ const CustomerDetailModal = ({ isOpen, onClose, customer }) => {
         style={{ zIndex: 2050 }}
       >
         <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-          <div className="modal-content border-0 shadow-lg">
+          <div className="modal-content border-0 shadow-lg animate-modal">
             {/* Header */}
             <div className="modal-header bg-primary bg-opacity-10 border-0 p-3">
               <div className="d-flex align-items-center">
