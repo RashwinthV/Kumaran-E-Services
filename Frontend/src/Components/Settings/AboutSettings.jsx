@@ -21,6 +21,8 @@ const AboutSettings = () => {
           <span className="badge bg-success-subtle text-success border border-success px-3">
             Online
           </span>
+          <a href="www.google.com" target="_blank">Google</a>
+          
         </div>
 
         <div className="setting-row border-top pt-4">

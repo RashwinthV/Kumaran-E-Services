@@ -158,7 +158,6 @@ function Settings() {
               branchInfo={branchInfo}
             />
           )}
-
           {activeTab === "sync" && <SyncSettings handleSync={handleSync} />}
 
           {activeTab === "shortcuts" && <ShortcutsSettings />}

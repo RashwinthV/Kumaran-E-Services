@@ -6,23 +6,22 @@ export const SERVICE_MODULES = {
       "Electricity",
       "Water",
       "Gas/LPG",
-      "Landline",
       "Broadband",
-      "Cable TV",
+      // "Cable TV",
     ],
   },
-  MOBILE_TV: {
-    label: "Mobile & TV",
-    icon: "bi-phone",
-    services: [
-      "Mobile Prepaid",
-      "Mobile Postpaid",
-      "DTH Recharge",
-      "Data Card",
-      "OTT Subscription",
-      "Music App",
-    ],
-  },
+  // MOBILE_TV: {
+  //   label: "Mobile & TV",
+  //   icon: "bi-phone",
+  //   services: [
+  //     // "Mobile Prepaid",
+  //     // "Mobile Postpaid",
+  //     "DTH Recharge",
+  //     "Data Card",
+  //     "OTT Subscription",
+  //     "Music App",
+  //   ],
+  // },
   FINANCIAL: {
     label: "Financial",
     icon: "bi-bank",
@@ -79,7 +78,7 @@ export const SERVICE_MODULES = {
   LOCAL: {
     label: "Local Services",
     icon: "bi-shop",
-    services: ["Xerox", "Scan", "Photograph", "Lamination"],
+    services: ["Xerox","Printout", "Scan", "Photograph", "Lamination"],
   },
 };
 

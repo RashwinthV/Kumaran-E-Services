@@ -6,16 +6,7 @@
   box-sizing: border-box;
 }
 
-.print-container.a4 {
-  width: 210mm;
-  min-height: 297mm;
-  padding: 15mm;
-}
-.print-container.a5 {
-  width: 148mm;
-  min-height: 210mm;
-  padding: 10mm;
-}
+/* Paper specifics removed because they are handled dynamically in PrintTemplate.jsx */
 
 /* Color Modes */
 .print-container.color-bw {
@@ -86,7 +77,6 @@
   background: #f8f9fa;
   padding: 10px;
   border-bottom: 1px solid #ddd;
-  text-align: left;
 }
 .standard-style .items-table td {
   padding: 10px;
@@ -98,7 +88,9 @@
   background: #1e293b;
   color: white;
   padding: 2rem;
-  margin: -15mm -15mm 2rem -15mm;
+  margin: calc(var(--print-padding, 15mm) * -1)
+    calc(var(--print-padding, 15mm) * -1) 2rem
+    calc(var(--print-padding, 15mm) * -1);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -155,7 +147,9 @@
 .modern-style .modern-top-bar {
   height: 8px;
   background: linear-gradient(to right, #6366f1, #a855f7);
-  margin: -15mm -15mm 2rem -15mm;
+  margin: calc(var(--print-padding, 15mm) * -1)
+    calc(var(--print-padding, 15mm) * -1) 2rem
+    calc(var(--print-padding, 15mm) * -1);
 }
 .modern-style .modern-header {
   display: flex;

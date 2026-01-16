@@ -2,36 +2,19 @@ import React from "react";
 
 const SaleHistoryStats = ({ data }) => {
   // Revenue is now tracked by paidAmount on every sale (including partial credit payments)
+  // Sales card displays the Net Revenue (Total bill value minus total value of items returned)
+  // This matches the "Total Amount" column displayed in the transaction table.
   const totalRevenue = (data || []).reduce((sum, item) => {
-    const s = (item.status || "").toLowerCase();
-    const isPaid = s === "paid" || s === "completed" || s === "success";
     const amt = Number(item.amount || 0);
-    const p = Number(item.paidAmount || 0);
     const r = Number(item.totalRefundedAmount || 0);
-
-    let val = 0;
-    if (isPaid) {
-      val = p > 0 ? p : amt - r;
-    } else {
-      val = p;
-    }
-    return sum + (isNaN(val) ? 0 : val);
+    const net = amt - r;
+    return sum + (isNaN(net) ? 0 : net);
   }, 0);
 
+  // Total Refunded displays the actual cash returned to customers ("handed in hand")
+  // This avoids double-counting credit settlements or adjustments as cash outflows.
   const totalRefunded = (data || []).reduce((sum, item) => {
-    // 1. Use cashRefundAmount if available (newest records)
-    if (item.cashRefundAmount > 0) return sum + Number(item.cashRefundAmount);
-
-    // 2. Legacy Fallback:
-    const paymentMode = (item.paymentMode || "").toLowerCase();
-    const isCredits = paymentMode === "credits";
-
-    // For credit sales without cashRefundAmount, we can't be 100% sure of the cash impact
-    // from legacy data, but usually it's 0 if not explicitly tracked.
-    if (isCredits) return sum;
-
-    // For standard sales, the full refund amount is the cash impact
-    return sum + Number(item.totalRefundedAmount || 0);
+    return sum + Number(item.cashRefundAmount || 0);
   }, 0);
 
   const countActiveSales = data.filter(
@@ -51,7 +34,7 @@ const SaleHistoryStats = ({ data }) => {
           </div>
           <div>
             <p className="text-muted small mb-1 fw-bold text-uppercase">
-              Net Revenue
+              Sales{" "}
             </p>
             <h4 className="fw-bold mb-0 text-dark">
               ₹{totalRevenue.toLocaleString()}

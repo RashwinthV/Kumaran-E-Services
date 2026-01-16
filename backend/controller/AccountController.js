@@ -23,7 +23,7 @@ exports.getAllAccounts = async (req, res) => {
           isClosed: false,
         });
         account.currentStatus = "Open";
-        return await account.save();
+        return await account.save({ validateBeforeSave: false });
       }
       return account;
     });
@@ -71,7 +71,7 @@ exports.getAccountsByBranch = async (req, res) => {
           isClosed: false,
         });
         account.currentStatus = "Open";
-        return await account.save();
+        return await account.save({ validateBeforeSave: false });
       }
       return account;
     });
@@ -123,7 +123,7 @@ exports.getAccountById = async (req, res) => {
         isClosed: false,
       });
       account.currentStatus = "Open";
-      account = await account.save();
+      account = await account.save({ validateBeforeSave: false });
       // Refetch to ensure populated data is intact or re-populate
       account = await Account.findById(account._id).populate(
         "branch",
@@ -436,7 +436,7 @@ exports.getMyBranchAccounts = async (req, res) => {
           isClosed: false,
         });
         account.currentStatus = "Open";
-        return await account.save();
+        return await account.save({ validateBeforeSave: false });
       }
       return account;
     });
@@ -541,7 +541,7 @@ exports.ensureDailySession = async (accountId, session = null) => {
       isClosed: false,
     });
     account.currentStatus = "Open";
-    await account.save({ session });
+    await account.save({ session, validateBeforeSave: false });
     dailySession = account.balanceHistory[account.balanceHistory.length - 1];
   }
 

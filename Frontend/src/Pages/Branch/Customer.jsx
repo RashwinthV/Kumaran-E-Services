@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useCustomer } from "../../Context/CustomerContext";
 import CustomerStats from "../../Components/Customer/CustomerStats";
 import CustomerFilters from "../../Components/Customer/CustomerFilters";
@@ -24,6 +24,9 @@ const Customer = () => {
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
 
   const handleReset = () => {
     setFilters({

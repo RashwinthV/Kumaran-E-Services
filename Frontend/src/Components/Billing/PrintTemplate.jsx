@@ -32,6 +32,29 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
           .join(", ")
     : "Local Branch St, City";
 
+  const paperDimensions = {
+    A4: { portrait: ["210mm", "297mm"], landscape: ["297mm", "210mm"] },
+    A5: { portrait: ["148mm", "210mm"], landscape: ["210mm", "148mm"] },
+    Letter: { portrait: ["216mm", "279mm"], landscape: ["279mm", "216mm"] },
+  };
+
+  const currentOrientation = settings.orientation || "portrait";
+  const [width, height] = paperDimensions[paperSize]
+    ? paperDimensions[paperSize][currentOrientation]
+    : paperDimensions["A4"][currentOrientation];
+
+  const paddingValue =
+    settings.printMargin === "none" ? "0mm" : settings.printMargin || "0mm";
+
+  const containerStyle = {
+    width: width,
+    minHeight: height,
+    padding: paddingValue,
+    "--print-padding": paddingValue, // For negative margins in templates
+    position: "relative",
+    overflow: "hidden",
+  };
+
   const renderTemplate = () => {
     const props = {
       sale,
@@ -58,9 +81,10 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
 
   return (
     <div
-      className={`print-container ${paperSize.toLowerCase()} template-${billTemplate} color-${
+      className={`print-container template-${billTemplate} color-${
         settings.colorMode || "color"
       }`}
+      style={containerStyle}
     >
       {renderTemplate()}
     </div>
@@ -82,7 +106,17 @@ const StandardInvoice = ({
   <div className="invoice-box standard-style">
     <div className="invoice-header">
       <div className="branch-info">
-        <h2>Kumaran E-Services</h2>
+        <h2 style={{ marginBottom: "2px" }}>Kumaran E-Services</h2>
+        <h4
+          style={{
+            margin: "0 0 8px 0",
+            color: "#444",
+            fontWeight: "600",
+            fontSize: "1rem",
+          }}
+        >
+          {branchInfo?.name || "Main Branch"}
+        </h4>
         <p>{formattedAddress}</p>
         <p>Ph: {branchInfo?.contact?.phone || branchInfo?.contact}</p>
         {branchInfo?.gstNumber && (
@@ -115,10 +149,16 @@ const StandardInvoice = ({
     <table className="items-table">
       <thead>
         <tr>
-          <th>Item</th>
-          <th className="text-center">Qty</th>
-          <th className="text-right">Price</th>
-          <th className="text-right">Total</th>
+          <th style={{ width: "50%" }}>Item Description</th>
+          <th className="text-center" style={{ width: "10%" }}>
+            Qty
+          </th>
+          <th className="text-right" style={{ width: "20%" }}>
+            Price
+          </th>
+          <th className="text-right" style={{ width: "20%" }}>
+            Total
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -205,7 +245,7 @@ const ProfessionalInvoice = ({
     <div className="pro-header">
       <div className="pro-logo-section">
         <h1>Kumaran E-Services</h1>
-        <p className="pro-tagline">Professional Business Services</p>
+        <p className="pro-tagline">{branchInfo?.name || "Main Branch"}</p>
       </div>
       <div className="pro-invoice-title">
         <h2 className="title-accent">INVOICE</h2>
@@ -241,10 +281,16 @@ const ProfessionalInvoice = ({
     <table className="pro-table">
       <thead>
         <tr>
-          <th>DESCRIPTION</th>
-          <th className="text-center">QTY</th>
-          <th className="text-right">RATE</th>
-          <th className="text-right">AMOUNT</th>
+          <th style={{ width: "50%" }}>DESCRIPTION</th>
+          <th className="text-center" style={{ width: "10%" }}>
+            QTY
+          </th>
+          <th className="text-right" style={{ width: "20%" }}>
+            RATE
+          </th>
+          <th className="text-right" style={{ width: "20%" }}>
+            AMOUNT
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -309,8 +355,8 @@ const ProfessionalInvoice = ({
           </div>
         )}
         <div className="pro-total-row pro-grand-total">
-          <span>TOTAL AMOUNT</span>
-          <span>
+          <span style={{ fontSize: "1.1rem" }}>TOTAL AMOUNT</span>
+          <span style={{ fontSize: "1.25rem" }}>
             {currencySymbol}
             {amount.toFixed(2)}
           </span>
@@ -337,8 +383,20 @@ const ModernPreviewInvoice = ({
     <div className="modern-body">
       <div className="modern-header">
         <div className="modern-brand">
-          <div className="modern-logo">{branchInfo?.name?.charAt(0)}</div>
-          <h4>Kumaran E-Services</h4>
+          <div className="modern-logo">K</div>
+          <div className="modern-brand-info">
+            <h4 style={{ margin: 0, lineHeight: 1 }}>Kumaran E-Services</h4>
+            <p
+              style={{
+                margin: "5px 0 0 0",
+                color: "#666",
+                fontSize: "0.85rem",
+                fontWeight: "600",
+              }}
+            >
+              {branchInfo?.name || "Main Branch"}
+            </p>
+          </div>
         </div>
         <div className="modern-meta">
           <span className="modern-bill-badge">INV-{sale.billNo}</span>

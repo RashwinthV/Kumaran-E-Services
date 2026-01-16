@@ -53,7 +53,14 @@ const individualSaleSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["Completed", "Pending", "Refunded", "Partially Refunded"],
+    enum: [
+      "Completed",
+      "Pending",
+      "Refunded",
+      "Partially Refunded",
+      "Paid",
+      "Cancelled",
+    ],
     default: "Completed",
   },
   paidAmount: {
