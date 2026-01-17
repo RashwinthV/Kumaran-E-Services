@@ -33,7 +33,9 @@ export const ModernTemplate = ({
           <div class="modern-contact-card">
             <h5>FROM</h5>
             <p><strong>${branchDetails.name}</strong></p>
-            <p class="sub">${branchDetails.address}</p>
+            <div class="modern-staff-tag">
+              <span>Billed By: ${staffName}</span>
+            </div>
           </div>
           <div class="modern-contact-card">
             <h5>FOR</h5>
@@ -69,33 +71,37 @@ export const ModernTemplate = ({
           </table>
         </div>
 
-        <div class="modern-summary">
-          <div class="modern-summary-item"><span>Subtotal</span><span>${currencySymbol}${subtotal.toFixed(
+        <div class="modern-footer-grid">
+          <div class="modern-terms">
+             <h5>Terms & Conditions</h5>
+             <p>1. Goods once sold will not be taken back or exchanged.<br>
+                2. Warranty, if any, will be provided by the manufacturer directly.<br>
+                3. Subject to local jurisdiction.</p>
+          </div>
+          <div class="modern-summary">
+            <div class="modern-summary-item"><span>Subtotal</span><span>${currencySymbol}${subtotal.toFixed(
     2
   )}</span></div>
-          ${
-            discount > 0
-              ? `<div class="modern-summary-item"><span>Discount Applied</span><span>-${currencySymbol}${discount.toFixed(
-                  2
-                )}</span></div>`
-              : ""
-          }
-          <div class="modern-summary-item"><span>GST Amount</span><span>${currencySymbol}${tax.toFixed(
+            <div class="modern-summary-item"><span>GST Amount</span><span>${currencySymbol}${tax.toFixed(
     2
   )}</span></div>
-          ${
-            Math.abs(roundingValue) > 0.01
-              ? `<div class="modern-summary-item"><span>Rounding</span><span>${currencySymbol}${roundingValue.toFixed(
-                  2
-                )}</span></div>`
-              : ""
-          }
-          <div class="modern-summary-item modern-total"><span>TOTAL PAYABLE</span><span>${currencySymbol}${amount.toFixed(
+            ${
+              discount > 0
+                ? `<div class="modern-summary-item"><span>Discount Applied</span><span>-${currencySymbol}${discount.toFixed(
+                    2
+                  )}</span></div>`
+                : ""
+            }
+            ${
+              Math.abs(roundingValue) > 0.01
+                ? `<div class="modern-summary-item"><span>Rounding</span><span>${currencySymbol}${roundingValue.toFixed(
+                    2
+                  )}</span></div>`
+                : ""
+            }
+            <div class="modern-summary-item modern-total"><span>TOTAL </span><span>${currencySymbol}${amount.toFixed(
     2
   )}</span></div>
-          <div class="modern-summary-item" style="border-top: 1px dashed #ddd; margin-top: 10px; padding-top: 5px;">
-            <span>Billed By:</span>
-            <span>${staffName}</span>
           </div>
         </div>
       </div>

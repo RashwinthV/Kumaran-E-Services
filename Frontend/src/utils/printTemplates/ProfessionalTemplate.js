@@ -25,7 +25,6 @@ export const ProfessionalTemplate = ({
       <div class="pro-details-grid">
         <div class="pro-detail-col">
           <h4 class="pro-label">OUR DETAILS</h4>
-          <p>${branchDetails.address}</p>
           <p>Contact: ${branchDetails.contact}</p>
           ${
             branchDetails.gstNumber
@@ -87,6 +86,9 @@ export const ProfessionalTemplate = ({
           <div class="pro-total-row"><span>SUB TOTAL</span><span>${currencySymbol}${subtotal.toFixed(
     2
   )}</span></div>
+          <div class="pro-total-row"><span>TAX (GST)</span><span>${currencySymbol}${tax.toFixed(
+    2
+  )}</span></div>
           ${
             discount > 0
               ? `<div class="pro-total-row" style="color: #000;"><span>DISCOUNT (-)</span><span>${currencySymbol}${discount.toFixed(
@@ -94,9 +96,6 @@ export const ProfessionalTemplate = ({
                 )}</span></div>`
               : ""
           }
-          <div class="pro-total-row"><span>TAX (GST)</span><span>${currencySymbol}${tax.toFixed(
-    2
-  )}</span></div>
           ${
             Math.abs(roundingValue) > 0.01
               ? `<div class="pro-total-row"><span>ROUNDING</span><span>${currencySymbol}${roundingValue.toFixed(

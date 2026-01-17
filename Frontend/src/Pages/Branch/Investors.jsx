@@ -7,6 +7,7 @@ import InvestorDetailsModal from "../../Components/Investors/InvestorDetailsModa
 import ProductPurchaseModal from "../../Components/Investors/ProductPurchaseModal";
 import PrincipalPayoutModal from "../../Components/Investors/PrincipalPayoutModal";
 import InvestorHistoryModal from "../../Components/Investors/InvestorHistoryModal";
+import { exportInvestorPDF } from "../../utils/investorUtils";
 
 // Hardcoded data for demonstration
 const MOCK_INVESTORS = [
@@ -326,6 +327,10 @@ const Investors = () => {
       const result = await upsertCustomer(payload);
       if (result) {
         setShowInvestorModal(false);
+        // Generate Certificate for new investor
+        if (!editMode) {
+          exportInvestorPDF(investorData);
+        }
       }
     } catch (err) {
       console.error("Failed to save investor:", err);
@@ -586,6 +591,7 @@ const Investors = () => {
         onBuyProducts={handleBuyProducts}
         onPayoutPrincipal={handlePayoutPrincipal}
         onViewHistory={handleViewHistoryList}
+        onDownloadCertificate={exportInvestorPDF}
         calculatePendingInterest={calculatePendingInterest}
         calculateAccumulatedInterest={calculateAccumulatedInterest}
         calculateUnpaidInterest={calculateUnpaidInterest}

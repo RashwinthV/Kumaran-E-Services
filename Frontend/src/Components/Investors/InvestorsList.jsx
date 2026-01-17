@@ -9,6 +9,7 @@ const InvestorsList = ({
   onBuyProducts,
   onPayoutPrincipal,
   onViewHistory,
+  onDownloadCertificate,
   calculatePendingInterest,
   calculateAccumulatedInterest,
   calculateUnpaidInterest,
@@ -185,6 +186,22 @@ const InvestorsList = ({
                         }}
                       >
                         <i className="bi bi-cash-stack"></i>
+                      </button>
+                      <button
+                        className="btn btn-sm btn-light text-warning shadow-sm border"
+                        onClick={() => onDownloadCertificate(investor)}
+                        title="Download Certificate"
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          padding: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <i className="bi bi-file-earmark-pdf-fill"></i>
                       </button>
                     </div>
                   </td>

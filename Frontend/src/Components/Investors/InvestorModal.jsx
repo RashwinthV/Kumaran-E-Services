@@ -11,6 +11,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
     email: "",
     investorType: "individual",
     panNumber: "",
+    aadharNumber: "",
     kycStatus: "pending",
     preferredPayoutMode: "cash",
     bankAccounts: [
@@ -34,7 +35,6 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
     interestType: "simple",
     startDate: new Date().toISOString().split("T")[0],
     status: "active",
-    paymentMode: "cash",
   });
 
   useEffect(() => {
@@ -45,6 +45,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
         email: investor.email || "",
         investorType: investor.investorType || "individual",
         panNumber: investor.panNumber || "",
+        aadharNumber: investor.aadharNumber || "",
         kycStatus: investor.kycStatus || "pending",
         preferredPayoutMode: investor.preferredPayoutMode || "cash",
         bankAccounts: investor.bankAccounts || [
@@ -68,7 +69,6 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
         interestType: investor.interestType,
         startDate: investor.startDate,
         status: investor.status,
-        paymentMode: investor.paymentMode,
       });
     } else {
       setFormData({
@@ -77,31 +77,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
         email: "",
         investorType: "individual",
         panNumber: "",
-        kycStatus: "pending",
-        preferredPayoutMode: "cash",
-        bankDetails: {
-          accountHolderName: "",
-          bankName: "",
-          accountNumber: "",
-          ifsc: "",
-        },
-        upiDetails: {
-          upiId: "",
-          upiPhone: "",
-        },
-        principalAmount: "",
-        interestRate: "",
-        interestType: "simple",
-        startDate: new Date().toISOString().split("T")[0],
-        status: "active",
-        paymentMode: "cash",
-      });
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        investorType: "individual",
-        panNumber: "",
+        aadharNumber: "",
         kycStatus: "pending",
         preferredPayoutMode: "cash",
         bankAccounts: [
@@ -125,7 +101,6 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
         interestType: "simple",
         startDate: new Date().toISOString().split("T")[0],
         status: "active",
-        paymentMode: "cash",
       });
     }
   }, [investor, editMode, isOpen]);
@@ -356,6 +331,21 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   />
                 </div>
                 <div className="col-md-6">
+                  <label className="form-label fw-bold small">
+                    Aadhar Number
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formData.aadharNumber}
+                    onChange={(e) =>
+                      handleChange("aadharNumber", e.target.value)
+                    }
+                    placeholder="12-digit Aadhar Number"
+                    maxLength={12}
+                  />
+                </div>
+                <div className="col-md-6">
                   <label className="form-label fw-bold small">KYC Status</label>
                   <select
                     className="form-select"
@@ -438,22 +428,6 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                     onChange={(e) => handleChange("startDate", e.target.value)}
                     required
                   />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-bold small">
-                    Default Payment Mode
-                  </label>
-                  <select
-                    className="form-select"
-                    value={formData.paymentMode}
-                    onChange={(e) =>
-                      handleChange("paymentMode", e.target.value)
-                    }
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="products">Products</option>
-                    <option value="reinvest">Reinvest</option>
-                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">Status</label>
