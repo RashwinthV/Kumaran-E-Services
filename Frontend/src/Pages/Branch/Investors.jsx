@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { API_ENDPOINTS } from "../../config/api";
 import "../../Styles/dashboard.css";
 import InvestorsList from "../../Components/Investors/InvestorsList";
 import InvestorModal from "../../Components/Investors/InvestorModal";
@@ -7,6 +10,7 @@ import InvestorDetailsModal from "../../Components/Investors/InvestorDetailsModa
 import ProductPurchaseModal from "../../Components/Investors/ProductPurchaseModal";
 import PrincipalPayoutModal from "../../Components/Investors/PrincipalPayoutModal";
 import InvestorHistoryModal from "../../Components/Investors/InvestorHistoryModal";
+import ConfirmationModal from "../../Components/Modals/ConfirmationModal";
 import { exportInvestorPDF } from "../../utils/investorUtils";
 
 // Hardcoded data for demonstration
@@ -193,8 +197,16 @@ const MOCK_INVESTORS = [
 import { useCustomer } from "../../Context/CustomerContext";
 
 const Investors = () => {
-  const { investors, loading, error, fetchInvestors, upsertCustomer } =
-    useCustomer();
+  const {
+    investors,
+    loading,
+    error,
+    fetchInvestors,
+    upsertCustomer,
+    checkMaturity,
+    closeInvestment,
+    deleteInvestment,
+  } = useCustomer();
   const [showInvestorModal, setShowInvestorModal] = useState(false);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -203,24 +215,75 @@ const Investors = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedInvestor, setSelectedInvestor] = useState(null);
   const [editMode, setEditMode] = useState(false);
-
-  // Map backend structure to frontend expectations if necessary
-  const processedInvestors = investors.map((inv) => {
-    const details = inv.investorDetails || {};
-    // If currentPrincipal is 0 and there's no payout history, it's likely uninitialized
-    const currentPrincipal =
-      details.currentPrincipal === 0 &&
-      (!details.payoutHistory || details.payoutHistory.length === 0)
-        ? details.principalAmount
-        : details.currentPrincipal ?? details.principalAmount;
-
-    return {
-      ...inv,
-      id: inv._id, // Use MongoDB ID as id
-      ...details, // Flatten investorDetails for the list/props
-      currentPrincipal,
-    };
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    type: "danger",
   });
+
+  useEffect(() => {
+    checkMaturity();
+  }, [checkMaturity]);
+
+  // Map backend structure to frontend expectations
+  // Handle new array-based structure: One row per investment
+  const processedInvestors = investors.flatMap((inv) => {
+    const investments =
+      inv.investmentDetails ||
+      (inv.investorDetails ? [inv.investorDetails] : []);
+
+    return investments.map((investment) => {
+      const details = investment || {};
+      const currentPrincipal =
+        details.currentPrincipal === 0 &&
+        (!details.payoutHistory || details.payoutHistory.length === 0)
+          ? details.principalAmount
+          : (details.currentPrincipal ?? details.principalAmount ?? 0);
+
+      return {
+        ...inv,
+        id: details._id || inv._id, // Use Investment ID if available
+        customerId: inv._id,
+        investmentId: details.id || details._id,
+        ...details, // Flatten investment details
+        currentPrincipal,
+        totalInterestPaid: details.totalInterestPaid || 0, // Prevent undefined error
+      };
+    });
+  });
+
+  const handleCloseInvestment = (investor) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Close Investment",
+      message:
+        "Are you sure you want to close this investment? This action cannot be undone.",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const customerId = investor.customerId || investor._id;
+          const investmentId = investor.investmentId || investor._id;
+
+          if (!customerId || !investmentId) {
+            toast.error("Error: Missing ID information.");
+            return;
+          }
+
+          const result = await closeInvestment(customerId, investmentId);
+          if (result && result.success) {
+            toast.success("Investment closed successfully");
+          } else {
+            toast.error(result?.message || "Failed to close investment");
+          }
+        } catch (err) {
+          console.error(err);
+          toast.error("An error occurred while closing investment.");
+        }
+      },
+    });
+  };
 
   // Calculate pending interest for current month
   const calculatePendingInterest = (investor) => {
@@ -241,7 +304,7 @@ const Investors = () => {
     const startDate = new Date(investor.startDate);
     const currentDate = new Date();
     const monthsElapsed = Math.floor(
-      (currentDate - startDate) / (1000 * 60 * 60 * 24 * 30.44)
+      (currentDate - startDate) / (1000 * 60 * 60 * 24 * 30.44),
     );
 
     const principal = investor.principalAmount;
@@ -262,10 +325,31 @@ const Investors = () => {
   };
 
   // Calculate unpaid interest (accumulated - already paid)
+  // NOW: Use 'unpaidInterest' from DB (which stores fully matured months)
+  // + partial interest for current month (if desired, or just show DB value)
   const calculateUnpaidInterest = (investor) => {
+    // If we have DB field, use it.
+    // If strictly DB driven: return investor.unpaidInterest || 0;
+
+    // If user wants to see real-time accrual including current partial month:
+    /*
+      const lastAccrual = investor.lastAccrualDate ? new Date(investor.lastAccrualDate) : new Date(investor.startDate);
+      const now = new Date();
+      // Calculate days elapsed since lastAccrual for partial... 
+      // For now, let's respect the "Maturity" model requested. 
+      // Typically "Unpaid" implies "Due". Unmatured interest is not yet due.
+    */
+
+    // RETURNING PERSISTED UNPAID INTEREST
+    // But fall back to old calc if new system hasn't run yet?
+    if (investor.unpaidInterest !== undefined) {
+      return investor.unpaidInterest;
+    }
+
+    // Fallback for legacy/unmigrated data
     const accumulated = calculateAccumulatedInterest(investor);
     const unpaid = accumulated - investor.totalInterestPaid;
-    return Math.max(0, unpaid); // Never negative
+    return Math.max(0, unpaid);
   };
 
   const handleAddInvestor = () => {
@@ -281,9 +365,35 @@ const Investors = () => {
   };
 
   const handleDeleteInvestor = (id) => {
-    if (window.confirm("Are you sure you want to delete this investor?")) {
-      setInvestors(investors.filter((inv) => inv.id !== id));
+    // Find the investor record to get customerId and investmentId
+    const target = processedInvestors.find((inv) => inv.id === id);
+    if (!target) {
+      toast.error("Investor record not found.");
+      return;
     }
+
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Investment",
+      message: "Are you sure you want to delete this investment record?",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const result = await deleteInvestment(
+            target.customerId,
+            target.investmentId,
+          );
+          if (result && result.success) {
+            toast.success("Investment record deleted successfully");
+          } else {
+            toast.error(result?.message || "Failed to delete investment");
+          }
+        } catch (err) {
+          console.error("Delete Error:", err);
+          toast.error("An error occurred while deleting.");
+        }
+      },
+    });
   };
 
   const handlePayInterest = (investor) => {
@@ -307,10 +417,28 @@ const Investors = () => {
         role: "Investor", // Default to investor role when adding from here
         investorDetails: {
           ...investorData,
+          // Include investment ID when editing to ensure backend updates the correct record
+          _id:
+            editMode && selectedInvestor?.investmentId
+              ? selectedInvestor.investmentId
+              : undefined,
+          id:
+            editMode && selectedInvestor?.investmentId
+              ? selectedInvestor.investmentId
+              : undefined,
           currentPrincipal:
             editMode && selectedInvestor?.currentPrincipal !== undefined
               ? selectedInvestor.currentPrincipal
               : investorData.principalAmount,
+          // Preserve existing transaction histories when editing
+          interestHistory:
+            editMode && selectedInvestor?.interestHistory
+              ? selectedInvestor.interestHistory
+              : [],
+          payoutHistory:
+            editMode && selectedInvestor?.payoutHistory
+              ? selectedInvestor.payoutHistory
+              : [],
           investments:
             editMode && selectedInvestor?.investments
               ? selectedInvestor.investments
@@ -321,12 +449,27 @@ const Investors = () => {
                     type: "initial",
                   },
                 ],
+          // Preserve maturity tracking fields
+          unpaidInterest:
+            editMode && selectedInvestor?.unpaidInterest !== undefined
+              ? selectedInvestor.unpaidInterest
+              : 0,
+          lastAccrualDate:
+            editMode && selectedInvestor?.lastAccrualDate
+              ? selectedInvestor.lastAccrualDate
+              : undefined,
+          totalInterestPaid:
+            editMode && selectedInvestor?.totalInterestPaid !== undefined
+              ? selectedInvestor.totalInterestPaid
+              : 0,
         },
       };
 
       const result = await upsertCustomer(payload);
       if (result) {
         setShowInvestorModal(false);
+        setEditMode(false);
+        setSelectedInvestor(null);
         // Generate Certificate for new investor
         if (!editMode) {
           exportInvestorPDF(investorData);
@@ -334,42 +477,71 @@ const Investors = () => {
       }
     } catch (err) {
       console.error("Failed to save investor:", err);
+      toast.error("Failed to save investor details");
     }
   };
 
-  const handleInterestPayment = (paymentData) => {
-    const updatedInvestors = investors.map((inv) => {
-      if (inv.id === selectedInvestor.id) {
-        const newHistory = [
-          ...inv.interestHistory,
-          {
-            id: inv.interestHistory.length + 1,
-            ...paymentData,
-            status: "paid",
-          },
-        ];
+  const handleInterestPayment = async (paymentData) => {
+    if (!selectedInvestor) return;
 
-        let updatedPrincipal = inv.principalAmount;
-        let updatedTotalPaid = inv.totalInterestPaid + paymentData.amount;
+    try {
+      const investor = selectedInvestor;
+      const currentUnpaid =
+        investor.unpaidInterest !== undefined
+          ? investor.unpaidInterest
+          : calculateUnpaidInterest(investor);
 
-        if (paymentData.mode === "reinvest") {
-          updatedPrincipal += paymentData.amount;
-        }
+      const amount = parseFloat(paymentData.amount);
+      const newUnpaid = Math.max(0, currentUnpaid - amount);
 
-        return {
-          ...inv,
-          interestHistory: newHistory,
-          totalInterestPaid: updatedTotalPaid,
-          principalAmount: updatedPrincipal,
-          lastInterestPaid: paymentData.paidDate,
-          paymentMode: paymentData.mode,
-        };
+      const newHistoryItem = {
+        id: (investor.interestHistory?.length || 0) + 1,
+        ...paymentData,
+        status: "paid",
+        date: paymentData.paidDate || new Date(),
+      };
+
+      const updatedHistory = [
+        ...(investor.interestHistory || []),
+        newHistoryItem,
+      ];
+
+      let updatedPrincipal = investor.principalAmount;
+      if (paymentData.mode === "reinvest") {
+        updatedPrincipal += amount;
       }
-      return inv;
-    });
 
-    setInvestors(updatedInvestors);
-    setShowInterestModal(false);
+      const cleanPayload = {
+        id: investor.customerId || investor._id || investor.id,
+        name: investor.name,
+        phone: investor.phone,
+        email: investor.email,
+        city: investor.city,
+        investorDetails: {
+          ...investor,
+          _id: investor.investmentId || investor._id,
+          interestHistory: updatedHistory,
+          totalInterestPaid: (investor.totalInterestPaid || 0) + amount,
+          principalAmount: updatedPrincipal,
+          currentPrincipal:
+            paymentData.mode === "reinvest"
+              ? (investor.currentPrincipal || investor.principalAmount) + amount
+              : investor.currentPrincipal || investor.principalAmount,
+          lastInterestPaid: paymentData.paidDate,
+          unpaidInterest: newUnpaid,
+          paymentMode: paymentData.mode,
+        },
+      };
+
+      const result = await upsertCustomer(cleanPayload);
+      if (result) {
+        toast.success(`Interest payment of ₹${amount} recorded!`);
+        setShowInterestModal(false);
+      }
+    } catch (err) {
+      console.error("Interest Payment Error:", err);
+      toast.error("Failed to pay interest");
+    }
   };
 
   const handleBuyProducts = (investor) => {
@@ -377,39 +549,104 @@ const Investors = () => {
     setShowProductModal(true);
   };
 
-  const handleProductPurchase = (purchaseData) => {
-    const updatedInvestors = investors.map((inv) => {
-      if (inv.id === selectedInvestor.id) {
-        const newHistory = [
-          ...inv.interestHistory,
-          {
-            id: inv.interestHistory.length + 1,
-            month: new Date().toLocaleDateString("en-US", {
-              month: "short",
-              year: "numeric",
-            }),
-            amount: purchaseData.totalAmount,
-            paidDate: new Date().toISOString().split("T")[0],
-            mode: "products",
-            status: "paid",
-            products: purchaseData.products
-              .map((p) => `${p.name} (${p.qty}x)`)
-              .join(", "),
-          },
-        ];
+  const handleProductPurchase = async (purchaseData) => {
+    if (!selectedInvestor) return;
 
-        return {
-          ...inv,
-          interestHistory: newHistory,
-          totalInterestPaid: inv.totalInterestPaid + purchaseData.totalAmount,
-          lastInterestPaid: new Date().toISOString().split("T")[0],
-        };
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      // Validate Payment Method (Passed from Modal)
+      if (!purchaseData.paymentMethod) {
+        toast.warning("Please select a payment account to generate the bill.");
+        return;
       }
-      return inv;
-    });
 
-    setInvestors(updatedInvestors);
-    setShowProductModal(false);
+      const salePayload = {
+        items: purchaseData.products.map((p) => ({
+          product: p._id,
+          qty: p.qty,
+          price: p.price,
+          lineTotal: p.price * p.qty,
+          taxAmount: 0,
+          taxableValue: p.price * p.qty,
+        })),
+        subtotal: purchaseData.totalAmount,
+        totalTax: 0,
+        grandTotal: purchaseData.totalAmount,
+        paymentMethod: purchaseData.paymentMethod, // From Modal Selection
+        customer: selectedInvestor.customerId || selectedInvestor._id,
+      };
+
+      const saleRes = await axios.post(API_ENDPOINTS.SALES.BASE, salePayload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!saleRes.data || !saleRes.data.success) {
+        toast.error("Failed to create sale bill.");
+        throw new Error("Failed to create sale bill.");
+      }
+
+      const saleInfo = saleRes.data.sale;
+
+      const investor = selectedInvestor;
+      const currentUnpaid =
+        investor.unpaidInterest !== undefined
+          ? investor.unpaidInterest
+          : calculateUnpaidInterest(investor);
+
+      const amount = purchaseData.totalAmount;
+      const newUnpaid = Math.max(0, currentUnpaid - amount);
+
+      const newHistoryItem = {
+        id: (investor.interestHistory?.length || 0) + 1,
+        month: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+        }),
+        amount: amount,
+        paidDate: new Date().toISOString().split("T")[0],
+        mode: "products",
+        status: "paid",
+        products: `Bill: ${saleInfo.billNumber}`,
+        saleId: saleInfo._id,
+        reference: saleInfo.billNumber,
+      };
+
+      const updatedHistory = [
+        ...(investor.interestHistory || []),
+        newHistoryItem,
+      ];
+
+      const cleanPayload = {
+        id: investor.customerId || investor._id || investor.id,
+        name: investor.name,
+        phone: investor.phone,
+        email: investor.email,
+        city: investor.city,
+        investorDetails: {
+          ...investor,
+          _id: investor.investmentId || investor._id,
+          interestHistory: updatedHistory,
+          totalInterestPaid: (investor.totalInterestPaid || 0) + amount,
+          lastInterestPaid: new Date().toISOString().split("T")[0],
+          unpaidInterest: newUnpaid,
+        },
+      };
+
+      const result = await upsertCustomer(cleanPayload);
+      if (result) {
+        setShowProductModal(false);
+        toast.success(
+          `Product purchase successful! Bill: ${saleInfo.billNumber}`,
+        );
+      }
+    } catch (err) {
+      console.error("Product Purchase Error:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Failed to process product purchase. Check stock or try again.",
+      );
+    }
   };
 
   const handlePayoutPrincipal = (investor) => {
@@ -417,37 +654,91 @@ const Investors = () => {
     setShowPayoutModal(true);
   };
 
-  const handlePrincipalPayout = (payoutData) => {
-    const updatedInvestors = investors.map((inv) => {
-      if (inv.id === selectedInvestor.id) {
-        const newCurrentPrincipal = inv.currentPrincipal - payoutData.amount;
+  const handlePrincipalPayout = async (payoutData) => {
+    if (!selectedInvestor) return;
 
-        return {
-          ...inv,
-          currentPrincipal: newCurrentPrincipal,
-          payoutHistory: [
-            ...(inv.payoutHistory || []),
-            {
-              id: (inv.payoutHistory?.length || 0) + 1,
-              amount: payoutData.amount,
-              date: payoutData.payoutDate,
-              reason: payoutData.reason,
-              mode: payoutData.mode,
-              reference: payoutData.reference,
-              notes: payoutData.notes,
-              remainingPrincipal: newCurrentPrincipal, // changed from newPrincipal for clarity if preferred, but existing code used newPrincipal. Let's stick to newPrincipal if that was the convention, or add standard fields. The screenshot showed Status, let's add Status.
-              status: "paid",
-              previousPrincipal: inv.currentPrincipal,
-              newPrincipal: newCurrentPrincipal,
-            },
-          ],
-        };
+    try {
+      const amount = parseFloat(payoutData.amount);
+      const isPayin = payoutData.type === "payin";
+
+      const commonPayload = {
+        id:
+          selectedInvestor.customerId ||
+          selectedInvestor._id ||
+          selectedInvestor.id,
+        name: selectedInvestor.name,
+        phone: selectedInvestor.phone,
+        email: selectedInvestor.email,
+        city: selectedInvestor.city,
+        role: "Investor",
+      };
+
+      const investorObj = selectedInvestor.investorDetails || selectedInvestor;
+      const investmentId =
+        selectedInvestor.investmentId || selectedInvestor._id;
+
+      const currentPrincipal = investorObj.currentPrincipal || 0;
+      const principalAmount = investorObj.principalAmount || 0;
+
+      const newCurrentPrincipal = isPayin
+        ? currentPrincipal + amount
+        : Math.max(0, currentPrincipal - amount);
+
+      const newPrincipalAmount = isPayin
+        ? principalAmount + amount
+        : principalAmount;
+
+      const previousPayoutHistory = investorObj.payoutHistory || [];
+      const updatedPayoutHistory = [
+        ...previousPayoutHistory,
+        {
+          id: (previousPayoutHistory.length || 0) + 1,
+          amount: amount,
+          date: payoutData.payoutDate || new Date(),
+          reason: payoutData.reason,
+          mode: payoutData.mode,
+          reference: payoutData.reference,
+          notes: payoutData.notes,
+          type: payoutData.type, // 'payin' or 'payout'
+          remainingPrincipal: newCurrentPrincipal,
+          status: "paid",
+          previousPrincipal: currentPrincipal,
+          newPrincipal: newCurrentPrincipal,
+        },
+      ];
+
+      const previousInvestments = investorObj.investments || [];
+      let updatedInvestments = [...previousInvestments];
+
+      if (isPayin) {
+        updatedInvestments.push({
+          date: payoutData.payoutDate || new Date(),
+          amount: amount,
+          type: "additional",
+        });
       }
-      return inv;
-    });
 
-    setInvestors(updatedInvestors);
-    setShowPayoutModal(false);
+      const payload = {
+        ...commonPayload,
+        investorDetails: {
+          ...investorObj,
+          _id: investmentId,
+          principalAmount: newPrincipalAmount,
+          currentPrincipal: newCurrentPrincipal,
+          payoutHistory: updatedPayoutHistory,
+          investments: updatedInvestments,
+        },
+      };
+
+      const result = await upsertCustomer(payload);
+      if (result) {
+        toast.success(`${isPayin ? "Pay-in" : "Pay-out"} successful!`);
+        setShowPayoutModal(false);
+      }
+    } catch (err) {
+      console.error("Failed to process payout/payin:", err);
+      toast.error("Failed to save transaction. Please try again.");
+    }
   };
 
   const handleViewHistoryList = () => {
@@ -527,7 +818,7 @@ const Investors = () => {
                     {processedInvestors
                       .reduce(
                         (sum, inv) => sum + (inv.currentPrincipal || 0),
-                        0
+                        0,
                       )
                       .toLocaleString()}
                   </h3>
@@ -548,7 +839,7 @@ const Investors = () => {
                     {processedInvestors
                       .reduce(
                         (sum, inv) => sum + (inv.totalInterestPaid || 0),
-                        0
+                        0,
                       )
                       .toLocaleString()}
                   </h3>
@@ -563,13 +854,13 @@ const Investors = () => {
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <p className="text-muted small mb-1">Pending This Month</p>
+                  <p className="text-muted small mb-1">Total Pending</p>
                   <h3 className="fw-bold text-info mb-0">
                     ₹
                     {processedInvestors
                       .reduce(
-                        (sum, inv) => sum + calculatePendingInterest(inv),
-                        0
+                        (sum, inv) => sum + calculateUnpaidInterest(inv),
+                        0,
                       )
                       .toFixed(2)}
                   </h3>
@@ -592,6 +883,7 @@ const Investors = () => {
         onPayoutPrincipal={handlePayoutPrincipal}
         onViewHistory={handleViewHistoryList}
         onDownloadCertificate={exportInvestorPDF}
+        onCloseInvestment={handleCloseInvestment}
         calculatePendingInterest={calculatePendingInterest}
         calculateAccumulatedInterest={calculateAccumulatedInterest}
         calculateUnpaidInterest={calculateUnpaidInterest}
@@ -628,6 +920,8 @@ const Investors = () => {
         investor={selectedInvestor}
         onEdit={handleEditInvestor}
         onDelete={handleDeleteInvestor}
+        onCloseInvestment={handleCloseInvestment}
+        onDownloadCertificate={exportInvestorPDF}
       />
 
       <ProductPurchaseModal
@@ -651,6 +945,15 @@ const Investors = () => {
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
         investors={processedInvestors}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

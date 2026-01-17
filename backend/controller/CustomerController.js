@@ -10,10 +10,72 @@ const { ensureDailySession } = require("./AccountController");
 // @access  Private (Staff/Admin)
 exports.getBranchInvestors = async (req, res) => {
   try {
-    const investors = await Customer.find({
+    const result = await Customer.find({
       branchCode: req.user.branchCode,
       role: { $in: ["Investor", "Customer & investor"] },
     }).sort({ name: 1 });
+
+    // Extract all unique saleIds for manual population
+    const saleIds = [];
+    result.forEach((customer) => {
+      customer.investmentDetails?.forEach((investment) => {
+        investment.interestHistory?.forEach((history) => {
+          if (history.saleId) {
+            saleIds.push(history.saleId);
+          }
+        });
+      });
+    });
+
+    // Fetch matching sales if any saleIds exist
+    let billMap = {};
+    if (saleIds.length > 0) {
+      const parentSales = await Sale.find({
+        "sales._id": { $in: saleIds },
+      });
+      parentSales.forEach((parent) => {
+        parent.sales.forEach((s) => {
+          if (saleIds.some((id) => id.toString() === s._id.toString())) {
+            billMap[s._id.toString()] = s.billNumber;
+          }
+        });
+      });
+    }
+
+    // Filter out soft-deleted investments and enrich with bill numbers
+    const investors = result
+      .map((customer) => {
+        const doc = customer.toObject();
+        if (doc.investmentDetails) {
+          doc.investmentDetails = doc.investmentDetails
+            .filter((inv) => !inv.isDeleted)
+            .map((investment) => {
+              if (investment.interestHistory) {
+                investment.interestHistory = investment.interestHistory.map(
+                  (history) => {
+                    if (history.saleId && billMap[history.saleId.toString()]) {
+                      return {
+                        ...history,
+                        // Inject billNumber into history record
+                        billNumber: billMap[history.saleId.toString()],
+                        // Optionally also populate saleId object structure if frontend expects it
+                        saleId: {
+                          _id: history.saleId,
+                          billNumber: billMap[history.saleId.toString()],
+                        },
+                      };
+                    }
+                    return history;
+                  },
+                );
+              }
+              return investment;
+            });
+        }
+        return doc;
+      })
+      .filter((customer) => customer.investmentDetails.length > 0);
+
     res.status(200).json({
       success: true,
       count: investors.length,
@@ -86,23 +148,67 @@ exports.upsertCustomer = async (req, res) => {
       }
 
       if (investorDetails) {
-        customer.investorDetails = {
-          ...customer.investorDetails,
-          ...investorDetails,
-        };
+        // Handle array logic
+        if (!customer.investmentDetails) customer.investmentDetails = [];
+
+        // Check if we are updating a specific investment by ID
+        // (Assuming frontend sends _id inside investorDetails if editing)
+        // If no _id, we might be creating a new investment OR updating the only one exist (legacy support)
+
+        let investmentFound = false;
+        if (investorDetails._id) {
+          const idx = customer.investmentDetails.findIndex(
+            (inv) => inv._id.toString() === investorDetails._id,
+          );
+          if (idx !== -1) {
+            customer.investmentDetails[idx] = {
+              ...customer.investmentDetails[idx].toObject(),
+              ...investorDetails,
+            };
+            investmentFound = true;
+          }
+        } else if (investorDetails.id) {
+          // Check formatted id
+          const idx = customer.investmentDetails.findIndex(
+            (inv) => inv._id.toString() === investorDetails.id,
+          );
+          if (idx !== -1) {
+            customer.investmentDetails[idx] = {
+              ...customer.investmentDetails[idx].toObject(),
+              ...investorDetails,
+            };
+            investmentFound = true;
+          }
+        }
+
+        // If not found by ID, and user passes broad details...
+        // If the customer has 1 active investment, maybe update that?
+        // Or if this is a "New Investment" action...
+        // Let's assume if no ID match, push NEW if it looks like a new investment (e.g. has principalAmount)
+        // or update the last investment if it's just a status update?
+        // Safe default: If array empty, push. If has items, find active one?
+        if (!investmentFound) {
+          // If no specific ID matched, we treat this as a NEW investment entry.
+          customer.investmentDetails.push(investorDetails);
+        }
       }
       await customer.save();
     } else {
-      customer = await Customer.create({
+      const newCustomerData = {
         name,
         phone,
         email,
         city,
         role: role || "customer",
-        investorDetails,
         branch: branch._id,
         branchCode: req.user.branchCode,
-      });
+      };
+
+      if (investorDetails) {
+        newCustomerData.investmentDetails = [investorDetails];
+      }
+
+      customer = await Customer.create(newCustomerData);
     }
 
     res.status(200).json({
@@ -162,7 +268,7 @@ exports.settleCustomerCredit = async (req, res) => {
 
     const totalOutstanding = customer.credits.reduce(
       (sum, c) => sum + c.totalAmount,
-      0
+      0,
     );
 
     // Calculate total settlement amount
@@ -170,15 +276,15 @@ exports.settleCustomerCredit = async (req, res) => {
     if (itemSettlements && itemSettlements.length > 0) {
       settlementAmount = itemSettlements.reduce(
         (sum, item) => sum + parseFloat(item.amount || 0),
-        0
+        0,
       );
     } else if (creditItemIds && creditItemIds.length > 0) {
       const itemsToSettle = customer.credits.filter((c) =>
-        creditItemIds.includes(c._id.toString())
+        creditItemIds.includes(c._id.toString()),
       );
       settlementAmount = itemsToSettle.reduce(
         (sum, c) => sum + c.totalAmount,
-        0
+        0,
       );
     } else {
       settlementAmount = parseFloat(amount);
@@ -190,7 +296,7 @@ exports.settleCustomerCredit = async (req, res) => {
 
     if (settlementAmount > totalOutstanding + 0.01) {
       throw new Error(
-        `Settlement amount (₹${settlementAmount}) exceeds total outstanding (₹${totalOutstanding})`
+        `Settlement amount (₹${settlementAmount}) exceeds total outstanding (₹${totalOutstanding})`,
       );
     }
 
@@ -212,7 +318,7 @@ exports.settleCustomerCredit = async (req, res) => {
     const destSessionData = await ensureDailySession(paymentMethod, session);
     const creditsSessionData = await ensureDailySession(
       creditsAccount._id,
-      session
+      session,
     );
 
     if (!destSessionData || !creditsSessionData) {
@@ -249,7 +355,7 @@ exports.settleCustomerCredit = async (req, res) => {
       // Process specific settlements per bill
       for (const item of itemSettlements) {
         const creditItem = customer.credits.find(
-          (c) => c._id.toString() === item.id
+          (c) => c._id.toString() === item.id,
         );
         if (!creditItem) continue;
 
@@ -305,7 +411,7 @@ exports.settleCustomerCredit = async (req, res) => {
             // Find sale by bill number (trim and case-insensitive for robustness)
             const targetBill = (creditItem.billNumber || "").trim();
             const individualSale = saleRecord.sales.find(
-              (s) => (s.billNumber || "").trim() === targetBill
+              (s) => (s.billNumber || "").trim() === targetBill,
             );
 
             // Update if found, regardless of status (though usually it's Pending)
@@ -349,7 +455,7 @@ exports.settleCustomerCredit = async (req, res) => {
       let creditItemsToProcess = [];
       if (creditItemIds && creditItemIds.length > 0) {
         creditItemsToProcess = customer.credits.filter((c) =>
-          creditItemIds.includes(c._id.toString())
+          creditItemIds.includes(c._id.toString()),
         );
       } else {
         customer.credits.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -364,7 +470,7 @@ exports.settleCustomerCredit = async (req, res) => {
         const creditItem = creditItemsToProcess[i];
         const settlementFromThisItem = Math.min(
           creditItem.totalAmount,
-          remainingToSettle
+          remainingToSettle,
         );
 
         const amountBefore = creditItem.totalAmount;
@@ -416,7 +522,7 @@ exports.settleCustomerCredit = async (req, res) => {
           if (saleRecord) {
             const targetBill = (creditItem.billNumber || "").trim();
             const individualSale = saleRecord.sales.find(
-              (s) => (s.billNumber || "").trim() === targetBill
+              (s) => (s.billNumber || "").trim() === targetBill,
             );
 
             if (individualSale) {
@@ -535,5 +641,184 @@ exports.getCustomerPaymentHistory = async (req, res) => {
       success: false,
       message: error.message || "Server error while fetching payment history",
     });
+  }
+};
+
+// @desc    Check and process investment maturity (Daily Job)
+// @route   POST /api/customers/check-maturity
+// @access  Private (System/Admin)
+exports.checkMaturity = async (req, res) => {
+  try {
+    const today = new Date();
+    // Normalize today to start of day for consistent comparison
+    today.setHours(0, 0, 0, 0);
+
+    const investors = await Customer.find({
+      role: { $in: ["Investor", "Customer & investor"] },
+    });
+
+    let processedCount = 0;
+
+    for (const investor of investors) {
+      if (
+        !investor.investmentDetails ||
+        investor.investmentDetails.length === 0
+      )
+        continue;
+
+      let investorUpdated = false;
+
+      for (const details of investor.investmentDetails) {
+        if (
+          details.status !== "active" ||
+          details.isDeleted ||
+          !details.investments ||
+          details.investments.length === 0
+        )
+          continue;
+
+        // Loop through each individual investment/deposit
+        for (const investment of details.investments) {
+          if (!investment.date || !investment.amount || investment.amount <= 0)
+            continue;
+
+          const investmentDate = new Date(investment.date);
+          investmentDate.setHours(0, 0, 0, 0);
+
+          // Determine the last accrual date for this specific investment
+          const lastAccrual = investment.lastAccrualDate
+            ? new Date(investment.lastAccrualDate)
+            : investmentDate;
+          lastAccrual.setHours(0, 0, 0, 0);
+
+          // Calculate the next accrual date (1 month after last accrual)
+          const nextAccrualDate = new Date(lastAccrual);
+          nextAccrualDate.setMonth(nextAccrualDate.getMonth() + 1);
+
+          // Check if this investment has matured for at least 1 month
+          if (today >= nextAccrualDate) {
+            // Ensure isMatured is false once interest is added to the ledger
+            investment.isMatured = false;
+
+            // Calculate interest for this specific investment
+            const monthlyInterest =
+              (investment.amount * details.interestRate) / 100;
+
+            // Add to total unpaid interest
+            details.unpaidInterest =
+              (details.unpaidInterest || 0) + monthlyInterest;
+
+            // Update this investment's last accrual date
+            investment.lastAccrualDate = nextAccrualDate;
+
+            investorUpdated = true;
+            processedCount++;
+          }
+        }
+      }
+
+      if (investorUpdated) {
+        // investor.markModified('investmentDetails'); // Mongoose usually handles subdoc updates
+        await investor.save();
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Processed maturity for ${processedCount} investments`,
+    });
+  } catch (error) {
+    console.error("Maturity check error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Close a specific investment
+// @route   POST /api/customers/:customerId/investment/:investmentId/close
+// @access  Private (Admin/Manager)
+exports.closeInvestment = async (req, res) => {
+  try {
+    const { customerId, investmentId } = req.params;
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Customer not found" });
+    }
+
+    if (!customer.investmentDetails) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No investments found" });
+    }
+
+    const investment = customer.investmentDetails.id(investmentId);
+    if (!investment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Investment not found" });
+    }
+
+    if (investment.status === "closed") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Investment already closed" });
+    }
+
+    investment.status = "closed";
+    await customer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Investment closed successfully",
+      data: customer,
+    });
+  } catch (error) {
+    console.error("Close investment error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Soft delete an investment
+// @route   DELETE /api/customers/:customerId/investments/:investmentId
+// @access  Private (Staff/Admin)
+exports.deleteInvestorInvestment = async (req, res) => {
+  try {
+    const { customerId, investmentId } = req.params;
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Customer not found" });
+    }
+
+    if (!customer.investmentDetails) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No investments found" });
+    }
+
+    const investment = customer.investmentDetails.id(investmentId);
+    if (!investment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Investment not found" });
+    }
+
+    investment.isDeleted = true;
+    await customer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Investment deleted successfully (Soft delete)",
+    });
+  } catch (error) {
+    console.error("Delete investment error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -6,6 +6,8 @@ const InvestorDetailsModal = ({
   investor,
   onEdit,
   onDelete,
+  onCloseInvestment,
+  onDownloadCertificate,
 }) => {
   if (!isOpen || !investor) return null;
 
@@ -51,7 +53,7 @@ const InvestorDetailsModal = ({
                   </div>
                   <div className="col-md-4">
                     <small className="text-muted">Status:</small>
-                    <div>
+                    <div className="d-flex gap-2">
                       <span
                         className={`badge ${
                           investor.status === "active"
@@ -61,6 +63,11 @@ const InvestorDetailsModal = ({
                       >
                         {investor.status}
                       </span>
+                      {investor.isMatured && (
+                        <span className="badge bg-info text-white">
+                          Matured
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-4">
@@ -74,7 +81,7 @@ const InvestorDetailsModal = ({
                     <div className="fw-bold">
                       {investor.lastInterestPaid
                         ? new Date(
-                            investor.lastInterestPaid
+                            investor.lastInterestPaid,
                           ).toLocaleDateString()
                         : "N/A"}
                     </div>
@@ -112,8 +119,8 @@ const InvestorDetailsModal = ({
                           investor.kycStatus === "verified"
                             ? "bg-success"
                             : investor.kycStatus === "rejected"
-                            ? "bg-danger"
-                            : "bg-warning text-dark"
+                              ? "bg-danger"
+                              : "bg-warning text-dark"
                         }`}
                       >
                         {(investor.kycStatus || "pending").toUpperCase()}
@@ -301,14 +308,8 @@ const InvestorDetailsModal = ({
                         : "Compound"}
                     </div>
                   </div>
+
                   <div className="col-md-3">
-                    <small className="text-muted">Default Payment Mode:</small>
-                    <div className="fw-bold text-warning fs-5">
-                      {investor.paymentMode.charAt(0).toUpperCase() +
-                        investor.paymentMode.slice(1)}
-                    </div>
-                  </div>
-                  <div className="col-md-6">
                     <small className="text-muted">Total Interest Paid:</small>
                     <div className="fw-bold text-danger fs-5">
                       ₹{investor.totalInterestPaid.toLocaleString()}
@@ -326,6 +327,78 @@ const InvestorDetailsModal = ({
                 </div>
               </div>
             </div>
+
+            {/* Principal Deposits History */}
+            {investor.investments && investor.investments.length > 0 && (
+              <div className="card border-0 shadow-sm mb-4">
+                <div className="card-header bg-light">
+                  <h6 className="mb-0 fw-bold">
+                    <i className="bi bi-journal-plus me-2"></i>Principal History
+                    (Deposits)
+                  </h6>
+                </div>
+                <div className="card-body p-0">
+                  <div className="table-responsive">
+                    <table className="table table-sm hover mb-0">
+                      <thead className="table-light small">
+                        <tr>
+                          <th className="px-3">Date</th>
+                          <th>Amount</th>
+                          <th>Maturity Status</th>
+                          <th>Maturity Date</th>
+                          <th>Type</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {investor.investments.map((inv, idx) => {
+                          const depositDate = new Date(inv.date);
+                          const maturityDate = new Date(depositDate);
+                          maturityDate.setMonth(maturityDate.getMonth() + 1);
+
+                          return (
+                            <tr key={idx}>
+                              <td className="px-3">
+                                {depositDate.toLocaleDateString()}
+                              </td>
+                              <td className="fw-bold">
+                                ₹{inv.amount.toLocaleString()}
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    inv.isMatured
+                                      ? "bg-success"
+                                      : "bg-warning text-dark"
+                                  }`}
+                                >
+                                  {inv.isMatured ? "Matured" : "Pending"}
+                                </span>
+                              </td>
+                              <td className="small text-muted">
+                                {maturityDate.toLocaleDateString()}
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    inv.type === "initial"
+                                      ? "bg-primary"
+                                      : "bg-info"
+                                  } bg-opacity-10 text-${
+                                    inv.type === "initial" ? "primary" : "info"
+                                  } text-capitalize`}
+                                >
+                                  {inv.type}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <div className="modal-footer border-top-0 bg-light rounded-bottom-4 d-flex justify-content-between">
             <div>
@@ -333,20 +406,34 @@ const InvestorDetailsModal = ({
                 type="button"
                 className="btn btn-outline-danger fw-bold me-2"
                 onClick={() => {
-                  if (
-                    window.confirm(
-                      "Are you sure you want to delete this investor?"
-                    )
-                  ) {
-                    onDelete(investor.id);
-                    onClose();
-                  }
+                  onDelete(investor.id);
+                  onClose();
                 }}
               >
                 <i className="bi bi-trash me-2"></i>Delete
               </button>
             </div>
             <div>
+              <button
+                type="button"
+                className="btn btn-info fw-bold me-2 text-white"
+                onClick={() => onDownloadCertificate(investor)}
+              >
+                <i className="bi bi-file-earmark-pdf-fill me-2"></i>Download
+                Certificate
+              </button>
+              {investor.status !== "closed" && (
+                <button
+                  type="button"
+                  className="btn btn-outline-danger fw-bold me-2"
+                  onClick={() => {
+                    onCloseInvestment(investor);
+                    onClose();
+                  }}
+                >
+                  <i className="bi bi-x-circle me-2"></i>Close Investment
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-warning fw-bold me-2 text-dark"

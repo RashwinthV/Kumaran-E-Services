@@ -8,6 +8,7 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
     reference: "",
     reason: "",
     notes: "",
+    type: "payout", // "payout" or "payin"
   });
 
   const [error, setError] = useState("");
@@ -15,42 +16,62 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
   const [selectedBankId, setSelectedBankId] = useState(
     investor?.bankAccounts?.find((b) => b.isDefault)?.id ||
       investor?.bankAccounts?.[0]?.id ||
-      ""
+      "",
   );
 
   // Initialize with the default UPI account ID or the first one if available
   const [selectedUpiId, setSelectedUpiId] = useState(
     investor?.upiAccounts?.find((u) => u.isDefault)?.id ||
       investor?.upiAccounts?.[0]?.id ||
-      ""
+      "",
   );
 
   const currentPrincipal =
     investor?.currentPrincipal || investor?.principalAmount || 0;
 
+  const isPayin = formData.type === "payin";
+
   const handleChange = (field, value) => {
-    if (field === "amount") {
-      const amt = parseFloat(value);
-      if (amt > currentPrincipal) {
-        setError(
-          `Amount cannot exceed current principal of ₹${currentPrincipal.toLocaleString()}`
-        );
-      } else if (amt <= 0) {
-        setError("Amount must be greater than 0");
+    let newFormData = { ...formData, [field]: value };
+
+    // Reset error when switching type
+    if (field === "type") {
+      setError("");
+      // Reset reason if switching types (optional, but good UX)
+      if (value === "payin") {
+        newFormData.reason = "additional_investment";
       } else {
-        setError("");
+        newFormData.reason = "";
       }
     }
-    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (field === "amount" || field === "type") {
+      const amt =
+        field === "amount" ? parseFloat(value) : parseFloat(formData.amount);
+      const type = field === "type" ? value : formData.type;
+
+      if (!isNaN(amt)) {
+        if (type === "payout" && amt > currentPrincipal) {
+          setError(
+            `Amount cannot exceed current principal of ₹${currentPrincipal.toLocaleString()}`,
+          );
+        } else if (amt <= 0) {
+          setError("Amount must be greater than 0");
+        } else {
+          setError("");
+        }
+      }
+    }
+    setFormData(newFormData);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const amt = parseFloat(formData.amount);
 
-    if (amt > currentPrincipal) {
+    if (formData.type === "payout" && amt > currentPrincipal) {
       setError(
-        `Amount cannot exceed current principal of ₹${currentPrincipal.toLocaleString()}`
+        `Amount cannot exceed current principal of ₹${currentPrincipal.toLocaleString()}`,
       );
       return;
     }
@@ -75,12 +96,14 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
       <div className="modal-dialog modal-lg modal-dialog-centered">
         <div className="modal-content shadow-lg border-0 rounded-4 animate-modal">
           <div
-            className="modal-header bg-danger text-white rounded-top-4"
+            className={`modal-header ${isPayin ? "bg-success" : "bg-danger"} text-white rounded-top-4`}
             style={{ maxHeight: "100vh", overflow: "auto" }}
           >
             <h5 className="modal-title fw-bold">
-              <i className="bi bi-cash-stack me-2"></i>
-              Principal Payout - {investor.name}
+              <i
+                className={`bi ${isPayin ? "bi-plus-circle" : "bi-dash-circle"} me-2`}
+              ></i>
+              Principal {isPayin ? "Payin" : "Payout"} - {investor.name}
             </h5>
             <button
               type="button"
@@ -93,17 +116,56 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
               className="modal-body p-4 overflow-auto "
               style={{ maxHeight: "70vh" }}
             >
-              {/* Warning Alert */}
-              <div className="alert alert-warning border-0 mb-4">
-                <div className="d-flex align-items-center">
-                  <i className="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-                  <div>
-                    <strong>Warning:</strong> This action will reduce the
-                    principal amount. Future interest calculations will be based
-                    on the remaining principal.
-                  </div>
+              {/* Transaction Type Toggle */}
+              <div className="d-flex justify-content-center mb-4">
+                <div className="btn-group w-50" role="group">
+                  <input
+                    type="radio"
+                    className="btn-check"
+                    name="transType"
+                    id="typePayout"
+                    autoComplete="off"
+                    checked={formData.type === "payout"}
+                    onChange={() => handleChange("type", "payout")}
+                  />
+                  <label
+                    className="btn btn-outline-danger"
+                    htmlFor="typePayout"
+                  >
+                    <i className="bi bi-arrow-up-right me-1"></i> Payout
+                  </label>
+
+                  <input
+                    type="radio"
+                    className="btn-check"
+                    name="transType"
+                    id="typePayin"
+                    autoComplete="off"
+                    checked={formData.type === "payin"}
+                    onChange={() => handleChange("type", "payin")}
+                  />
+                  <label
+                    className="btn btn-outline-success"
+                    htmlFor="typePayin"
+                  >
+                    <i className="bi bi-arrow-down-left me-1"></i> Payin
+                  </label>
                 </div>
               </div>
+
+              {/* Warning Alert (Only for Payout) */}
+              {formData.type === "payout" && (
+                <div className="alert alert-warning border-0 mb-4">
+                  <div className="d-flex align-items-center">
+                    <i className="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                    <div>
+                      <strong>Warning:</strong> This action will reduce the
+                      principal amount. Future interest calculations will be
+                      based on the remaining principal.
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Investor Summary */}
               <div className="card border-0 bg-light mb-4">
@@ -134,7 +196,8 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
-                    Payout Amount (₹) <span className="text-danger">*</span>
+                    {isPayin ? "Payin" : "Payout"} Amount (₹){" "}
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
@@ -143,9 +206,9 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     onChange={(e) => handleChange("amount", e.target.value)}
                     required
                     min="0"
-                    max={currentPrincipal}
+                    max={isPayin ? undefined : currentPrincipal}
                     step="0.01"
-                    placeholder="Enter amount to payout"
+                    placeholder={`Enter amount to ${isPayin ? "add" : "payout"}`}
                   />
                   {error ? (
                     <div className="invalid-feedback">{error}</div>
@@ -157,7 +220,8 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
-                    Payout Date <span className="text-danger">*</span>
+                    {isPayin ? "Payin" : "Payout"} Date{" "}
+                    <span className="text-danger">*</span>
                   </label>
                   <input
                     type="date"
@@ -188,8 +252,8 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     {formData.mode === "cheque"
                       ? "Cheque Number"
                       : formData.mode === "bank" || formData.mode === "upi"
-                      ? "Transaction ID"
-                      : "Reference Number"}
+                        ? "Transaction ID"
+                        : "Reference Number"}
                     {formData.mode === "cheque" && (
                       <span className="text-danger">*</span>
                     )}
@@ -203,8 +267,8 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                       formData.mode === "cheque"
                         ? "Enter cheque number"
                         : formData.mode === "bank"
-                        ? "NEFT/IMPS/RTGS Ref"
-                        : "Optional reference"
+                          ? "NEFT/IMPS/RTGS Ref"
+                          : "Optional reference"
                     }
                     required={formData.mode === "cheque"}
                   />
@@ -244,7 +308,7 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                             {(() => {
                               const selectedBank =
                                 investor.bankAccounts.find(
-                                  (b) => b.id === selectedBankId
+                                  (b) => b.id === selectedBankId,
                                 ) || investor.bankAccounts[0];
                               return (
                                 <div className="row g-2">
@@ -362,7 +426,7 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                             {(() => {
                               const selectedUpi =
                                 investor.upiAccounts.find(
-                                  (u) => u.id === selectedUpiId
+                                  (u) => u.id === selectedUpiId,
                                 ) || investor.upiAccounts[0];
                               return (
                                 <div className="row g-2">
@@ -415,7 +479,8 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                 )}
                 <div className="col-md-12">
                   <label className="form-label fw-bold small">
-                    Reason for Payout <span className="text-danger">*</span>
+                    Reason for {isPayin ? "Payin" : "Payout"}{" "}
+                    <span className="text-danger">*</span>
                   </label>
                   <select
                     className="form-select"
@@ -424,13 +489,30 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     required
                   >
                     <option value="">Select reason...</option>
-                    <option value="partial_withdrawal">
-                      Partial Withdrawal
-                    </option>
-                    <option value="emergency">Emergency</option>
-                    <option value="reinvestment">Reinvestment Elsewhere</option>
-                    <option value="closure">Account Closure</option>
-                    <option value="other">Other</option>
+                    {isPayin ? (
+                      <>
+                        <option value="additional_investment">
+                          Additional Investment
+                        </option>
+                        <option value="reinvestment">
+                          Reinvestment of Interest
+                        </option>
+                        <option value="correction">Correction</option>
+                        <option value="other">Other</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="partial_withdrawal">
+                          Partial Withdrawal
+                        </option>
+                        <option value="emergency">Emergency</option>
+                        <option value="reinvestment">
+                          Reinvestment Elsewhere
+                        </option>
+                        <option value="closure">Account Closure</option>
+                        <option value="other">Other</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="col-md-12">
@@ -449,17 +531,21 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
               {formData.amount && !error && (
                 <div className="alert alert-info mt-4">
                   <h6 className="fw-bold mb-2">
-                    <i className="bi bi-calculator me-2"></i>After Payout
+                    <i className="bi bi-calculator me-2"></i>After{" "}
+                    {isPayin ? "Payin" : "Payout"}
                   </h6>
                   <div className="row">
                     <div className="col-md-6">
                       <small className="text-muted">
                         New Principal Amount:
                       </small>
-                      <div className="fw-bold fs-5 text-success">
+                      <div
+                        className={`fw-bold fs-5 ${isPayin ? "text-success" : "text-danger"}`}
+                      >
                         ₹
-                        {(
-                          currentPrincipal - parseFloat(formData.amount)
+                        {(isPayin
+                          ? currentPrincipal + parseFloat(formData.amount)
+                          : currentPrincipal - parseFloat(formData.amount)
                         ).toLocaleString()}
                       </div>
                     </div>
@@ -470,7 +556,9 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                       <div className="fw-bold fs-5 text-primary">
                         ₹
                         {(
-                          ((currentPrincipal - parseFloat(formData.amount)) *
+                          ((isPayin
+                            ? currentPrincipal + parseFloat(formData.amount)
+                            : currentPrincipal - parseFloat(formData.amount)) *
                             investor.interestRate) /
                           100 /
                           12
@@ -547,11 +635,11 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
               </button>
               <button
                 type="submit"
-                className="btn btn-danger fw-bold px-4"
+                className={`btn ${isPayin ? "btn-success" : "btn-danger"} fw-bold px-4`}
                 disabled={!!error || !formData.amount}
               >
                 <i className="bi bi-cash-stack me-2"></i>
-                Process Payout
+                Process {isPayin ? "Payin" : "Payout"}
               </button>
             </div>
           </form>

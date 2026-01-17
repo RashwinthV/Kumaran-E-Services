@@ -81,7 +81,11 @@ const investorDetailsSchema = new mongoose.Schema(
     startDate: { type: Date },
     lastInterestPaid: { type: Date },
     totalInterestPaid: { type: Number, default: 0 },
-    status: { type: String, enum: ["active", "inactive"], default: "active" },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "closed"],
+      default: "active",
+    },
     paymentMode: { type: String },
     investorType: {
       type: String,
@@ -131,7 +135,10 @@ const investorDetailsSchema = new mongoose.Schema(
       {
         date: Date,
         amount: Number,
-        type: { type: String }, // e.g., 'initial', 'additional'
+        // Maturity Tracking
+        isMatured: { type: Boolean, default: false },
+        lastAccrualDate: Date, 
+        type: { type: String },
       },
     ],
     payoutHistory: [
@@ -154,13 +161,20 @@ const investorDetailsSchema = new mongoose.Schema(
         mode: String,
         status: String,
         products: String,
+        notes: String,
+        reference: String,
+        saleId: { type: mongoose.Schema.Types.ObjectId, ref: "Sale" },
       },
     ],
+
+    unpaidInterest: { type: Number, default: 0 },
+    lastAccrualDate: { type: Date }, // To track when the last monthly interest was added to unpaidInterest
+    isDeleted: { type: Boolean, default: false },
   },
   {
     toJSON: { getters: true },
     toObject: { getters: true },
-  }
+  },
 );
 
 const customerSchema = new mongoose.Schema(
@@ -200,14 +214,14 @@ const customerSchema = new mongoose.Schema(
       enum: ["customer", "Investor", "Customer & investor"],
       default: "customer",
     },
-    investorDetails: investorDetailsSchema,
+    investmentDetails: [investorDetailsSchema],
     credits: [creditItemSchema],
   },
   {
     timestamps: true,
     toJSON: { getters: true },
     toObject: { getters: true },
-  }
+  },
 );
 
 module.exports =

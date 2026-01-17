@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 import { useBilling } from "../../Context/BillingContext";
+import { useAuth } from "../../Context/AuthContext";
+import { API_ENDPOINTS } from "../../config/api";
+import PaymentPanel from "../Billing/PaymentPanel";
 
 const ProductPurchaseModal = ({
   isOpen,
@@ -9,20 +14,44 @@ const ProductPurchaseModal = ({
   onSave,
 }) => {
   const { products, refreshProducts, loading } = useBilling();
+  const { accessToken } = useAuth();
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  // Payment State
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
   // Fetch products when modal opens
   useEffect(() => {
-    if (isOpen && products.length === 0) {
-      refreshProducts();
+    if (isOpen) {
+      if (products.length === 0) refreshProducts();
+      fetchAccounts();
     }
   }, [isOpen, products.length, refreshProducts]);
 
+  const fetchAccounts = async () => {
+    try {
+      const res = await axios.get(API_ENDPOINTS.BRANCH_ACCOUNTS, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.data.success) {
+        setAccounts(res.data.data);
+        const cashAccount = res.data.data.find((acc) => acc.type === "Cash");
+        if (cashAccount) {
+          setSelectedAccountId(cashAccount._id);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+    }
+  };
+
   // Filter products that can be afforded with unpaid interest
   const affordableProducts = products.filter(
-    (product) => product.price <= unpaidInterest
+    (product) => product.price <= unpaidInterest,
   );
 
   // Get unique categories
@@ -50,8 +79,8 @@ const ProductPurchaseModal = ({
       ) {
         setCart(
           cart.map((item) =>
-            item._id === product._id ? { ...item, qty: item.qty + 1 } : item
-          )
+            item._id === product._id ? { ...item, qty: item.qty + 1 } : item,
+          ),
         );
       }
     } else {
@@ -77,18 +106,24 @@ const ProductPurchaseModal = ({
     setCart(cart.filter((item) => item._id !== id));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (cart.length === 0) return;
+    if (!selectedAccountId) {
+      toast.error("Please select a payment account");
+      return;
+    }
 
+    setIsProcessing(true);
     const purchaseData = {
       products: cart,
       totalAmount: cartTotal,
       remainingInterest: remainingBalance,
+      paymentMethod: selectedAccountId,
     };
 
-    onSave(purchaseData);
+    await onSave(purchaseData);
     setCart([]);
+    setIsProcessing(false);
   };
 
   if (!isOpen || !investor) return null;
@@ -100,7 +135,7 @@ const ProductPurchaseModal = ({
     >
       <div
         className="modal-dialog modal-xl"
-        style={{ maxWidth: "80vw", margin: "1rem auto" }}
+        style={{ maxWidth: "85vw", margin: "1rem auto" }}
       >
         <div
           className="modal-content shadow-lg border-0 rounded-4 animate-modal"
@@ -121,8 +156,7 @@ const ProductPurchaseModal = ({
               onClick={onClose}
             ></button>
           </div>
-          <form
-            onSubmit={handleSubmit}
+          <div
             style={{
               display: "flex",
               flexDirection: "column",
@@ -239,7 +273,7 @@ const ProductPurchaseModal = ({
                                         disabled={
                                           product.price > remainingBalance &&
                                           !cart.find(
-                                            (i) => i._id === product._id
+                                            (i) => i._id === product._id,
                                           )
                                         }
                                       >
@@ -327,28 +361,38 @@ const ProductPurchaseModal = ({
                         </div>
                       )}
                     </div>
+
+                    {/* Payment Panel Integration */}
+                    {cart.length > 0 && (
+                      <div className="bg-light border-top">
+                        <PaymentPanel
+                          accounts={accounts}
+                          selectedAccountId={selectedAccountId}
+                          onAccountChange={setSelectedAccountId}
+                          onPayment={handleSubmit}
+                          onClear={() => setCart([])}
+                          grandTotal={cartTotal}
+                          isProcessing={isProcessing}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="modal-footer border-top-0 bg-light rounded-bottom-4 py-2">
-              <button
-                type="button"
-                className="btn btn-sm btn-light text-muted fw-bold"
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-sm btn-info fw-bold px-3"
-                disabled={cart.length === 0}
-              >
-                <i className="bi bi-check-circle me-2"></i>
-                Complete (₹{cartTotal.toFixed(2)})
-              </button>
-            </div>
-          </form>
+            {/* Standard Footer only for Cancel when cart is empty or optional */}
+            {cart.length === 0 && (
+              <div className="modal-footer border-top-0 bg-light rounded-bottom-4 py-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-light text-muted fw-bold"
+                  onClick={onClose}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

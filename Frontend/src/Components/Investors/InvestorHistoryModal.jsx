@@ -1,22 +1,28 @@
 import React, { useState, useMemo } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { useAuth } from "../../Context/AuthContext";
 
 const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
+  const { user } = useAuth();
   const [selectedInvestorId, setSelectedInvestorId] = useState(
-    investors.length > 0 ? investors[0].id : ""
+    investors.length > 0 ? investors[0].id : "",
   );
   const [interestPage, setInterestPage] = useState(1);
   const [payoutPage, setPayoutPage] = useState(1);
   const itemsPerPage = 5;
 
   const selectedInvestor = useMemo(() => {
-    return investors.find((inv) => inv.id === parseInt(selectedInvestorId));
+    return investors.find(
+      (inv) => String(inv.id) === String(selectedInvestorId),
+    );
   }, [investors, selectedInvestorId]);
 
   // Interest History Pagination
   const interestHistory = useMemo(() => {
     if (!selectedInvestor || !selectedInvestor.interestHistory) return [];
     return [...selectedInvestor.interestHistory].sort(
-      (a, b) => new Date(b.paidDate) - new Date(a.paidDate)
+      (a, b) => new Date(b.paidDate) - new Date(a.paidDate),
     );
   }, [selectedInvestor]);
 
@@ -30,7 +36,7 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
   const payoutHistory = useMemo(() => {
     if (!selectedInvestor || !selectedInvestor.payoutHistory) return [];
     return [...selectedInvestor.payoutHistory].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
+      (a, b) => new Date(b.date) - new Date(a.date),
     );
   }, [selectedInvestor]);
 
@@ -39,6 +45,308 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
     const start = (payoutPage - 1) * itemsPerPage;
     return payoutHistory.slice(start, start + itemsPerPage);
   }, [payoutHistory, payoutPage]);
+
+  const downloadTransactionHistoryPDF = async () => {
+    if (!selectedInvestor) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPos = 20;
+
+    // Load Logo
+    const loadImg = (url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+      });
+    };
+
+    const logoImg = await loadImg("/kes_logo.jpeg");
+
+    // Header with sleek black background and rounded effect
+    yPos = 15;
+    doc.setFillColor(20, 20, 20); // Premium Deep Black
+    doc.roundedRect(10, 8, pageWidth - 20, 48, 4, 4, "F");
+
+    // Logo positioned in header
+    if (logoImg) {
+      doc.addImage(logoImg, "JPEG", 14, 10, 30, 30);
+    }
+
+    // Company/Branch Name - Adjusted for Logo
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("times", "bold");
+    const logoOffset = logoImg ? 20 : 0;
+    doc.text("KUMARAN E-SERVICES", pageWidth / 2 + logoOffset, 18, {
+      align: "center",
+    });
+
+    // Branch Details
+    doc.setFontSize(11);
+    doc.setFont("times", "normal");
+    const branchText = user?.branchCode
+      ? `Branch: ${user.branchCode}`
+      : "Branch Office";
+    doc.text(branchText, pageWidth / 2 + logoOffset, 28, { align: "center" });
+
+    // Document Title
+    doc.setFontSize(14);
+    doc.setFont("times", "bold");
+    doc.text("TRANSACTION HISTORY STATEMENT", pageWidth / 2 + logoOffset, 38, {
+      align: "center",
+    });
+
+    // Generation Date
+    doc.setFontSize(9);
+    doc.setFont("times", "italic");
+    doc.text(
+      `Generated on: ${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} at ${new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`,
+      pageWidth / 2 + logoOffset,
+      45,
+      { align: "center" },
+    );
+
+    yPos = 60;
+
+    // Investor Details Box
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(14, yPos, pageWidth - 28, 32, 2, 2, "F");
+
+    yPos += 6;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont("times", "bold");
+    doc.text("INVESTOR DETAILS", 18, yPos);
+
+    yPos += 7;
+    doc.setFontSize(10);
+    doc.setFont("times", "normal");
+
+    // Two column layout for investor details
+    const col1X = 18;
+    const col2X = pageWidth / 2 + 5;
+
+    doc.setFont("times", "bold");
+    doc.text("Name:", col1X, yPos);
+    doc.setFont("times", "normal");
+    doc.text(selectedInvestor.name, col1X + 25, yPos);
+
+    doc.setFont("times", "bold");
+    doc.text("Phone:", col2X, yPos);
+    doc.setFont("times", "normal");
+    doc.text(selectedInvestor.phone, col2X + 25, yPos);
+
+    yPos += 6;
+    doc.setFont("times", "bold");
+    doc.text("Principal:", col1X, yPos);
+    doc.setFont("times", "normal");
+    doc.text(
+      `Rs. ${selectedInvestor.principalAmount?.toLocaleString("en-IN") || 0}`,
+      col1X + 25,
+      yPos,
+    );
+
+    doc.setFont("times", "bold");
+    doc.text("Interest Rate:", col2X, yPos);
+    doc.setFont("times", "normal");
+    doc.text(
+      `${selectedInvestor.interestRate || 0} paise/month`,
+      col2X + 25,
+      yPos,
+    );
+
+    yPos += 6;
+    doc.setFont("times", "bold");
+    doc.text("Type:", col1X, yPos);
+    doc.setFont("times", "normal");
+    doc.text(
+      selectedInvestor.interestType === "simple"
+        ? "Simple Interest"
+        : "Compound Interest",
+      col1X + 25,
+      yPos,
+    );
+
+    doc.setFont("times", "bold");
+    doc.text("Status:", col2X, yPos);
+    doc.setFont("times", "normal");
+    doc.text(
+      selectedInvestor.status?.toUpperCase() || "ACTIVE",
+      col2X + 25,
+      yPos,
+    );
+
+    yPos += 12;
+
+    // Interest Payment History
+    if (interestHistory.length > 0) {
+      doc.setFontSize(12);
+      doc.setFont("times", "bold");
+      doc.text("Interest Payment History", 14, yPos);
+      yPos += 5;
+
+      const interestTableData = interestHistory.map((payment, index) => [
+        index + 1,
+        payment.month || "-",
+        `Rs. ${payment.amount?.toLocaleString() || 0}`,
+        new Date(payment.paidDate).toLocaleDateString(),
+        payment.mode || "-",
+        payment.products ||
+          payment.saleId?.billNumber ||
+          payment.billNumber ||
+          payment.reference ||
+          payment.notes ||
+          "-",
+        payment.status || "paid",
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["#", "Month", "Amount", "Date", "Mode", "Details", "Status"]],
+        body: interestTableData,
+        theme: "striped",
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          font: "times",
+          fontStyle: "bold",
+        },
+        styles: { fontSize: 8, font: "times" },
+        margin: { left: 14, right: 14 },
+      });
+
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Principal Transaction History
+    if (payoutHistory.length > 0) {
+      if (yPos > pageHeight - 60) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(12);
+      doc.setFont("times", "bold");
+      doc.text("Principal Transaction History", 14, yPos);
+      yPos += 5;
+
+      const payoutTableData = payoutHistory.map((payout, index) => [
+        index + 1,
+        new Date(payout.date).toLocaleDateString(),
+        `Rs. ${payout.amount?.toLocaleString() || 0}`,
+        payout.type || "-",
+        payout.mode || "-",
+        payout.reference || "-",
+        payout.status || "completed",
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["#", "Date", "Amount", "Type", "Mode", "Reference", "Status"]],
+        body: payoutTableData,
+        theme: "striped",
+        headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          font: "times",
+          fontStyle: "bold",
+        },
+        styles: { fontSize: 8, font: "times" },
+        margin: { left: 14, right: 14 },
+      });
+
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    // Summary Section - Redesigned
+    if (yPos > pageHeight - 70) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Summary Header
+    // Summary Header
+    doc.setTextColor(41, 128, 185);
+    doc.setFontSize(14);
+    doc.setFont("times", "bold");
+    doc.text("FINANCIAL SUMMARY", 14, yPos + 7);
+
+    yPos += 15;
+
+    // Summary Items - Three Column Layout
+    const colWidth = (pageWidth - 28) / 3;
+    const summaryY = yPos;
+
+    // Item 1: Total Interest Paid
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(9);
+    doc.setFont("times", "bold");
+    doc.text("TOTAL INTEREST PAID", 14, summaryY, { align: "left" });
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text(
+      `Rs. ${selectedInvestor.totalInterestPaid?.toLocaleString("en-IN") || 0}`,
+      14,
+      summaryY + 8,
+      { align: "left" },
+    );
+
+    // Item 2: Unpaid Interest
+    const sumCol2X = 14 + colWidth;
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(9);
+    doc.setFont("times", "bold");
+    doc.text("UNPAID INTEREST", sumCol2X, summaryY, { align: "left" });
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text(
+      `Rs. ${selectedInvestor.unpaidInterest?.toFixed(2) || "0.00"}`,
+      sumCol2X,
+      summaryY + 8,
+      { align: "left" },
+    );
+
+    // Item 3: Current Principal
+    const sumCol3X = 14 + colWidth * 2;
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(9);
+    doc.setFont("times", "bold");
+    doc.text("CURRENT PRINCIPAL", sumCol3X, summaryY, { align: "left" });
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text(
+      `Rs. ${selectedInvestor.currentPrincipal?.toLocaleString("en-IN") || selectedInvestor.principalAmount?.toLocaleString("en-IN") || 0}`,
+      sumCol3X,
+      summaryY + 8,
+      { align: "left" },
+    );
+
+    yPos += 20;
+
+    // Signature Section
+    if (yPos > pageHeight - 40) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Signature Section - Line Removed
+    yPos += 15;
+    yPos += 5;
+    doc.setFontSize(9);
+    doc.setFont("times", "italic");
+    doc.text("Authorized Signature", pageWidth - 42, yPos, { align: "center" });
+    yPos += 4;
+    doc.text("(Owner/Manager)", pageWidth - 42, yPos, { align: "center" });
+
+    // Save PDF
+    doc.save(
+      `${selectedInvestor.name}_Transaction_History_${new Date().toLocaleDateString().replace(/\//g, "-")}.pdf`,
+    );
+  };
 
   if (!isOpen) return null;
 
@@ -152,11 +460,11 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                   {selectedInvestor && (
                     <div className="col-md-8 text-end">
                       <span className="badge bg-primary me-2 px-3 py-2">
-                        Principal: ₹
+                        Principal: Rs.
                         {selectedInvestor.principalAmount.toLocaleString()}
                       </span>
                       <span className="badge bg-success px-3 py-2">
-                        Total Paid: ₹
+                        Total Paid: Rs.
                         {selectedInvestor.totalInterestPaid.toLocaleString()}
                       </span>
                     </div>
@@ -203,11 +511,11 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                                 </td>
                                 <td className="fw-bold">{payment.month}</td>
                                 <td className="text-success fw-bold">
-                                  ₹{payment.amount.toLocaleString()}
+                                  Rs.{payment.amount.toLocaleString()}
                                 </td>
                                 <td>
                                   {new Date(
-                                    payment.paidDate
+                                    payment.paidDate,
                                   ).toLocaleDateString()}
                                 </td>
                                 <td>
@@ -216,7 +524,12 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                                   </span>
                                 </td>
                                 <td className="small">
-                                  {payment.products || payment.notes || "—"}
+                                  {payment.products ||
+                                    payment.saleId?.billNumber ||
+                                    payment.billNumber ||
+                                    payment.reference ||
+                                    payment.notes ||
+                                    "—"}
                                 </td>
                                 <td>
                                   <span className="badge bg-success bg-opacity-10 text-success">
@@ -243,7 +556,7 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                     {renderPagination(
                       interestPage,
                       totalInterestPages,
-                      setInterestPage
+                      setInterestPage,
                     )}
                   </div>
                 </div>
@@ -251,9 +564,9 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                 {/* Payout History Table */}
                 <div className="card border-0 shadow-sm">
                   <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h6 className="mb-0 fw-bold text-danger">
-                      <i className="bi bi-arrow-down-circle me-2"></i>
-                      Principal Payout History
+                    <h6 className="mb-0 fw-bold text-dark">
+                      <i className="bi bi-arrow-left-right me-2"></i>
+                      Principal Transaction History
                     </h6>
                     <span className="badge bg-danger bg-opacity-10 text-danger">
                       {payoutHistory.length} Records
@@ -283,8 +596,11 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                                 <td>
                                   {new Date(payout.date).toLocaleDateString()}
                                 </td>
-                                <td className="text-danger fw-bold">
-                                  ₹{payout.amount.toLocaleString()}
+                                <td
+                                  className={`fw-bold ${payout.type === "payin" ? "text-success" : "text-danger"}`}
+                                >
+                                  {payout.type === "payin" ? "+" : "-"}Rs.
+                                  {payout.amount.toLocaleString()}
                                 </td>
                                 <td className="text-capitalize">
                                   {payout.type}
@@ -308,7 +624,7 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                                 colSpan="7"
                                 className="text-center py-4 text-muted"
                               >
-                                No principal payouts recorded.
+                                No principal transactions recorded.
                               </td>
                             </tr>
                           )}
@@ -320,7 +636,7 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
                     {renderPagination(
                       payoutPage,
                       totalPayoutPages,
-                      setPayoutPage
+                      setPayoutPage,
                     )}
                   </div>
                 </div>
@@ -332,6 +648,15 @@ const InvestorHistoryModal = ({ isOpen, onClose, investors }) => {
             )}
           </div>
           <div className="modal-footer bg-light rounded-bottom-4">
+            <button
+              type="button"
+              className="btn btn-primary fw-bold px-4"
+              onClick={downloadTransactionHistoryPDF}
+              disabled={!selectedInvestor}
+            >
+              <i className="bi bi-file-earmark-pdf-fill me-2"></i>
+              Download PDF
+            </button>
             <button
               type="button"
               className="btn btn-secondary fw-bold px-4"

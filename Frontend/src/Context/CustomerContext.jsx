@@ -58,7 +58,7 @@ export const CustomerProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken]
+    [accessToken],
   );
 
   const fetchInvestors = useCallback(async () => {
@@ -91,7 +91,7 @@ export const CustomerProvider = ({ children }) => {
           `${API_ENDPOINTS.CUSTOMER_SEARCH}/${phone}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          },
         );
         if (res.data.success) {
           return res.data.data;
@@ -101,7 +101,7 @@ export const CustomerProvider = ({ children }) => {
         return null;
       }
     },
-    [accessToken]
+    [accessToken],
   );
 
   const upsertCustomer = useCallback(
@@ -126,7 +126,7 @@ export const CustomerProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken, fetchCustomers, fetchInvestors]
+    [accessToken, fetchCustomers, fetchInvestors],
   );
 
   useEffect(() => {
@@ -147,7 +147,7 @@ export const CustomerProvider = ({ children }) => {
           settlementData,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          },
         );
 
         if (res.data.success) {
@@ -166,7 +166,7 @@ export const CustomerProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken, fetchCustomers]
+    [accessToken, fetchCustomers],
   );
 
   const fetchCustomerPaymentHistory = useCallback(
@@ -178,7 +178,7 @@ export const CustomerProvider = ({ children }) => {
           `${API_ENDPOINTS.CUSTOMERS}/${customerId}/payment-history`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          },
         );
         if (res.data.success) {
           return res.data.data;
@@ -188,7 +188,55 @@ export const CustomerProvider = ({ children }) => {
         return null;
       }
     },
-    [accessToken]
+    [accessToken],
+  );
+
+  const checkMaturity = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      const res = await axios.post(
+        `${API_ENDPOINTS.CUSTOMERS}/check-maturity`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (res.data.success) {
+        await fetchInvestors(); // Refresh investors after check
+        return res.data;
+      }
+    } catch (error) {
+      console.error("Error checking maturity:", error);
+    }
+  }, [accessToken, fetchInvestors]);
+
+  const closeInvestment = useCallback(
+    async (customerId, investmentId) => {
+      if (!accessToken) return;
+
+      try {
+        const res = await axios.post(
+          `${API_ENDPOINTS.CUSTOMERS}/${customerId}/investment/${investmentId}/close`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+        if (res.data.success) {
+          await fetchInvestors();
+          return { success: true, message: res.data.message };
+        }
+      } catch (error) {
+        console.error("Error closing investment:", error);
+        return {
+          success: false,
+          message:
+            error.response?.data?.message || "Failed to close investment",
+        };
+      }
+    },
+    [accessToken, fetchInvestors],
   );
 
   const value = {
@@ -202,6 +250,34 @@ export const CustomerProvider = ({ children }) => {
     upsertCustomer,
     settleCustomerCredit,
     fetchCustomerPaymentHistory,
+    checkMaturity,
+    closeInvestment,
+    deleteInvestment: useCallback(
+      async (customerId, investmentId) => {
+        if (!accessToken) return;
+
+        try {
+          const res = await axios.delete(
+            `${API_ENDPOINTS.CUSTOMERS}/${customerId}/investment/${investmentId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          );
+          if (res.data.success) {
+            await fetchInvestors();
+            return { success: true, message: res.data.message };
+          }
+        } catch (error) {
+          console.error("Error deleting investment:", error);
+          return {
+            success: false,
+            message:
+              error.response?.data?.message || "Failed to delete investment",
+          };
+        }
+      },
+      [accessToken, fetchInvestors],
+    ),
   };
 
   return (

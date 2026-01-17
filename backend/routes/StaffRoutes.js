@@ -16,6 +16,9 @@ const {
   searchByPhone,
   settleCustomerCredit,
   getCustomerPaymentHistory,
+  checkMaturity,
+  closeInvestment,
+  deleteInvestorInvestment,
 } = require("../controller/CustomerController");
 const {
   getInventoryByBranchStaff,
@@ -41,16 +44,27 @@ router.post("/accounts/:id/close", protect, closeAccount);
 router.get("/customers/my-branch", protect, getMyBranchCustomers);
 router.get("/customers/investors/my-branch", protect, getBranchInvestors);
 router.post("/customers", protect, upsertCustomer);
+router.post("/customers/check-maturity", protect, checkMaturity);
+router.post(
+  "/customers/:customerId/investment/:investmentId/close",
+  protect,
+  closeInvestment,
+);
+router.delete(
+  "/customers/:customerId/investment/:investmentId",
+  protect,
+  deleteInvestorInvestment,
+);
 router.get("/customers/search/:phone", protect, searchByPhone);
 router.post(
   "/customers/:customerId/settle-credit",
   protect,
-  settleCustomerCredit
+  settleCustomerCredit,
 );
 router.get(
   "/customers/:customerId/payment-history",
   protect,
-  getCustomerPaymentHistory
+  getCustomerPaymentHistory,
 );
 
 //get brabch products

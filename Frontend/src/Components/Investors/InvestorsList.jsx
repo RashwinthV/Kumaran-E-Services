@@ -9,7 +9,6 @@ const InvestorsList = ({
   onBuyProducts,
   onPayoutPrincipal,
   onViewHistory,
-  onDownloadCertificate,
   calculatePendingInterest,
   calculateAccumulatedInterest,
   calculateUnpaidInterest,
@@ -111,15 +110,22 @@ const InvestorsList = ({
                     </span>
                   </td>
                   <td className="text-center">
-                    <span
-                      className={`badge ${
-                        investor.status === "active"
-                          ? "bg-success"
-                          : "bg-secondary"
-                      }`}
-                    >
-                      {investor.status}
-                    </span>
+                    <div className="d-flex flex-column gap-1 align-items-center">
+                      <span
+                        className={`badge ${
+                          investor.status === "active"
+                            ? "bg-success"
+                            : "bg-secondary"
+                        } w-100`}
+                      >
+                        {investor.status}
+                      </span>
+                      {investor.isMatured && (
+                        <span className="badge bg-info text-white w-100">
+                          Matured
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <div className="d-flex gap-2 justify-content-center">
@@ -186,22 +192,6 @@ const InvestorsList = ({
                         }}
                       >
                         <i className="bi bi-cash-stack"></i>
-                      </button>
-                      <button
-                        className="btn btn-sm btn-light text-warning shadow-sm border"
-                        onClick={() => onDownloadCertificate(investor)}
-                        title="Download Certificate"
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                          padding: 0,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "8px",
-                        }}
-                      >
-                        <i className="bi bi-file-earmark-pdf-fill"></i>
                       </button>
                     </div>
                   </td>

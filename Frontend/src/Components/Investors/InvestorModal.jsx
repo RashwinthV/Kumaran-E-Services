@@ -130,7 +130,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
   const removeBankAccount = (index) => {
     if (formData.bankAccounts.length > 1) {
       const updatedAccounts = formData.bankAccounts.filter(
-        (_, i) => i !== index
+        (_, i) => i !== index,
       );
       setFormData((prev) => ({ ...prev, bankAccounts: updatedAccounts }));
     }
@@ -159,7 +159,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
   const removeUpiAccount = (index) => {
     if (formData.upiAccounts.length > 1) {
       const updatedAccounts = formData.upiAccounts.filter(
-        (_, i) => i !== index
+        (_, i) => i !== index,
       );
       setFormData((prev) => ({ ...prev, upiAccounts: updatedAccounts }));
     }
@@ -188,7 +188,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
       .filter(
         (c) =>
           c.name.toLowerCase().includes(lowerSearch) ||
-          c.phone.includes(searchTerm)
+          c.phone.includes(searchTerm),
       )
       .slice(0, 5);
   }, [customers, searchTerm]);
@@ -363,17 +363,18 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   </label>
                   <input
                     type="number"
-                    className="form-control"
+                    className={`form-control ${editMode ? "bg-light" : ""}`}
                     value={formData.principalAmount}
                     onChange={(e) =>
                       handleChange(
                         "principalAmount",
-                        parseFloat(e.target.value)
+                        parseFloat(e.target.value),
                       )
                     }
                     required
                     min="0"
                     step="0.01"
+                    disabled={editMode}
                   />
                 </div>
                 <div className="col-md-6">
@@ -383,7 +384,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   </label>
                   <input
                     type="number"
-                    className="form-control"
+                    className={`form-control ${editMode ? "bg-light" : ""}`}
                     value={formData.interestRate}
                     onChange={(e) =>
                       handleChange("interestRate", parseFloat(e.target.value))
@@ -392,6 +393,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                     min="0"
                     step="0.01"
                     placeholder="e.g. 2 for 2 paise per rupee"
+                    disabled={editMode}
                   />
                   <small className="text-muted">
                     Ex: 2 paise per ₹1 = 2% per month
@@ -402,11 +404,12 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                     Interest Type <span className="text-danger">*</span>
                   </label>
                   <select
-                    className="form-select"
+                    className={`form-select ${editMode ? "bg-light" : ""}`}
                     value={formData.interestType}
                     onChange={(e) =>
                       handleChange("interestType", e.target.value)
                     }
+                    disabled={editMode}
                   >
                     <option value="simple">Simple Interest</option>
                     <option value="compound">Compound Interest</option>
@@ -423,10 +426,11 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   </label>
                   <input
                     type="date"
-                    className="form-control"
+                    className={`form-control ${editMode ? "bg-light" : ""}`}
                     value={formData.startDate}
                     onChange={(e) => handleChange("startDate", e.target.value)}
                     required
+                    disabled={editMode}
                   />
                 </div>
                 <div className="col-md-6">
@@ -512,7 +516,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                                     handleBankChange(
                                       index,
                                       "accountHolderName",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="Holder Name"
@@ -530,7 +534,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                                     handleBankChange(
                                       index,
                                       "bankName",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="Bank Name"
@@ -548,7 +552,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                                     handleBankChange(
                                       index,
                                       "accountNumber",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="Account No"
@@ -566,7 +570,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                                     handleBankChange(
                                       index,
                                       "ifsc",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="IFSC Code"
@@ -625,7 +629,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                                     handleUpiChange(
                                       index,
                                       "upiId",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="e.g. name@bank"
@@ -643,7 +647,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                                     handleUpiChange(
                                       index,
                                       "upiPhone",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder="10 digit number"
