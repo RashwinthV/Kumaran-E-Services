@@ -153,8 +153,8 @@ const SaleHistoryFilters = ({
             onChange={(e) => onFilterChange("billType", e.target.value)}
           >
             <option value="All">All Types</option>
-            <option value="Products">Products Only</option>
-            <option value="Services">Services Only</option>
+            <option value="Products">Products </option>
+            <option value="Services">Services </option>
           </select>
         </div>
 

@@ -5,9 +5,20 @@ const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
   // Sales card displays the Net Revenue (Total bill value minus total value of items returned)
   // This matches the "Total Amount" column displayed in the transaction table.
   const totalRevenue = (data || []).reduce((sum, item) => {
-    const amt = Number(item.amount || 0);
+    // Skip cancelled transactions entirely
+    if (item.status === "Cancelled") return sum;
+
+    let grossAmount = Number(item.amount || 0);
+
+    // For Pending sales (Credits) or specific 'Credits' mode transactions that aren't fully paid,
+    // we should only count the actual 'paidAmount' towards realized revenue.
+    // We check for 'Pending' status which usually indicates unfinished payment for credits.
+    if (item.status === "Pending" || item.paymentMode === "Credits") {
+      grossAmount = Number(item.paidAmount || 0);
+    }
+
     const r = Number(item.totalRefundedAmount || 0);
-    const net = amt - r;
+    const net = grossAmount - r;
     return sum + (isNaN(net) ? 0 : net);
   }, 0);
 
