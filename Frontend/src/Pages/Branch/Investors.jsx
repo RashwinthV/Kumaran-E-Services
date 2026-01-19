@@ -206,6 +206,7 @@ const Investors = () => {
     checkMaturity,
     closeInvestment,
     deleteInvestment,
+    processPrincipalTransaction,
   } = useCustomer();
   const [showInvestorModal, setShowInvestorModal] = useState(false);
   const [showInterestModal, setShowInterestModal] = useState(false);
@@ -415,6 +416,7 @@ const Investors = () => {
         email: investorData.email || "",
         city: investorData.city || "",
         role: "Investor", // Default to investor role when adding from here
+        initialPaymentAccountId: investorData.paymentAccountId, // Pass explicit account for initial Funds
         investorDetails: {
           ...investorData,
           // Include investment ID when editing to ensure backend updates the correct record
@@ -485,58 +487,31 @@ const Investors = () => {
     if (!selectedInvestor) return;
 
     try {
-      const investor = selectedInvestor;
-      const currentUnpaid =
-        investor.unpaidInterest !== undefined
-          ? investor.unpaidInterest
-          : calculateUnpaidInterest(investor);
-
-      const amount = parseFloat(paymentData.amount);
-      const newUnpaid = Math.max(0, currentUnpaid - amount);
-
-      const newHistoryItem = {
-        id: (investor.interestHistory?.length || 0) + 1,
-        ...paymentData,
-        status: "paid",
-        date: paymentData.paidDate || new Date(),
+      const payload = {
+        customerId:
+          selectedInvestor.customerId ||
+          selectedInvestor._id ||
+          selectedInvestor.id,
+        investmentId:
+          selectedInvestor.investmentId ||
+          selectedInvestor._id ||
+          selectedInvestor.investorDetails?._id,
+        type: "interest_payout",
+        amount: parseFloat(paymentData.amount),
+        paymentAccountId: paymentData.paymentAccountId,
+        date: paymentData.paidDate,
+        mode: paymentData.mode,
+        reference: paymentData.reference,
+        notes: paymentData.notes,
+        month: paymentData.month,
       };
 
-      const updatedHistory = [
-        ...(investor.interestHistory || []),
-        newHistoryItem,
-      ];
-
-      let updatedPrincipal = investor.principalAmount;
-      if (paymentData.mode === "reinvest") {
-        updatedPrincipal += amount;
-      }
-
-      const cleanPayload = {
-        id: investor.customerId || investor._id || investor.id,
-        name: investor.name,
-        phone: investor.phone,
-        email: investor.email,
-        city: investor.city,
-        investorDetails: {
-          ...investor,
-          _id: investor.investmentId || investor._id,
-          interestHistory: updatedHistory,
-          totalInterestPaid: (investor.totalInterestPaid || 0) + amount,
-          principalAmount: updatedPrincipal,
-          currentPrincipal:
-            paymentData.mode === "reinvest"
-              ? (investor.currentPrincipal || investor.principalAmount) + amount
-              : investor.currentPrincipal || investor.principalAmount,
-          lastInterestPaid: paymentData.paidDate,
-          unpaidInterest: newUnpaid,
-          paymentMode: paymentData.mode,
-        },
-      };
-
-      const result = await upsertCustomer(cleanPayload);
-      if (result) {
-        toast.success(`Interest payment of ₹${amount} recorded!`);
+      const result = await processPrincipalTransaction(payload);
+      if (result && result.success) {
+        toast.success(result.message || "Interest payment recorded!");
         setShowInterestModal(false);
+      } else {
+        toast.error(result?.message || "Transaction failed");
       }
     } catch (err) {
       console.error("Interest Payment Error:", err);
@@ -658,85 +633,33 @@ const Investors = () => {
     if (!selectedInvestor) return;
 
     try {
-      const amount = parseFloat(payoutData.amount);
-      const isPayin = payoutData.type === "payin";
-
-      const commonPayload = {
-        id:
+      const payload = {
+        customerId:
           selectedInvestor.customerId ||
           selectedInvestor._id ||
           selectedInvestor.id,
-        name: selectedInvestor.name,
-        phone: selectedInvestor.phone,
-        email: selectedInvestor.email,
-        city: selectedInvestor.city,
-        role: "Investor",
+        investmentId:
+          selectedInvestor.investmentId ||
+          selectedInvestor._id ||
+          selectedInvestor.investorDetails._id,
+        type: payoutData.type,
+        amount: payoutData.amount,
+        paymentAccountId: payoutData.paymentAccountId,
+        date: payoutData.payoutDate,
+        mode: payoutData.mode,
+        reference: payoutData.reference,
+        notes: payoutData.notes,
       };
 
-      const investorObj = selectedInvestor.investorDetails || selectedInvestor;
-      const investmentId =
-        selectedInvestor.investmentId || selectedInvestor._id;
-
-      const currentPrincipal = investorObj.currentPrincipal || 0;
-      const principalAmount = investorObj.principalAmount || 0;
-
-      const newCurrentPrincipal = isPayin
-        ? currentPrincipal + amount
-        : Math.max(0, currentPrincipal - amount);
-
-      const newPrincipalAmount = isPayin
-        ? principalAmount + amount
-        : principalAmount;
-
-      const previousPayoutHistory = investorObj.payoutHistory || [];
-      const updatedPayoutHistory = [
-        ...previousPayoutHistory,
-        {
-          id: (previousPayoutHistory.length || 0) + 1,
-          amount: amount,
-          date: payoutData.payoutDate || new Date(),
-          reason: payoutData.reason,
-          mode: payoutData.mode,
-          reference: payoutData.reference,
-          notes: payoutData.notes,
-          type: payoutData.type, // 'payin' or 'payout'
-          remainingPrincipal: newCurrentPrincipal,
-          status: "paid",
-          previousPrincipal: currentPrincipal,
-          newPrincipal: newCurrentPrincipal,
-        },
-      ];
-
-      const previousInvestments = investorObj.investments || [];
-      let updatedInvestments = [...previousInvestments];
-
-      if (isPayin) {
-        updatedInvestments.push({
-          date: payoutData.payoutDate || new Date(),
-          amount: amount,
-          type: "additional",
-        });
-      }
-
-      const payload = {
-        ...commonPayload,
-        investorDetails: {
-          ...investorObj,
-          _id: investmentId,
-          principalAmount: newPrincipalAmount,
-          currentPrincipal: newCurrentPrincipal,
-          payoutHistory: updatedPayoutHistory,
-          investments: updatedInvestments,
-        },
-      };
-
-      const result = await upsertCustomer(payload);
-      if (result) {
-        toast.success(`${isPayin ? "Pay-in" : "Pay-out"} successful!`);
+      const result = await processPrincipalTransaction(payload);
+      if (result && result.success) {
+        toast.success(result.message || "Transaction successful!");
         setShowPayoutModal(false);
+      } else {
+        toast.error(result?.message || "Transaction failed");
       }
     } catch (err) {
-      console.error("Failed to process payout/payin:", err);
+      console.error("Failed to process transaction:", err);
       toast.error("Failed to save transaction. Please try again.");
     }
   };

@@ -98,10 +98,10 @@ const SaleHistoryDetailModal = ({
                       sale.status === "Paid"
                         ? "bg-success text-success bg-opacity-10"
                         : sale.status === "Cancelled"
-                        ? "bg-danger text-danger bg-opacity-10"
-                        : sale.status === "Refunded"
-                        ? "bg-secondary text-secondary bg-opacity-10"
-                        : "bg-warning text-warning bg-opacity-10"
+                          ? "bg-danger text-danger bg-opacity-10"
+                          : sale.status === "Refunded"
+                            ? "bg-secondary text-secondary bg-opacity-10"
+                            : "bg-warning text-warning bg-opacity-10"
                     }`}
                   >
                     {sale.status}
@@ -152,8 +152,8 @@ const SaleHistoryDetailModal = ({
                           isFullyRefunded
                             ? "table-secondary bg-opacity-10"
                             : isPartiallyRefunded
-                            ? "bg-danger bg-opacity-10"
-                            : ""
+                              ? "bg-danger bg-opacity-10"
+                              : ""
                         }
                       >
                         <td>
@@ -202,7 +202,7 @@ const SaleHistoryDetailModal = ({
                           >
                             {currencySymbol}
                             {(item.lineTotal || item.price * item.qty).toFixed(
-                              2
+                              2,
                             )}
                           </div>
                           {item.discount > 0 && (
@@ -371,15 +371,17 @@ const SaleHistoryDetailModal = ({
         {/* Footer */}
         <div className="px-4 py-3 bg-light border-top d-flex justify-content-between align-items-center">
           <div>
-            {sale.status !== "Refunded" && sale.status !== "Cancelled" && (
-              <button
-                onClick={onOpenRefund}
-                className="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"
-              >
-                <i className="bi bi-arrow-counterclockwise"></i>
-                Process Refund
-              </button>
-            )}
+            {sale.status !== "Refunded" &&
+              sale.status !== "Cancelled" &&
+              !sale.isService && (
+                <button
+                  onClick={onOpenRefund}
+                  className="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"
+                >
+                  <i className="bi bi-arrow-counterclockwise"></i>
+                  Process Refund
+                </button>
+              )}
           </div>
           <div className="d-flex gap-2">
             <button onClick={onClose} className="btn btn-light border px-4">

@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
   },
   SALES: {
     BASE: `${API_BASE}/api/staff`,
+    SERVICES: `${API_BASE}/api/staff/services`,
     REFUND: `${API_BASE}/api/staff/refund`,
   },
   BRANCH_ACCOUNTS: `${API_BASE}/api/staff/accounts/my-branch`,
@@ -21,4 +22,8 @@ export const API_ENDPOINTS = {
   INVESTORS: `${API_BASE}/api/staff/customers/investors`,
   CUSTOMER_SEARCH: `${API_BASE}/api/staff/customers/search`,
   BRANCH: `${API_BASE}/api/staff/Branch`,
+  COMPLAINTS: {
+    BASE: `${API_BASE}/api/complaints`,
+    BY_ID: (id) => `${API_BASE}/api/complaints/${id}`,
+  },
 };

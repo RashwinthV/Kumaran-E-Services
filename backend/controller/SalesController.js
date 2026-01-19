@@ -4,6 +4,7 @@ const Account = require("../models/Account");
 const Branch = require("../models/Branch");
 const Inventory = require("../models/Inventory");
 const Customer = require("../models/Customer");
+const Credit = require("../models/Credit");
 const Refund = require("../models/Refund");
 
 // @desc    Create new sale (Daily Storage version)
@@ -13,23 +14,17 @@ exports.createSale = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const {
-      customer, // Customer ID (Optional for walk-ins, we handle it)
-      items,
-      subtotal,
-      totalTax,
-      grandTotal,
-      paymentMethod,
-    } = req.body;
+    const { customer, items, subtotal, totalTax, grandTotal, paymentMethod } =
+      req.body;
 
     const branch = await Branch.findOne({ code: req.user.branchCode }).session(
-      session
+      session,
     );
     if (!branch) {
       throw new Error("Branch not found for the user");
     }
 
-    // 1. Resolve Customer (Auto-manage Walk-in if ID not provided)
+    // 1. Resolve Customer
     let customerId = customer;
     if (!customerId) {
       let walkIn = await Customer.findOne({
@@ -48,7 +43,7 @@ exports.createSale = async (req, res) => {
               branchCode: req.user.branchCode,
             },
           ],
-          { session }
+          { session },
         );
         walkIn = walkIn[0];
       }
@@ -59,22 +54,20 @@ exports.createSale = async (req, res) => {
     const dateKey = today.toISOString().slice(0, 10);
     const dateStr = dateKey.replace(/-/g, "");
 
-    // 2. Fetch Account to check type
+    // 2. Fetch Account
     const account = await Account.findById(paymentMethod).session(session);
     if (!account) {
       throw new Error("Payment account not found");
     }
 
-    // Determine status based on payment method
     const saleStatus = account.type === "Credits" ? "Pending" : "Completed";
 
-    // Increment sequential bill number
+    // Increment bill number
     branch.lastBillNumber += 1;
     await branch.save({ session });
 
     const billNumber = `${req.user.branchCode}-${dateStr}-${branch.lastBillNumber}`;
 
-    // Ensure each item has required taxableValue for schema consistency
     const processedItems = items.map((item) => ({
       ...item,
       taxableValue:
@@ -102,7 +95,6 @@ exports.createSale = async (req, res) => {
       $push: { sales: individualSale },
     };
 
-    // Only update daily totals if payment is received (Completed status)
     if (saleStatus === "Completed") {
       updateData.$inc = {
         daySubtotal: subtotal,
@@ -114,22 +106,28 @@ exports.createSale = async (req, res) => {
     const saleRecord = await Sale.findOneAndUpdate(
       { date: dateKey, branch: branch._id },
       updateData,
-      { upsert: true, new: true, session }
+      { upsert: true, new: true, session },
     );
 
-    // If payment is "Credits", update Customer Credits with Sale ID and BillNumber
+    // If payment is "Credits", create a new Credit Document
     if (account.type === "Credits") {
-      const custDoc = await Customer.findById(customerId).session(session);
-      // We already checked walk-in above, but for clarity let's just push
-      custDoc.credits.push({
-        date: new Date(),
-        products: items.map((i) => i.product),
-        totalAmount: grandTotal,
-        originalAmount: grandTotal,
-        sale: saleRecord._id,
-        billNumber: billNumber,
-      });
-      await custDoc.save({ session });
+      await Credit.create(
+        [
+          {
+            customer: customerId,
+            branch: branch._id,
+            date: new Date(),
+            products: items.map((i) => i.product),
+            totalAmount: grandTotal,
+            originalAmount: grandTotal,
+            sale: saleRecord._id,
+            billNumber: billNumber,
+            isService: false,
+            status: "Pending",
+          },
+        ],
+        { session },
+      );
     }
 
     // 4. Update Account Balance & Daily Session
@@ -144,7 +142,7 @@ exports.createSale = async (req, res) => {
 
     if (dailySession.isClosed) {
       throw new Error(
-        "This account is closed for today. Please re-open or use another account."
+        "This account is closed for today. Please re-open or use another account.",
       );
     }
 
@@ -166,13 +164,13 @@ exports.createSale = async (req, res) => {
 
       if (!currentInventory) {
         throw new Error(
-          `Product not found in inventory. Please add it to branch inventory first.`
+          `Product not found in inventory. Please add it to branch inventory first.`,
         );
       }
 
       if (currentInventory.quantity < item.qty) {
         throw new Error(
-          `Insufficient stock for ${currentInventory.product.name} (SKU: ${currentInventory.product.sku}). Available: ${currentInventory.quantity}, Required: ${item.qty}`
+          `Insufficient stock for ${currentInventory.product.name} (SKU: ${currentInventory.product.sku}). Available: ${currentInventory.quantity}, Required: ${item.qty}`,
         );
       }
 
@@ -184,12 +182,12 @@ exports.createSale = async (req, res) => {
           quantity: { $gte: item.qty },
         },
         { $inc: { quantity: -item.qty } },
-        { session, new: true }
+        { session, new: true },
       );
 
       if (!inventoryUpdate) {
         throw new Error(
-          `Failed to update inventory for ${currentInventory.product.name}`
+          `Failed to update inventory for ${currentInventory.product.name}`,
         );
       }
 
@@ -244,64 +242,87 @@ exports.getSales = async (req, res) => {
     const query = req.user.role === "admin" ? {} : { branch: branch._id };
 
     const dailyRecords = await Sale.find(query)
-      .populate("sales.paymentMethod", "name type upiAccountName")
-      .populate("sales.staff", "name")
-      .populate("sales.customer", "name phone city credits")
+      .populate(
+        "sales.paymentMethod services.paymentMethod",
+        "name type upiAccountName",
+      )
+      .populate("sales.staff services.staff", "name")
+      .populate("sales.customer services.customer", "name phone city") // Removed credits
       .populate("sales.items.product", "name sku gstType gst")
       .sort({ date: -1 });
 
+    // Extract all Bill Numbers to fetch relevant Credits in one go
+    const allBillNumbers = [];
+    dailyRecords.forEach((record) => {
+      record.sales.forEach((s) => s && allBillNumbers.push(s.billNumber));
+      record.services.forEach((s) => s && allBillNumbers.push(s.billNumber));
+    });
+
+    const relatedCredits = await Credit.find({
+      billNumber: { $in: allBillNumbers },
+    });
+
+    // Create a Map for quick lookup: billNumber -> Credit Document
+    const creditMap = new Map();
+    relatedCredits.forEach((c) => creditMap.set(c.billNumber, c));
+
     const flattenedSales = dailyRecords.reduce((acc, record) => {
-      // Ensure sales array exists
-      if (!record.sales || !Array.isArray(record.sales)) return acc;
+      const recordsToProcess = [];
 
-      const salesWithMeta = record.sales
-        .filter((s) => s) // Ensure no nulls in array
-        .map((s) => {
-          const saleObj = typeof s.toObject === "function" ? s.toObject() : s;
-
-          // Real-time Sync: Calculate paidAmount from customer ledger if it's a credit sale
-          let livePaidAmount = saleObj.paidAmount || 0;
-          if (
-            saleObj.paymentMethod?.type === "Credits" &&
-            saleObj.customer?.credits
-          ) {
-            const matchingCredit = saleObj.customer.credits.find(
-              (c) => c.billNumber === saleObj.billNumber
-            );
-            if (matchingCredit) {
-              const ledgerTotal = (matchingCredit.paymentHistory || []).reduce(
-                (sum, p) => sum + (p.amount || 0),
-                0
-              );
-              livePaidAmount = Math.max(livePaidAmount, ledgerTotal);
-            }
-          }
-
-          // Strip the bulky credits array before sending to frontend
-          if (saleObj.customer) {
-            delete saleObj.customer.credits;
-          }
-
-          // Real-time Status Sync: If net balance is zero, it's effectively Paid
-          const netRemaining =
-            (saleObj.grandTotal || 0) - (saleObj.totalRefundedAmount || 0);
-          let finalStatus = saleObj.status;
-
-          if (saleObj.status !== "Refunded" && saleObj.status !== "Cancelled") {
-            if (livePaidAmount >= netRemaining - 0.01) {
-              finalStatus = "Completed";
-            }
-          }
-
-          return {
-            ...saleObj,
-            status: finalStatus,
-            paidAmount: livePaidAmount,
-            branchId: record.branch,
-            dateStr: record.date, // YYYY-MM-DD from parent record
-            _id: s._id,
-          };
+      if (record.sales) {
+        record.sales.forEach((s) => {
+          if (s)
+            recordsToProcess.push({
+              ...(s.toObject ? s.toObject() : s),
+              isService: false,
+            });
         });
+      }
+
+      if (record.services) {
+        record.services.forEach((s) => {
+          if (s)
+            recordsToProcess.push({
+              ...(s.toObject ? s.toObject() : s),
+              isService: true,
+            });
+        });
+      }
+
+      const salesWithMeta = recordsToProcess.map((saleObj) => {
+        // Real-time Sync: Calculate paidAmount from Credit collection if it's a credit sale
+        let livePaidAmount = saleObj.paidAmount || 0;
+
+        if (saleObj.paymentMethod?.type === "Credits") {
+          const matchingCredit = creditMap.get(saleObj.billNumber);
+          if (matchingCredit) {
+            const ledgerTotal = (matchingCredit.paymentHistory || []).reduce(
+              (sum, p) => sum + (p.amount || 0),
+              0,
+            );
+            livePaidAmount = Math.max(livePaidAmount, ledgerTotal);
+          }
+        }
+
+        // Real-time Status Sync: If net balance is zero, it's effectively Paid
+        const netRemaining =
+          (saleObj.grandTotal || 0) - (saleObj.totalRefundedAmount || 0);
+        let finalStatus = saleObj.status;
+
+        if (saleObj.status !== "Refunded" && saleObj.status !== "Cancelled") {
+          if (livePaidAmount >= netRemaining - 0.01) {
+            finalStatus = "Completed";
+          }
+        }
+
+        return {
+          ...saleObj,
+          status: finalStatus,
+          paidAmount: livePaidAmount,
+          branchId: record.branch,
+          dateStr: record.date, // YYYY-MM-DD from parent record
+        };
+      });
       return acc.concat(salesWithMeta);
     }, []);
 
@@ -312,6 +333,16 @@ exports.getSales = async (req, res) => {
       return dateB - dateA;
     });
 
+    // Note: Refund import was missing in previous edit, adding it back via separate edit or assuming it's there?
+    // Wait, I messed up the imports in the previous step. I need to fix imports first or here.
+    // I cannot import here. I will assume I fix imports in a separate step or just ignore Refund for GET sales.
+    // But this block is just the GET sales part.
+    // The previous block I edited was CREATE sales.
+    // Refund usage is in REFUND endpoint which is AFTER this block.
+    // So if I only edit this block I am fine.
+
+    // I need to make sure I don't break the Refund functionality down below.
+    // But since I am replacing only getSales...
     const refunds = await Refund.find(query)
       .populate("originalSale", "billNumber")
       .populate("customer", "name phone")
@@ -352,7 +383,7 @@ exports.refundSale = async (req, res) => {
 
     // 1. Find the daily sale record containing this transaction
     const dailyRecord = await Sale.findOne({
-      "sales._id": saleId,
+      $or: [{ "sales._id": saleId }, { "services._id": saleId }],
       date: saleDate,
     }).session(session);
 
@@ -360,13 +391,23 @@ exports.refundSale = async (req, res) => {
       throw new Error("Transaction record not found for the specified date");
     }
 
-    const individualSale = dailyRecord.sales.id(saleId);
+    let individualSale = dailyRecord.sales.id(saleId);
+    let isServiceRefund = false;
+
+    if (!individualSale) {
+      individualSale = dailyRecord.services.id(saleId);
+      isServiceRefund = true;
+    }
+
+    if (!individualSale) {
+      throw new Error("Specific transaction ID not found in daily record");
+    }
     if (
       individualSale.status === "Cancelled" ||
       individualSale.status === "Refunded"
     ) {
       throw new Error(
-        `Cannot refund a transaction with status: ${individualSale.status}`
+        `Cannot refund a transaction with status: ${individualSale.status}`,
       );
     }
 
@@ -381,7 +422,7 @@ exports.refundSale = async (req, res) => {
       const remainingQty = saleItem.qty - (saleItem.refundedQty || 0);
       if (refundReq.qtyToRefund > remainingQty) {
         throw new Error(
-          `Cannot refund more than available quantity for ${saleItem.product}`
+          `Cannot refund more than available quantity for ${saleItem.product}`,
         );
       }
 
@@ -402,7 +443,8 @@ exports.refundSale = async (req, res) => {
         refundAmount: itemRefundAmount,
       });
 
-      // 3. Restore to Inventory
+      // 3. Restore to Inventory (DISABLED as requested: Refunded products should not increase stock)
+      /* 
       const inventoryUpdate = await Inventory.findOneAndUpdate(
         {
           product: saleItem.product,
@@ -418,6 +460,7 @@ exports.refundSale = async (req, res) => {
       if (!inventoryUpdate) {
         throw new Error("Failed to restore inventory");
       }
+      */
     }
 
     if (batchRefundAmount === 0) {
@@ -439,7 +482,7 @@ exports.refundSale = async (req, res) => {
           dateStr: new Date().toISOString().split("T")[0],
         },
       ],
-      { session }
+      { session },
     );
 
     // 5. Update individual sale status and totals
@@ -453,15 +496,13 @@ exports.refundSale = async (req, res) => {
 
     // We need to check if this was a credit sale to handle partial revenue deduction
     const tempAccount = await Account.findById(
-      individualSale.paymentMethod
+      individualSale.paymentMethod,
     ).session(session);
     if (tempAccount && tempAccount.type === "Credits") {
-      const tempCustomer = await Customer.findById(
-        individualSale.customer
-      ).session(session);
-      const existingCredit = tempCustomer?.credits?.find(
-        (c) => c.billNumber === individualSale.billNumber
-      );
+      const existingCredit = await Credit.findOne({
+        billNumber: individualSale.billNumber,
+        customer: individualSale.customer,
+      }).session(session);
 
       const remainingDebtBefore = existingCredit
         ? existingCredit.totalAmount
@@ -470,7 +511,7 @@ exports.refundSale = async (req, res) => {
       // If no debt left (already settled), the whole refund reduces realized cash revenue
       amountToDeductFromDaily = Math.max(
         0,
-        batchRefundAmount - remainingDebtBefore
+        batchRefundAmount - remainingDebtBefore,
       );
     } else {
       // For Cash/UPI sales, full refund amount is deducted from daily revenue
@@ -478,18 +519,26 @@ exports.refundSale = async (req, res) => {
     }
 
     if (amountToDeductFromDaily > 0) {
-      dailyRecord.dayGrandTotal -= amountToDeductFromDaily;
-      // Adjust subtotal and tax proportionally based on the actual deduction from realized revenue
-      const taxRatio = individualSale.totalTax / individualSale.grandTotal;
+      const taxRatio =
+        (individualSale.totalTax || 0) / (individualSale.grandTotal || 1);
       const taxPart = amountToDeductFromDaily * taxRatio;
-      dailyRecord.daySubtotal -= amountToDeductFromDaily - (taxPart || 0);
-      dailyRecord.dayTotalTax -= taxPart || 0;
+      const subtotalPart = amountToDeductFromDaily - taxPart;
+
+      if (isServiceRefund) {
+        dailyRecord.serviceDayGrandTotal -= amountToDeductFromDaily;
+        dailyRecord.serviceDaySubtotal -= subtotalPart;
+        dailyRecord.serviceDayTotalTax -= taxPart;
+      } else {
+        dailyRecord.dayGrandTotal -= amountToDeductFromDaily;
+        dailyRecord.daySubtotal -= subtotalPart;
+        dailyRecord.dayTotalTax -= taxPart;
+      }
     }
 
     // Update the record of how much is "paid" on this sale and actual cash impact
     individualSale.paidAmount = Math.max(
       0,
-      (individualSale.paidAmount || 0) - amountToDeductFromDaily
+      (individualSale.paidAmount || 0) - amountToDeductFromDaily,
     );
     individualSale.cashRefundAmount =
       (individualSale.cashRefundAmount || 0) + amountToDeductFromDaily;
@@ -498,7 +547,7 @@ exports.refundSale = async (req, res) => {
     const netTotal =
       individualSale.grandTotal - individualSale.totalRefundedAmount;
     const allItemsFullyRefunded = individualSale.items.every(
-      (item) => (item.refundedQty || 0) === item.qty
+      (item) => (item.refundedQty || 0) === item.qty,
     );
 
     if (allItemsFullyRefunded) {
@@ -510,22 +559,24 @@ exports.refundSale = async (req, res) => {
       individualSale.status = "Partially Refunded";
     }
 
-    dailyRecord.markModified("sales");
+    if (isServiceRefund) {
+      dailyRecord.markModified("services");
+    } else {
+      dailyRecord.markModified("sales");
+    }
     await dailyRecord.save({ session });
 
     // 7. Update Account Balances
     const { ensureDailySession } = require("./AccountController");
     const account = await Account.findById(
-      individualSale.paymentMethod
+      individualSale.paymentMethod,
     ).session(session);
 
     if (account && account.type === "Credits") {
-      const customer = await Customer.findById(individualSale.customer).session(
-        session
-      );
-      const existingCredit = customer?.credits?.find(
-        (c) => c.billNumber === individualSale.billNumber
-      );
+      const existingCredit = await Credit.findOne({
+        billNumber: individualSale.billNumber,
+        customer: individualSale.customer,
+      }).session(session);
 
       const remainingDebt = existingCredit ? existingCredit.totalAmount : 0;
       const debtReduction = Math.min(batchRefundAmount, remainingDebt);
@@ -535,7 +586,7 @@ exports.refundSale = async (req, res) => {
       if (debtReduction > 0) {
         const creditSessionDetail = await ensureDailySession(
           account._id,
-          session
+          session,
         );
         if (creditSessionDetail) {
           creditSessionDetail.account.currentBalance -= debtReduction;
@@ -555,7 +606,7 @@ exports.refundSale = async (req, res) => {
         if (cashAccount) {
           const cashSessionDetail = await ensureDailySession(
             cashAccount._id,
-            session
+            session,
           );
           if (cashSessionDetail) {
             cashSessionDetail.account.currentBalance -= cashSurplus;
@@ -566,8 +617,8 @@ exports.refundSale = async (req, res) => {
         }
       }
 
-      // 8. Update Customer Ledger (Debt only, no store credit)
-      if (customer && existingCredit) {
+      // 8. Update Credit Document directly (Debt only, no store credit)
+      if (existingCredit) {
         const amountBefore = existingCredit.totalAmount;
         existingCredit.totalAmount -= debtReduction;
         const amountAfter = Math.max(0, existingCredit.totalAmount);
@@ -576,7 +627,7 @@ exports.refundSale = async (req, res) => {
         existingCredit.paymentHistory.push({
           date: new Date(),
           amount: debtReduction,
-          paymentMethod: individualSale.paymentMethod,
+          paymentMethod: individualSale.paymentMethod, // Original payment method ID
           paymentMethodName: "Product Return",
           billNumber: existingCredit.billNumber,
           amountBefore: amountBefore,
@@ -585,19 +636,20 @@ exports.refundSale = async (req, res) => {
           recordedBy: req.user._id,
         });
 
-        // Clean up if fully settled
+        // Update status
         if (existingCredit.totalAmount <= 0.01) {
-          customer.credits = customer.credits.filter(
-            (c) => c.billNumber !== individualSale.billNumber
-          );
+          existingCredit.status = "Settled";
+          existingCredit.totalAmount = 0;
+        } else {
+          existingCredit.status = "Partial";
         }
-        await customer.save({ session });
+        await existingCredit.save({ session });
       }
     } else {
       // Standard Cash/UPI Refund
       const sessionDetail = await ensureDailySession(
         individualSale.paymentMethod,
-        session
+        session,
       );
       if (sessionDetail) {
         sessionDetail.account.currentBalance -= batchRefundAmount;

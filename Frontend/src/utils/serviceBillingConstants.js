@@ -1,4 +1,24 @@
 export const SERVICE_MODULES = {
+    LOCAL: {
+    label: "Local Services",
+    icon: "bi-shop",
+    services: ["Xerox", "Printout", "Scan", "Photograph", "Lamination"],
+  },
+  MOBILE_SERVICE: {
+    label: "Mobile Service",
+    icon: "bi-phone",
+    services: ["Recharge", "Mobile Repair", "Pending Repair"],
+  },
+    TRAVEL: {
+    label: "Travel & Transport",
+    icon: "bi-bus-front",
+    services: [
+      "Train Ticket",
+      "Bus Ticket",
+      "Flight Ticket",
+      "FASTag Recharge",
+    ],
+  },
   UTILITY: {
     label: "Utility Bills",
     icon: "bi-lightning-charge",
@@ -65,21 +85,8 @@ export const SERVICE_MODULES = {
       "Coaching Fees",
     ],
   },
-  TRAVEL: {
-    label: "Travel & Transport",
-    icon: "bi-bus-front",
-    services: [
-      "Train Ticket",
-      "Bus Ticket",
-      "Flight Ticket",
-      "FASTag Recharge",
-    ],
-  },
-  LOCAL: {
-    label: "Local Services",
-    icon: "bi-shop",
-    services: ["Xerox","Printout", "Scan", "Photograph", "Lamination"],
-  },
+
+
 };
 
 export const getCurrencySymbol = (settingValue) => {
@@ -93,6 +100,21 @@ export const getCurrencySymbol = (settingValue) => {
 // fields: consumerId (label), providerName (label), etc.
 // If a field label is null/false, the field is hidden.
 export const SERVICE_FIELDS_CONFIG = {
+  // --- MOBILE SERVICE ---
+  Recharge: {
+    consumerId: "Mobile Number",
+    providerName: "Operator & Circle",
+    planDetails: "Plan Description",
+    showName: false,
+  },
+  "Mobile Repair": {
+    consumerId: "IMEI / Serial No",
+    providerName: "Device Model (Brand)",
+    planDetails: "Fault Description",
+    showName: true,
+    labelName: "Customer Name",
+    repairFields: true, // Special flag for extra fields
+  },
   // --- UTILITY ---
   Electricity: {
     consumerId: "Consumer Number",

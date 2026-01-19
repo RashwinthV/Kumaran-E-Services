@@ -15,7 +15,7 @@ const ProductsCatalog = () => {
   const [sortBy, setSortBy] = useState("Lowest Stock");
   const [branchInfo, setBranchInfo] = useState(() => getDecrypted("branch"));
   const [appSettings, setAppSettings] = useState(() =>
-    getDecrypted("app_settings")
+    getDecrypted("app_settings"),
   );
 
   const isServiceProduct = (item) => {
@@ -67,7 +67,7 @@ const ProductsCatalog = () => {
           product.tags.some((tag) => tag.toLowerCase().includes(term))) ||
         (product.compatibleModels &&
           product.compatibleModels.some((model) =>
-            model.toLowerCase().includes(term)
+            model.toLowerCase().includes(term),
           ));
 
       // Handle nested category name (if populated) or find in categories array
@@ -160,7 +160,7 @@ const ProductsCatalog = () => {
       bContactRow.number,
       1,
       bContactRow.number,
-      columns.length
+      columns.length,
     );
     bContactRow.alignment = { horizontal: "center", vertical: "middle" };
 
@@ -201,7 +201,7 @@ const ProductsCatalog = () => {
         sectionHeader.number,
         1,
         sectionHeader.number,
-        columns.length
+        columns.length,
       );
       sectionHeader.font = {
         bold: true,
@@ -308,7 +308,7 @@ const ProductsCatalog = () => {
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(
       new Blob([buffer]),
-      `Stock_Report_${new Date().toISOString().split("T")[0]}.xlsx`
+      `Stock_Report_${new Date().toISOString().split("T")[0]}.xlsx`,
     );
   };
 
@@ -474,20 +474,21 @@ const ProductsCatalog = () => {
                   </div>
 
                   <div className="compatible-section">
-                    <p className="compatible-label">Compatible With:</p>
+                    {product.compatibleModels &&
+                      product.compatibleModels.length > 0&&(<p className="compatible-label">Compatible With:</p>)}{" "}
                     <div className="compatible-tags">
                       {product.compatibleModels &&
-                      product.compatibleModels.length > 0 ? (
-                        product.compatibleModels.map((model, idx) => (
-                          <span key={idx} className="model-tag">
-                            {model}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="model-tag" style={{ opacity: 0.5 }}>
-                          No compatible models listed
-                        </span>
-                      )}
+                      product.compatibleModels.length > 0
+                        ? product.compatibleModels.map((model, idx) => (
+                            <span key={idx} className="model-tag">
+                              {model}
+                            </span>
+                          ))
+                        : ""
+                          // <span className="model-tag" style={{ opacity: 0.5 }}>
+                          //   No compatible models listed
+                          // </span>
+                      }
                     </div>
                   </div>
 

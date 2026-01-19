@@ -8,6 +8,7 @@ import SaleHistoryDetailModal from "../../Components/SaleHistory/SaleHistoryDeta
 import RefundModal from "../../Components/SaleHistory/RefundModal";
 import SaleHistoryPagination from "../../Components/SaleHistory/SaleHistoryPagination";
 import { useBilling } from "../../Context/BillingContext";
+import { useCustomer } from "../../Context/CustomerContext";
 import { toast } from "react-toastify";
 import Loader from "../../Components/Loading/universalLoader";
 import { getDecrypted } from "../../utils/storage";
@@ -34,6 +35,27 @@ const SaleHistory = () => {
     refreshSales,
   } = useBilling();
 
+  const { investors } = useCustomer();
+
+  const totalInvestment = useMemo(() => {
+    return (investors || []).reduce((sum, inv) => {
+      const investments =
+        inv.investmentDetails ||
+        (inv.investorDetails ? [inv.investorDetails] : []);
+
+      const invTotal = investments.reduce((acc, detail) => {
+        const principal =
+          detail.currentPrincipal === 0 &&
+          (!detail.payoutHistory || detail.payoutHistory.length === 0)
+            ? detail.principalAmount
+            : (detail.currentPrincipal ?? detail.principalAmount ?? 0);
+        return acc + principal;
+      }, 0);
+
+      return sum + invTotal;
+    }, 0);
+  }, [investors]);
+
   const today = new Date().toISOString().split("T")[0];
   const currentMonth = (new Date().getMonth() + 1).toString();
   const currentYear = new Date().getFullYear().toString();
@@ -47,13 +69,14 @@ const SaleHistory = () => {
     sortBy: "Newest",
     month: currentMonth,
     year: currentYear,
+    billType: "All",
   });
 
   const [selectedSale, setSelectedSale] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [appSettings, setAppSettings] = useState(() =>
-    getDecrypted("app_settings")
+    getDecrypted("app_settings"),
   );
   const [branchInfo, setBranchInfo] = useState(() => getDecrypted("branch"));
 
@@ -70,7 +93,7 @@ const SaleHistory = () => {
 
   const currencySymbol = useMemo(
     () => getCurrencySymbol(appSettings?.currency),
-    [appSettings]
+    [appSettings],
   );
 
   // Pagination State
@@ -87,7 +110,7 @@ const SaleHistory = () => {
         date: createdDate.toISOString().split("T")[0], // Keep for filters
         formattedDate: formatDate(
           createdDate.toISOString().split("T")[0],
-          appSettings?.dateFormat || "DD/MM/YYYY"
+          appSettings?.dateFormat || "DD/MM/YYYY",
         ),
         time: createdDate.toLocaleTimeString([], {
           hour: "2-digit",
@@ -108,8 +131,8 @@ const SaleHistory = () => {
             const sgst = Number((tax - cgst).toFixed(2));
 
             return {
-              name: item.product?.name || "Unknown Product",
-              sku: item.product?.sku || "N/A",
+              name: item.name || item.product?.name || "Unknown Product",
+              sku: item.product?.sku || (sale.isService ? "Service" : "N/A"),
               qty: item.qty,
               price: item.price,
               lineTotal: item.lineTotal,
@@ -125,6 +148,7 @@ const SaleHistory = () => {
               discount: item.discount || 0,
             };
           }) || [],
+        isService: sale.isService,
         // Extra info for the detail modal if needed
         subtotal: sale.subtotal,
         totalTax: sale.totalTax,
@@ -177,6 +201,7 @@ const SaleHistory = () => {
       sortBy: "Newest",
       month: currentMonth,
       year: currentYear,
+      billType: "All",
     });
     setCurrentPage(1);
   };
@@ -428,7 +453,7 @@ const SaleHistory = () => {
         color: { argb: "FFFF0000" },
       };
       worksheet.mergeCells(
-        `A${refundTitleRow.number}:J${refundTitleRow.number}`
+        `A${refundTitleRow.number}:J${refundTitleRow.number}`,
       );
       refundTitleRow.alignment = { horizontal: "center" };
       worksheet.addRow([]);
@@ -538,6 +563,12 @@ const SaleHistory = () => {
           filters.year === "All" ||
           saleDate.getFullYear().toString() === filters.year;
 
+        // Bill Type Filter
+        const matchesBillType =
+          filters.billType === "All" ||
+          (filters.billType === "Services" && item.isService) ||
+          (filters.billType === "Products" && !item.isService);
+
         return (
           matchesSearch &&
           matchesMode &&
@@ -545,7 +576,8 @@ const SaleHistory = () => {
           matchesStart &&
           matchesEnd &&
           matchesMonth &&
-          matchesYear
+          matchesYear &&
+          matchesBillType
         );
       })
       .sort((a, b) => {
@@ -589,7 +621,7 @@ const SaleHistory = () => {
         </div> */}
       </div>
 
-      <SaleHistoryStats data={filteredData} />
+      <SaleHistoryStats data={filteredData} totalInvestment={totalInvestment} />
 
       <SaleHistoryFilters
         filters={filters}

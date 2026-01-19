@@ -3,6 +3,8 @@ import {
   getCurrencySymbol,
   SERVICE_FIELDS_CONFIG,
 } from "../../utils/serviceBillingConstants";
+import MobileServiceInputs from "./MobileServiceInputs";
+import LocalServiceInputs from "./LocalServiceInputs";
 
 const ServiceInputForm = ({
   selectedModule,
@@ -11,8 +13,53 @@ const ServiceInputForm = ({
   handleInputChange,
   currency,
   serviceSettings,
+  componentSuggestions = [],
+  // New props for Pending Repair sub-service
+  complaints = [],
+  onSelectComplaint,
+  onCancelComplaint,
+  selectedComplaintId,
 }) => {
+  const isRepairService = selectedService === "Mobile Repair";
+  const isXeroxPrintScan = ["Xerox", "Printout", "Scan"].includes(
+    selectedService,
+  );
+  const isPhotoLami = ["Photograph", "Lamination"].includes(selectedService);
+  // Manual entry disabled if any of these special modes are active
+  const isManualBaseDisabled =
+    isRepairService || isXeroxPrintScan || isPhotoLami;
+
   const renderDynamicInputs = () => {
+    // Local Service Special Case
+    if (selectedModule === "LOCAL") {
+      return (
+        <LocalServiceInputs
+          selectedService={selectedService}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          currency={currency}
+          serviceSettings={serviceSettings}
+        />
+      );
+    }
+
+    // Mobile Service Special Case
+    if (selectedModule === "MOBILE_SERVICE") {
+      return (
+        <MobileServiceInputs
+          selectedService={selectedService}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          currency={currency}
+          componentSuggestions={componentSuggestions}
+          complaints={complaints}
+          onSelectComplaint={onSelectComplaint}
+          onCancelComplaint={onCancelComplaint}
+          selectedComplaintId={selectedComplaintId}
+        />
+      );
+    }
+
     // Ticket Special Case
     if (
       ["Train Ticket", "Bus Ticket", "Flight Ticket"].includes(selectedService)
@@ -182,13 +229,13 @@ const ServiceInputForm = ({
           showName = true;
           labelPlan = "Fee Details";
           break;
-    
+
         case "TRAVEL":
           // Non-ticket travel
           labelConsumer = "Vehicle No";
           labelProvider = "Provider";
           break;
-    
+
         case "LOCAL":
           // Should have been caught by description check above, but fallback:
           return (
@@ -311,7 +358,7 @@ const ServiceInputForm = ({
 
         {/* Financials Row (Prominent) - Pinned to bottom */}
         <div className="row g-2 mt-2 pt-2 border-top align-items-end mt-auto">
-          <div className="col-md-4">
+          <div className={selectedModule === "LOCAL" ? "col-md-6" : "col-md-4"}>
             <label className="small fw-bold text-muted text-uppercase mb-1">
               Base Amount
             </label>
@@ -330,7 +377,7 @@ const ServiceInputForm = ({
               />
             </div>
           </div>
-          <div className="col-md-4">
+          <div className={selectedModule === "LOCAL" ? "col-md-6" : "col-md-4"}>
             <label className="small fw-bold text-muted text-uppercase mb-1">
               Service Charge
             </label>
@@ -349,17 +396,19 @@ const ServiceInputForm = ({
               />
             </div>
           </div>
-          <div className="col-md-4">
-            <label className="small fw-bold text-muted text-uppercase mb-1">
-              Quantity
-            </label>
-            <input
-              type="number"
-              className="form-control text-center"
-              value={formData.qty}
-              onChange={(e) => handleInputChange("qty", e.target.value)}
-            />
-          </div>
+          {selectedModule !== "LOCAL" && (
+            <div className="col-md-4">
+              <label className="small fw-bold text-muted text-uppercase mb-1">
+                Quantity
+              </label>
+              <input
+                type="number"
+                className="form-control text-center"
+                value={formData.qty}
+                onChange={(e) => handleInputChange("qty", e.target.value)}
+              />
+            </div>
+          )}
         </div>
       </form>
     </div>

@@ -48,7 +48,10 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
               onClick={onClose}
             ></button>
           </div>
-          <div className="modal-body p-4">
+          <div
+            className="modal-body p-4 overflow-auto"
+            style={{ maxHeight: "70vh" }}
+          >
             <h6 className="fw-bold text-muted text-uppercase mb-3 small">
               General Configuration
             </h6>
@@ -148,10 +151,211 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
                   onChange={(e) =>
                     handleChange(
                       "defaultServiceCharge",
-                      parseFloat(e.target.value)
+                      parseFloat(e.target.value),
                     )
                   }
                 />
+              </div>
+            </div>
+
+            <hr className="my-4 opacity-25" />
+
+            <h6 className="fw-bold text-muted text-uppercase mb-3 small">
+              Local Service Rates (₹)
+            </h6>
+
+            {/* Xerox Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <label className="fw-bold text-primary small mb-2 d-block">
+                XEROX RATES
+              </label>
+              <div className="row g-2">
+                {[
+                  "A4 B&W",
+                  "A4 Color",
+                  "A3 B&W",
+                  "A3 Color",
+                  "Legal Size",
+                  "ID Card Size",
+                ].map((type) => (
+                  <div className="col-6 col-md-4" key={type}>
+                    <label
+                      className="x-small text-muted mb-1"
+                      style={{ fontSize: "0.7rem" }}
+                    >
+                      {type}
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      value={
+                        localSettings[`xerox_${type.replace(/\s/g, "_")}`] || ""
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          `xerox_${type.replace(/\s/g, "_")}`,
+                          parseFloat(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Printout Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <label className="fw-bold text-success small mb-2 d-block">
+                PRINTOUT RATES
+              </label>
+              <div className="row g-2">
+                {[
+                  "A4 B&W",
+                  "A4 Color",
+                  "A3 B&W",
+                  "A3 Color",
+                  "Legal Size",
+                  "ID Card Size",
+                ].map((type) => (
+                  <div className="col-6 col-md-4" key={type}>
+                    <label
+                      className="x-small text-muted mb-1"
+                      style={{ fontSize: "0.7rem" }}
+                    >
+                      {type}
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      value={
+                        localSettings[`print_${type.replace(/\s/g, "_")}`] || ""
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          `print_${type.replace(/\s/g, "_")}`,
+                          parseFloat(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Scan Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <label className="fw-bold text-info small mb-2 d-block">
+                SCAN RATES
+              </label>
+              <div className="row g-2">
+                {["A4 Size", "A3 Size", "Legal Size", "ID Card Size"].map(
+                  (type) => (
+                    <div className="col-6 col-md-4" key={type}>
+                      <label
+                        className="x-small text-muted mb-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {type}
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        value={
+                          localSettings[`scan_${type.replace(/\s/g, "_")}`] ||
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleChange(
+                            `scan_${type.replace(/\s/g, "_")}`,
+                            parseFloat(e.target.value),
+                          )
+                        }
+                      />
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* Photo Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <label className="fw-bold text-warning small mb-2 d-block">
+                PHOTOGRAPH RATES
+              </label>
+              <div className="row g-2">
+                {[
+                  "Passport Size",
+                  "Stamp Size",
+                  "4x6 (Postcard)",
+                  "5x7",
+                  "6x8",
+                  "8x10",
+                  "A4 Size",
+                ].map((type) => (
+                  <div className="col-6 col-md-4" key={type}>
+                    <label
+                      className="x-small text-muted mb-1"
+                      style={{ fontSize: "0.7rem" }}
+                    >
+                      {type}
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      value={
+                        localSettings[
+                          `photo_${type.replace(/[()\s]/g, "_")}`
+                        ] || ""
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          `photo_${type.replace(/[()\s]/g, "_")}`,
+                          parseFloat(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Lamination Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <label className="fw-bold text-danger small mb-2 d-block">
+                LAMINATION RATES
+              </label>
+              <div className="row g-2">
+                {[
+                  "ID Card / Aadhaar",
+                  "A4 Size",
+                  "A3 Size",
+                  "Legal Size",
+                  "4x6 Size",
+                  "B5 Size",
+                ].map((type) => (
+                  <div className="col-6 col-md-4" key={type}>
+                    <label
+                      className="x-small text-muted mb-1"
+                      style={{ fontSize: "0.7rem" }}
+                    >
+                      {type}
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      value={
+                        localSettings[`lami_${type.replace(/[\/\s]/g, "_")}`] ||
+                        ""
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          `lami_${type.replace(/[\/\s]/g, "_")}`,
+                          parseFloat(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>

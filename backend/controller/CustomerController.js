@@ -94,11 +94,34 @@ exports.getBranchInvestors = async (req, res) => {
 // @access  Private (Staff/Admin)
 exports.getMyBranchCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({
-      branchCode: req.user.branchCode,
-    })
-      .populate("credits.products", "name code")
-      .sort({ name: 1 });
+    const customers = await Customer.aggregate([
+      {
+        $match: { branchCode: req.user.branchCode },
+      },
+      {
+        $lookup: {
+          from: "credits", // Collection name is usually lowercase plural
+          localField: "_id",
+          foreignField: "customer",
+          as: "credits",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          phone: 1,
+          city: 1,
+          email: 1,
+          role: 1,
+          branchCode: 1,
+          credits: 1, // Return all credits (Active & Settled)
+        },
+      },
+      {
+        $sort: { name: 1 },
+      },
+    ]);
+
     res.status(200).json({
       success: true,
       count: customers.length,
@@ -116,31 +139,41 @@ exports.getMyBranchCustomers = async (req, res) => {
 // @route   POST /api/customers
 // @access  Private (Staff/Admin)
 exports.upsertCustomer = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const { name, phone, email, city, role, investorDetails } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      city,
+      role,
+      investorDetails,
+      initialPaymentAccountId,
+    } = req.body;
 
     // Find branch
-    const branch = await Branch.findOne({ code: req.user.branchCode });
+    const branch = await Branch.findOne({ code: req.user.branchCode }).session(
+      session,
+    );
     if (!branch) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Branch not found" });
+      throw new Error("Branch not found");
     }
 
     // Try to find by phone within the same branch
     let customer = await Customer.findOne({
       phone,
       branchCode: req.user.branchCode,
-    });
+    }).session(session);
+
+    let isNewInvestment = false;
+    let transactionAmount = 0;
 
     if (customer) {
       customer.name = name;
       customer.city = city;
       if (email) customer.email = email;
 
-      // Update role logic:
-      // If adding investor details to a regular customer, set role to "Customer & investor"
-      // Otherwise keep existing role or use the provided one
       if (role === "Investor" && customer.role === "customer") {
         customer.role = "Customer & investor";
       } else if (role) {
@@ -148,12 +181,7 @@ exports.upsertCustomer = async (req, res) => {
       }
 
       if (investorDetails) {
-        // Handle array logic
         if (!customer.investmentDetails) customer.investmentDetails = [];
-
-        // Check if we are updating a specific investment by ID
-        // (Assuming frontend sends _id inside investorDetails if editing)
-        // If no _id, we might be creating a new investment OR updating the only one exist (legacy support)
 
         let investmentFound = false;
         if (investorDetails._id) {
@@ -168,7 +196,6 @@ exports.upsertCustomer = async (req, res) => {
             investmentFound = true;
           }
         } else if (investorDetails.id) {
-          // Check formatted id
           const idx = customer.investmentDetails.findIndex(
             (inv) => inv._id.toString() === investorDetails.id,
           );
@@ -181,18 +208,14 @@ exports.upsertCustomer = async (req, res) => {
           }
         }
 
-        // If not found by ID, and user passes broad details...
-        // If the customer has 1 active investment, maybe update that?
-        // Or if this is a "New Investment" action...
-        // Let's assume if no ID match, push NEW if it looks like a new investment (e.g. has principalAmount)
-        // or update the last investment if it's just a status update?
-        // Safe default: If array empty, push. If has items, find active one?
         if (!investmentFound) {
-          // If no specific ID matched, we treat this as a NEW investment entry.
           customer.investmentDetails.push(investorDetails);
+          isNewInvestment = true;
+          // Use the principal amount from the new details
+          transactionAmount = parseFloat(investorDetails.principalAmount || 0);
         }
       }
-      await customer.save();
+      await customer.save({ session });
     } else {
       const newCustomerData = {
         name,
@@ -206,20 +229,59 @@ exports.upsertCustomer = async (req, res) => {
 
       if (investorDetails) {
         newCustomerData.investmentDetails = [investorDetails];
+        isNewInvestment = true;
+        transactionAmount = parseFloat(investorDetails.principalAmount || 0);
       }
 
-      customer = await Customer.create(newCustomerData);
+      const created = await Customer.create([newCustomerData], { session });
+      customer = created[0];
     }
 
+    // Handle Financial Transaction for Initial Investment
+    if (isNewInvestment && initialPaymentAccountId && transactionAmount > 0) {
+      const account = await Account.findById(initialPaymentAccountId).session(
+        session,
+      );
+      if (!account) {
+        throw new Error("Generic Error: Selected payment account not found");
+      }
+
+      const { ensureDailySession } = require("./AccountController");
+      const sessionDetail = await ensureDailySession(
+        initialPaymentAccountId,
+        session,
+      );
+
+      if (!sessionDetail) {
+        throw new Error("Failed to resolve account session");
+      }
+
+      if (sessionDetail.dailySession.isClosed) {
+        throw new Error("Selected account is closed for today");
+      }
+
+      // Credit the account (Money In)
+      sessionDetail.account.currentBalance += transactionAmount;
+      sessionDetail.dailySession.expectedClosingBalance += transactionAmount;
+      await sessionDetail.account.save({ session });
+    }
+
+    await session.commitTransaction();
     res.status(200).json({
       success: true,
       data: customer,
     });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    console.error("Upsert customer error:", error);
     res.status(500).json({
       success: false,
       message: error.message,
     });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -249,6 +311,7 @@ exports.searchByPhone = async (req, res) => {
 // @route   POST /api/customers/:customerId/settle-credit
 // @access  Private (Staff/Admin)
 exports.settleCustomerCredit = async (req, res) => {
+  const Credit = require("../models/Credit"); // Ensure model is available
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -260,13 +323,21 @@ exports.settleCustomerCredit = async (req, res) => {
       throw new Error("Payment method is required");
     }
 
-    // 1. Get Customer
+    // 1. Get Customer (just to verify existence and branch)
     const customer = await Customer.findById(customerId).session(session);
     if (!customer) {
       throw new Error("Customer not found");
     }
 
-    const totalOutstanding = customer.credits.reduce(
+    // 2. Fetch Active Credits for this Customer
+    const customerCredits = await Credit.find({
+      customer: customerId,
+      totalAmount: { $gt: 0.01 },
+    })
+      .sort({ date: 1 }) // FIFO by default
+      .session(session);
+
+    const totalOutstanding = customerCredits.reduce(
       (sum, c) => sum + c.totalAmount,
       0,
     );
@@ -279,7 +350,7 @@ exports.settleCustomerCredit = async (req, res) => {
         0,
       );
     } else if (creditItemIds && creditItemIds.length > 0) {
-      const itemsToSettle = customer.credits.filter((c) =>
+      const itemsToSettle = customerCredits.filter((c) =>
         creditItemIds.includes(c._id.toString()),
       );
       settlementAmount = itemsToSettle.reduce(
@@ -300,7 +371,7 @@ exports.settleCustomerCredit = async (req, res) => {
       );
     }
 
-    // 2. Resolve Accounts
+    // 3. Resolve Accounts
     const destAccount = await Account.findById(paymentMethod).session(session);
     if (!destAccount) {
       throw new Error("Destination account not found");
@@ -314,7 +385,7 @@ exports.settleCustomerCredit = async (req, res) => {
       throw new Error("Credits account not found for this branch");
     }
 
-    // 3. Update Balances & Daily Sessions
+    // 4. Update Balances & Daily Sessions
     const destSessionData = await ensureDailySession(paymentMethod, session);
     const creditsSessionData = await ensureDailySession(
       creditsAccount._id,
@@ -348,13 +419,13 @@ exports.settleCustomerCredit = async (req, res) => {
     creditsDailySession.expectedClosingBalance -= settlementAmount;
     await updatedCreditsAccount.save({ session });
 
-    // 4. Update Customer Credits Array & Billing Status
+    // 5. Update Credit Documents & Billing Status
     const saleRecordsToUpdate = new Map();
 
     if (itemSettlements && itemSettlements.length > 0) {
       // Process specific settlements per bill
       for (const item of itemSettlements) {
-        const creditItem = customer.credits.find(
+        const creditItem = customerCredits.find(
           (c) => c._id.toString() === item.id,
         );
         if (!creditItem) continue;
@@ -366,15 +437,7 @@ exports.settleCustomerCredit = async (req, res) => {
         creditItem.totalAmount -= settleAmt;
         const amountAfter = Math.max(0, creditItem.totalAmount);
 
-        // Initialize originalAmount if not set
-        if (!creditItem.originalAmount) {
-          creditItem.originalAmount = amountBefore;
-        }
-
-        // Initialize paymentHistory array if not exists
-        if (!creditItem.paymentHistory) {
-          creditItem.paymentHistory = [];
-        }
+        if (!creditItem.paymentHistory) creditItem.paymentHistory = [];
 
         // Get payment method name
         let paymentMethodName = "Unknown";
@@ -384,13 +447,12 @@ exports.settleCustomerCredit = async (req, res) => {
           paymentMethodName = destAccount.type;
         }
 
-        // Record payment history
         creditItem.paymentHistory.push({
           date: new Date(),
           amount: settleAmt,
           paymentMethod: paymentMethod,
           paymentMethodName: paymentMethodName,
-          creditItem: creditItem._id,
+          // creditItem self ref is implicit in document
           billNumber: creditItem.billNumber,
           amountBefore: amountBefore,
           amountAfter: amountAfter,
@@ -398,7 +460,16 @@ exports.settleCustomerCredit = async (req, res) => {
           recordedBy: req.user._id,
         });
 
-        // 4. Update Sale History with partial/full payment
+        if (creditItem.totalAmount <= 0.01) {
+          creditItem.status = "Settled";
+          creditItem.totalAmount = 0;
+        } else {
+          creditItem.status = "Partial";
+        }
+
+        await creditItem.save({ session });
+
+        // Update Sale History logic (keeping it consistent with previous logic)
         if (creditItem.sale && creditItem.billNumber) {
           let saleRecord = saleRecordsToUpdate.get(creditItem.sale.toString());
           if (!saleRecord) {
@@ -408,58 +479,63 @@ exports.settleCustomerCredit = async (req, res) => {
           }
 
           if (saleRecord) {
-            // Find sale by bill number (trim and case-insensitive for robustness)
             const targetBill = (creditItem.billNumber || "").trim();
-            const individualSale = saleRecord.sales.find(
-              (s) => (s.billNumber || "").trim() === targetBill,
-            );
+            const individualSale =
+              saleRecord.sales.find(
+                (s) => (s.billNumber || "").trim() === targetBill,
+              ) ||
+              saleRecord.services.find(
+                (s) => (s.billNumber || "").trim() === targetBill,
+              );
 
-            // Update if found, regardless of status (though usually it's Pending)
             if (individualSale) {
-              // Calculate proportional subtotal and tax for this partial payment
               const taxRatio =
                 (individualSale.totalTax || 0) /
                 (individualSale.grandTotal || 1);
               const taxPart = settleAmt * taxRatio;
               const subtotalPart = settleAmt - taxPart;
 
-              // Save the update even if status is already completed (for robustness)
               const alreadyPaid = individualSale.status === "Completed";
-
               if (!alreadyPaid) {
-                // Update Sale History Totals (Real-time realization of revenue)
-                // Only if not already counted (to prevent double counting)
-                saleRecord.daySubtotal += subtotalPart;
-                saleRecord.dayTotalTax += taxPart;
-                saleRecord.dayGrandTotal += settleAmt;
+                // Determine if it was a service sale or product sale
+                if (individualSale.fieldService || individualSale.isService) {
+                  saleRecord.serviceDaySubtotal += subtotalPart;
+                  saleRecord.serviceDayTotalTax += taxPart;
+                  saleRecord.serviceDayGrandTotal += settleAmt;
+                } else {
+                  saleRecord.daySubtotal += subtotalPart;
+                  saleRecord.dayTotalTax += taxPart;
+                  saleRecord.dayGrandTotal += settleAmt;
+                }
               }
 
-              // Update individual sale tracking
               individualSale.paidAmount =
                 (individualSale.paidAmount || 0) + settleAmt;
 
-              // If fully settled, mark as Completed
               if (creditItem.totalAmount <= 0.01) {
-                creditItem.totalAmount = 0;
                 individualSale.status = "Completed";
               }
 
-              saleRecord.markModified("sales");
+              if (individualSale.fieldService || individualSale.isService) {
+                saleRecord.markModified("services");
+              } else {
+                saleRecord.markModified("sales");
+              }
             }
           }
         }
       }
     } else {
-      // FIFO or selected IDs logic (existing behavior)
+      // FIFO Logic
       let remainingToSettle = settlementAmount;
       let creditItemsToProcess = [];
+
       if (creditItemIds && creditItemIds.length > 0) {
-        creditItemsToProcess = customer.credits.filter((c) =>
+        creditItemsToProcess = customerCredits.filter((c) =>
           creditItemIds.includes(c._id.toString()),
         );
       } else {
-        customer.credits.sort((a, b) => new Date(a.date) - new Date(b.date));
-        creditItemsToProcess = customer.credits;
+        creditItemsToProcess = customerCredits; // Already sorted by date
       }
 
       for (
@@ -478,17 +554,8 @@ exports.settleCustomerCredit = async (req, res) => {
         const amountAfter = Math.max(0, creditItem.totalAmount);
         remainingToSettle -= settlementFromThisItem;
 
-        // Initialize originalAmount if not set
-        if (!creditItem.originalAmount) {
-          creditItem.originalAmount = amountBefore;
-        }
+        if (!creditItem.paymentHistory) creditItem.paymentHistory = [];
 
-        // Initialize paymentHistory array if not exists
-        if (!creditItem.paymentHistory) {
-          creditItem.paymentHistory = [];
-        }
-
-        // Get payment method name
         let paymentMethodName = "Unknown";
         if (destAccount.type === "Upi" && destAccount.upiAccountName) {
           paymentMethodName = destAccount.upiAccountName;
@@ -496,13 +563,11 @@ exports.settleCustomerCredit = async (req, res) => {
           paymentMethodName = destAccount.type;
         }
 
-        // Record payment history
         creditItem.paymentHistory.push({
           date: new Date(),
           amount: settlementFromThisItem,
           paymentMethod: paymentMethod,
           paymentMethodName: paymentMethodName,
-          creditItem: creditItem._id,
           billNumber: creditItem.billNumber,
           amountBefore: amountBefore,
           amountAfter: amountAfter,
@@ -510,7 +575,16 @@ exports.settleCustomerCredit = async (req, res) => {
           recordedBy: req.user._id,
         });
 
-        // Update Sale History with partial/full payment
+        if (creditItem.totalAmount <= 0.01) {
+          creditItem.status = "Settled";
+          creditItem.totalAmount = 0;
+        } else {
+          creditItem.status = "Partial";
+        }
+
+        await creditItem.save({ session });
+
+        // Update Sale Record (same logic as above)
         if (creditItem.sale && creditItem.billNumber) {
           let saleRecord = saleRecordsToUpdate.get(creditItem.sale.toString());
           if (!saleRecord) {
@@ -521,36 +595,46 @@ exports.settleCustomerCredit = async (req, res) => {
 
           if (saleRecord) {
             const targetBill = (creditItem.billNumber || "").trim();
-            const individualSale = saleRecord.sales.find(
-              (s) => (s.billNumber || "").trim() === targetBill,
-            );
+            const individualSale =
+              saleRecord.sales.find(
+                (s) => (s.billNumber || "").trim() === targetBill,
+              ) ||
+              saleRecord.services.find(
+                (s) => (s.billNumber || "").trim() === targetBill,
+              );
 
             if (individualSale) {
-              // Calculate proportional subtotal and tax for this partial payment
               const taxRatio =
                 (individualSale.totalTax || 0) /
                 (individualSale.grandTotal || 1);
               const taxPart = settlementFromThisItem * taxRatio;
               const subtotalPart = settlementFromThisItem - taxPart;
 
-              // Only increment daily totals if not already fully paid
-              if (individualSale.status !== "Completed") {
-                saleRecord.daySubtotal += subtotalPart;
-                saleRecord.dayTotalTax += taxPart;
-                saleRecord.dayGrandTotal += settlementFromThisItem;
+              const alreadyPaid = individualSale.status === "Completed";
+              if (!alreadyPaid) {
+                if (individualSale.fieldService || individualSale.isService) {
+                  saleRecord.serviceDaySubtotal += subtotalPart;
+                  saleRecord.serviceDayTotalTax += taxPart;
+                  saleRecord.serviceDayGrandTotal += settlementFromThisItem;
+                } else {
+                  saleRecord.daySubtotal += subtotalPart;
+                  saleRecord.dayTotalTax += taxPart;
+                  saleRecord.dayGrandTotal += settlementFromThisItem;
+                }
               }
 
-              // Update individual sale tracking
               individualSale.paidAmount =
                 (individualSale.paidAmount || 0) + settlementFromThisItem;
 
-              // If fully settled, mark as Completed
               if (creditItem.totalAmount <= 0.01) {
-                creditItem.totalAmount = 0;
                 individualSale.status = "Completed";
               }
 
-              saleRecord.markModified("sales");
+              if (individualSale.fieldService || individualSale.isService) {
+                saleRecord.markModified("services");
+              } else {
+                saleRecord.markModified("sales");
+              }
             }
           }
         }
@@ -562,15 +646,14 @@ exports.settleCustomerCredit = async (req, res) => {
       await saleRecord.save({ session });
     }
 
-    // Filter out zeroed credits from the ORIGINAL customer.credits array
-    customer.credits = customer.credits.filter((c) => c.totalAmount > 0.01);
-    await customer.save({ session });
+    // Since we filtered Active credits, and updated them, we don't need to "filter out" from array like before.
+    // They just exist with status 'Settled' or 'Partial' in the collection.
 
     await session.commitTransaction();
     res.status(200).json({
       success: true,
       message: "Credit settled successfully",
-      data: customer,
+      // Optionally return validation of new balance
     });
   } catch (error) {
     if (session.inTransaction()) {
@@ -590,13 +673,11 @@ exports.settleCustomerCredit = async (req, res) => {
 // @route   GET /api/customers/:customerId/payment-history
 // @access  Private (Staff/Admin)
 exports.getCustomerPaymentHistory = async (req, res) => {
+  const Credit = require("../models/Credit");
   try {
     const { customerId } = req.params;
 
-    const customer = await Customer.findById(customerId)
-      .populate("credits.paymentHistory.paymentMethod", "type upiAccountName")
-      .populate("credits.paymentHistory.recordedBy", "name email")
-      .populate("credits.products", "name code");
+    const customer = await Customer.findById(customerId).select("name phone");
 
     if (!customer) {
       return res.status(404).json({
@@ -605,9 +686,16 @@ exports.getCustomerPaymentHistory = async (req, res) => {
       });
     }
 
+    // Fetch credits from separate collection
+    const credits = await Credit.find({ customer: customerId })
+      .populate("paymentHistory.paymentMethod", "type upiAccountName")
+      .populate("paymentHistory.recordedBy", "name email")
+      .populate("products", "name code")
+      .sort({ date: -1 });
+
     // Collect all payment history from all credit items
     const allPayments = [];
-    customer.credits.forEach((creditItem) => {
+    credits.forEach((creditItem) => {
       if (creditItem.paymentHistory && creditItem.paymentHistory.length > 0) {
         creditItem.paymentHistory.forEach((payment) => {
           allPayments.push({
@@ -733,6 +821,157 @@ exports.checkMaturity = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+// @desc    Process principal transaction (Payin/Payout)
+// @route   POST /api/customers/transaction
+// @access  Private (Staff/Admin)
+exports.processPrincipalTransaction = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const {
+      customerId,
+      investmentId,
+      type, // 'payin' or 'payout'
+      amount,
+      paymentAccountId,
+      date,
+      mode,
+      reference,
+      notes,
+    } = req.body;
+
+    const transactionAmount = parseFloat(amount);
+    if (!transactionAmount || transactionAmount <= 0) {
+      throw new Error("Invalid amount");
+    }
+
+    // 1. Get Customer & Investment
+    const customer = await Customer.findById(customerId).session(session);
+    if (!customer) throw new Error("Customer not found");
+
+    if (!customer.investmentDetails) throw new Error("No investments found");
+
+    const investment = customer.investmentDetails.id(investmentId);
+    if (!investment) throw new Error("Investment record not found");
+
+    // 2. Perform Account Transaction (if account provided)
+    // For Payin: Account increases (Credit)
+    // For Payout / Interest Payout: Account decreases (Debit)
+    if (paymentAccountId) {
+      const { ensureDailySession } = require("./AccountController");
+      const sessionDetail = await ensureDailySession(paymentAccountId, session);
+
+      if (!sessionDetail) throw new Error("Failed to resolve account");
+      if (sessionDetail.dailySession.isClosed) {
+        throw new Error("Selected account is closed for today");
+      }
+
+      if (type === "payin") {
+        sessionDetail.account.currentBalance += transactionAmount;
+        sessionDetail.dailySession.expectedClosingBalance += transactionAmount;
+      } else if (type === "payout" || type === "interest_payout") {
+        if (sessionDetail.account.currentBalance < transactionAmount) {
+          // Optional: Allow negative or throw? Usually warn.
+        }
+        sessionDetail.account.currentBalance -= transactionAmount;
+        sessionDetail.dailySession.expectedClosingBalance -= transactionAmount;
+      }
+
+      await sessionDetail.account.save({ session });
+    }
+
+    // 3. Update Investment Details
+    const currentPrincipal = investment.currentPrincipal || 0;
+    const principalAmount = investment.principalAmount || 0;
+
+    if (type === "payin") {
+      investment.currentPrincipal = currentPrincipal + transactionAmount;
+      investment.principalAmount = principalAmount + transactionAmount;
+
+      // Update investments array (deposit history)
+      if (!investment.investments) investment.investments = [];
+      investment.investments.push({
+        date: date || new Date(),
+        amount: transactionAmount,
+        type: "additional",
+      });
+    } else if (type === "payout") {
+      if (currentPrincipal < transactionAmount) {
+        throw new Error("Insufficient principal balance");
+      }
+      investment.currentPrincipal = currentPrincipal - transactionAmount;
+      // Do we decrease base principal on payout? Depends on logic. Usually yes if it's withdrawal.
+      // investment.principalAmount = Math.max(0, principalAmount - transactionAmount);
+    } else if (type === "interest_payout") {
+      const currentUnpaid = investment.unpaidInterest || 0;
+      investment.unpaidInterest = Math.max(
+        0,
+        currentUnpaid - transactionAmount,
+      );
+      investment.totalInterestPaid =
+        (investment.totalInterestPaid || 0) + transactionAmount;
+      investment.lastInterestPaid = date || new Date();
+
+      if (!investment.interestHistory) investment.interestHistory = [];
+      investment.interestHistory.push({
+        paidDate: date || new Date(), // Changed from date to paidDate to match schema
+        amount: transactionAmount,
+        mode: mode,
+        reference: reference === undefined ? "" : reference,
+        notes: notes === undefined ? "" : notes,
+        status: "paid",
+        month: req.body.month, // Capture month from request for interest
+      });
+
+      if (mode === "reinvest") {
+        investment.currentPrincipal = currentPrincipal + transactionAmount;
+        investment.principalAmount = principalAmount + transactionAmount;
+
+        if (!investment.investments) investment.investments = [];
+        investment.investments.push({
+          date: date || new Date(),
+          amount: transactionAmount,
+          type: "interest_capitalization",
+        });
+      }
+    }
+
+    // Update Payout History (Only for principal transactions)
+    if (type === "payin" || type === "payout") {
+      if (!investment.payoutHistory) investment.payoutHistory = [];
+      investment.payoutHistory.push({
+        amount: transactionAmount,
+        date: date || new Date(),
+        type: type, // 'payin' or 'payout'
+        mode: mode,
+        reference: reference,
+        notes: notes,
+        previousPrincipal: currentPrincipal,
+        newPrincipal: investment.currentPrincipal,
+        status: "paid",
+      });
+    }
+
+    await customer.save({ session });
+
+    await session.commitTransaction();
+    res.status(200).json({
+      success: true,
+      message: `${type === "payin" ? "Pay-in" : type === "interest_payout" ? "Interest Payment" : "Pay-out"} successful`,
+      data: customer,
+    });
+  } catch (error) {
+    if (session.inTransaction()) await session.abortTransaction();
+    console.error("Transaction error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  } finally {
+    session.endSession();
   }
 };
 

@@ -278,6 +278,33 @@ export const CustomerProvider = ({ children }) => {
       },
       [accessToken, fetchInvestors],
     ),
+    processPrincipalTransaction: useCallback(
+      async (transactionData) => {
+        if (!accessToken) return;
+
+        try {
+          const res = await axios.post(
+            `${API_ENDPOINTS.CUSTOMERS}/transaction`,
+            transactionData,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          );
+          if (res.data.success) {
+            await fetchInvestors();
+            return { success: true, message: res.data.message };
+          }
+        } catch (error) {
+          console.error("Error processing transaction:", error);
+          return {
+            success: false,
+            message:
+              error.response?.data?.message || "Failed to process transaction",
+          };
+        }
+      },
+      [accessToken, fetchInvestors],
+    ),
   };
 
   return (

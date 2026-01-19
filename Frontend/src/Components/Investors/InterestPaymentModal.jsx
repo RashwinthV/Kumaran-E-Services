@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { API_ENDPOINTS } from "../../config/api";
 
 const InterestPaymentModal = ({
   isOpen,
@@ -18,22 +20,58 @@ const InterestPaymentModal = ({
     paidDate: new Date().toISOString().split("T")[0],
     mode: investor?.paymentMode || "cash",
     products: "",
+    mode: investor?.paymentMode || "cash",
+    products: "",
     notes: "",
+    paymentAccountId: "",
   });
+
+  const [accounts, setAccounts] = useState([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setLoadingAccounts(true);
+        const token = localStorage.getItem("accessToken");
+        const res = await axios.get(API_ENDPOINTS.BRANCH_ACCOUNTS, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success) {
+          const validAccounts = res.data.data.filter(
+            (acc) => acc.type !== "Credits",
+          );
+          setAccounts(validAccounts);
+          const cashAcc = validAccounts.find((a) => a.type === "Cash");
+          if (cashAcc) {
+            setFormData((prev) => ({ ...prev, paymentAccountId: cashAcc._id }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch accounts", err);
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchAccounts();
+    }
+  }, [isOpen]);
 
   const [error, setError] = useState("");
   // Initialize with the default bank account ID or the first one if available
   const [selectedBankId, setSelectedBankId] = useState(
     investor?.bankAccounts?.find((b) => b.isDefault)?.id ||
       investor?.bankAccounts?.[0]?.id ||
-      ""
+      "",
   );
 
   // Initialize with the default UPI account ID or the first one if available
   const [selectedUpiId, setSelectedUpiId] = useState(
     investor?.upiAccounts?.find((u) => u.isDefault)?.id ||
       investor?.upiAccounts?.[0]?.id ||
-      ""
+      "",
   );
 
   const handleChange = (field, value) => {
@@ -42,8 +80,8 @@ const InterestPaymentModal = ({
       if (parseFloat(value) > unpaidInterest) {
         setError(
           `Amount cannot exceed unpaid interest of ₹${unpaidInterest.toFixed(
-            2
-          )}`
+            2,
+          )}`,
         );
       } else {
         setError("");
@@ -56,12 +94,17 @@ const InterestPaymentModal = ({
     e.preventDefault();
     if (formData.amount > unpaidInterest) {
       setError(
-        `Amount cannot exceed unpaid interest of ₹${unpaidInterest.toFixed(2)}`
+        `Amount cannot exceed unpaid interest of ₹${unpaidInterest.toFixed(2)}`,
       );
       return;
     }
     if (formData.amount <= 0) {
       setError("Amount must be greater than 0");
+      return;
+    }
+    const financialModes = ["cash", "cheque", "bank", "upi"];
+    if (financialModes.includes(formData.mode) && !formData.paymentAccountId) {
+      setError("Please select a transaction account.");
       return;
     }
     onSave(formData);
@@ -190,6 +233,50 @@ const InterestPaymentModal = ({
                     </option>
                   </select>
                 </div>
+
+                {/* Company Account Selector (Paid From) */}
+                {(formData.mode === "cash" ||
+                  formData.mode === "cheque" ||
+                  formData.mode === "bank" ||
+                  formData.mode === "upi") && (
+                  <div className="col-md-12">
+                    <label className="form-label fw-bold small">
+                      Paid From Account <span className="text-danger">*</span>
+                    </label>
+                    <div className="d-grid gap-2 d-md-flex mb-2">
+                      {accounts.map((acc) => (
+                        <button
+                          key={acc._id}
+                          type="button"
+                          onClick={() =>
+                            handleChange("paymentAccountId", acc._id)
+                          }
+                          className={`btn btn-sm flex-fill fw-bold py-2 transition-all ${
+                            formData.paymentAccountId === acc._id
+                              ? "btn-success shadow border-0"
+                              : "btn-light border text-secondary hover-shadow"
+                          }`}
+                        >
+                          {acc.type === "Upi" ? (
+                            <span>
+                              <i className="bi bi-qr-code me-1"></i>UPI
+                            </span>
+                          ) : acc.type === "Credits" ||
+                            acc.type === "Credit" ? (
+                            <span>
+                              <i className="bi bi-person-badge me-1"></i>CREDIT
+                            </span>
+                          ) : (
+                            <span>
+                              <i className="bi bi-cash me-1"></i>
+                              {acc.type}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {/* Dynamic Reference Field */}
                 {(formData.mode === "cheque" ||
                   formData.mode === "bank" ||
@@ -254,7 +341,7 @@ const InterestPaymentModal = ({
                             {(() => {
                               const selectedBank =
                                 investor.bankAccounts.find(
-                                  (b) => b.id === selectedBankId
+                                  (b) => b.id === selectedBankId,
                                 ) || investor.bankAccounts[0];
                               return (
                                 <div className="row g-2">
@@ -372,7 +459,7 @@ const InterestPaymentModal = ({
                             {(() => {
                               const selectedUpi =
                                 investor.upiAccounts.find(
-                                  (u) => u.id === selectedUpiId
+                                  (u) => u.id === selectedUpiId,
                                 ) || investor.upiAccounts[0];
                               return (
                                 <div className="row g-2">

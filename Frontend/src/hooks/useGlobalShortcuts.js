@@ -3,10 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
 import defaultShortcuts from "../config/shortcuts.json";
 
-const useGlobalShortcuts = () => {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-
+// Export this hook so UI components (like ShortcutGuide) can display them!
+export const useShortcutList = () => {
   // Load overrides from localStorage
   const [overrides, setOverrides] = useState(() => {
     const saved = localStorage.getItem("app_shortcuts_overrides");
@@ -19,16 +17,8 @@ const useGlobalShortcuts = () => {
 
   // Merge JSON defaults with LocalStorage overrides
   const shortcuts = useMemo(() => {
-    // Create a map of defaults for easy access
-    // If the structure of defaults changes (new IDs), they appear automatically.
-    // If user removed an ID in overrides, we need to respect that?
-    // For simplicity: We take defaults, and map over them applying overrides.
-    // Plus check if there are any *custom* shortcuts added in overrides.
-
     const specificOverrides = overrides.updates || {};
-    // overrides.updates is a map: { "nav_settings": { key: "b", ... } }
 
-    // 1. Map over defaults and apply overrides
     const mergedDefaults = defaultShortcuts.map((def) => {
       if (specificOverrides[def.id]) {
         return { ...def, ...specificOverrides[def.id] };
@@ -36,16 +26,11 @@ const useGlobalShortcuts = () => {
       return def;
     });
 
-    // 2. Add purely custom shortcuts (ids that don't exist in defaults)
     const customShortcuts = (overrides.custom || []).map((s) => ({
       ...s,
       isCustom: true,
     }));
 
-    // 3. Filter out deleted shortcuts (if we implement delete)
-    // const activeShortcuts = mergedDefaults.filter(s => !overrides.deleted?.includes(s.id));
-
-    // For now, let's just combine
     return [...mergedDefaults, ...customShortcuts];
   }, [overrides]);
 
@@ -70,10 +55,19 @@ const useGlobalShortcuts = () => {
     };
   }, []);
 
+  return shortcuts;
+};
+
+const useGlobalShortcuts = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const shortcuts = useShortcutList();
+
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(
-        document.activeElement?.tagName
+        document.activeElement?.tagName,
       );
 
       for (const shortcut of shortcuts) {

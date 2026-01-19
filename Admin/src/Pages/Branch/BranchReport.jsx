@@ -43,6 +43,7 @@ const BranchReport = () => {
     branch: id, // Locked to this branch
     startDate: "",
     endDate: "",
+    billType: "all",
   });
 
   useEffect(() => {
@@ -118,12 +119,14 @@ const BranchReport = () => {
               ? Number((item.totalTax - item.totalTax / 2).toFixed(2))
               : 0,
             totalTax: item.totalTax || 0,
+            fieldService: item.fieldService || "",
+            isService: item.isService,
           };
         });
 
         // Important: Filter data by current branch ID immediately
         const branchData = rawData.filter(
-          (item) => String(item.rawBranchId) === String(id)
+          (item) => String(item.rawBranchId) === String(id),
         );
         setData(branchData);
         applyFilters(branchData, filters);
@@ -152,7 +155,7 @@ const BranchReport = () => {
     // But we keep the logic just in case sourceData changes
     if (currentFilters.branch !== "all") {
       result = result.filter(
-        (item) => String(item.rawBranchId) === String(currentFilters.branch)
+        (item) => String(item.rawBranchId) === String(currentFilters.branch),
       );
     }
 
@@ -169,11 +172,11 @@ const BranchReport = () => {
 
     if (currentFilters.dateRange === "today") {
       result = result.filter(
-        (item) => checkDate(item.date).getTime() === today.getTime()
+        (item) => checkDate(item.date).getTime() === today.getTime(),
       );
     } else if (currentFilters.dateRange === "yesterday") {
       result = result.filter(
-        (item) => checkDate(item.date).getTime() === yesterday.getTime()
+        (item) => checkDate(item.date).getTime() === yesterday.getTime(),
       );
     } else if (currentFilters.dateRange === "this_week") {
       const day = today.getDay();
@@ -222,6 +225,15 @@ const BranchReport = () => {
       }
     }
 
+    // Bill Type Filter
+    if (currentFilters.billType !== "all") {
+      result = result.filter((item) => {
+        if (currentFilters.billType === "services") return item.isService;
+        if (currentFilters.billType === "products") return !item.isService;
+        return true;
+      });
+    }
+
     setFilteredData(result);
     calculateStats(result);
   };
@@ -230,12 +242,12 @@ const BranchReport = () => {
     // Stats calculation based on unique bills to avoid double counting items
     const uniqueSales = Array.from(
       new Map(
-        dataSet.map((item) => [item.id || item.billNumber, item])
-      ).values()
+        dataSet.map((item) => [item.id || item.billNumber, item]),
+      ).values(),
     );
     const totalSales = uniqueSales.reduce(
       (sum, item) => sum + (item.amount || 0),
-      0
+      0,
     );
     const uniqueCustomers = new Set(uniqueSales.map((i) => i.customerName))
       .size;
@@ -316,6 +328,7 @@ const BranchReport = () => {
       { header: "Line Total", key: "lineTotal", width: 18 },
       { header: "Mode", key: "paymentMode", width: 15 },
       { header: "Status", key: "status", width: 18 },
+      { header: "Field Service", key: "fieldService", width: 20 },
       { header: "CP", key: "cp", width: 12 },
       { header: "Profit/Loss", key: "profit", width: 15 },
     ];
@@ -350,8 +363,8 @@ const BranchReport = () => {
       rowData.forEach((row) => {
         const excelRow = worksheet.addRow(row);
         excelRow.font = { size: 13 };
-        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(15), Profit(16) [Adjusted Indices]
-        [8, 9, 10, 11, 12, 15, 16].forEach((colIndex) => {
+        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(16), Profit(17) [Adjusted Indices]
+        [8, 9, 10, 11, 12, 16, 17].forEach((colIndex) => {
           const cell = excelRow.getCell(colIndex);
           cell.numFmt = `"₹"#,##0.00`;
         });
@@ -392,8 +405,8 @@ const BranchReport = () => {
           sale.formattedDate,
           sale.customerName,
           sale.customerPhone,
-          p.product?.sku || p.sku || "N/A",
-          p.product?.name || p.name || "N/A",
+          p.product?.sku || p.sku || (sale.isService ? "Service" : "N/A"),
+          p.name || p.product?.name || "N/A",
           p.qty,
           p.price,
           p.taxableValue || p.lineTotal - p.taxAmount,
@@ -402,6 +415,7 @@ const BranchReport = () => {
           p.lineTotal,
           sale.paymentMethod,
           itemStatus,
+          sale.fieldService || "",
           cpValue,
           profitValue,
         ];
@@ -505,7 +519,7 @@ const BranchReport = () => {
       new Blob([buffer]),
       `${currentBranch?.name?.replace(/\s+/g, "_")}_Detailed_Report_${
         new Date().toISOString().split("T")[0]
-      }.xlsx`
+      }.xlsx`,
     );
   };
 

@@ -135,6 +135,26 @@ const ReportFilters = ({
           </div>
         )}
 
+        {/* Bill Type Filter */}
+        <div className="col-md-2">
+          <label
+            className="form-label small text-muted fw-bold text-uppercase"
+            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
+          >
+            Transaction Type
+          </label>
+          <select
+            name="billType"
+            value={filters.billType}
+            onChange={handleChange}
+            className="form-select form-select-sm bg-light border-0 shadow-none"
+          >
+            <option value="all">All Types</option>
+            <option value="products">Products Only</option>
+            <option value="services">Services Only</option>
+          </select>
+        </div>
+
         {/* Export Action */}
         <div className="col d-flex align-items-end justify-content-end ms-auto">
           <button

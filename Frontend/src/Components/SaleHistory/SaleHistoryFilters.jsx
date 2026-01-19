@@ -139,6 +139,25 @@ const SaleHistoryFilters = ({
           </select>
         </div>
 
+        {/* Bill Type Filter */}
+        <div className="col-md-2">
+          <label
+            className="form-label small text-muted fw-bold text-uppercase"
+            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
+          >
+            Bill Type
+          </label>
+          <select
+            className="form-select form-select-sm bg-light shadow-none"
+            value={filters.billType}
+            onChange={(e) => onFilterChange("billType", e.target.value)}
+          >
+            <option value="All">All Types</option>
+            <option value="Products">Products Only</option>
+            <option value="Services">Services Only</option>
+          </select>
+        </div>
+
         {/* Status */}
         <div className="col-md-2">
           <label

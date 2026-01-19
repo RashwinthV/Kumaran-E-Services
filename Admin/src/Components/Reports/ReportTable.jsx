@@ -41,7 +41,7 @@ const ReportTable = ({ data, reportType }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredData.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   const handlePageChange = (page) => {
@@ -84,6 +84,7 @@ const ReportTable = ({ data, reportType }) => {
                   <th>Customer</th>
                   <th>Payment Mode</th>
                   <th>Amount</th>
+                  <th>Field Service</th>
                   <th>Status</th>
                   <th>CP</th>
                   <th>profit/Loss</th>
@@ -115,6 +116,7 @@ const ReportTable = ({ data, reportType }) => {
                         <td>
                           <strong>{formatCurrency(row.amount)}</strong>
                         </td>
+                        <td>{row.fieldService || "-"}</td>
                         <td>
                           {row.status ? (
                             <span

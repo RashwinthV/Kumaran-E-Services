@@ -61,17 +61,30 @@ export const ProfessionalTemplate = ({
             <tr>
               <td>
                 <div class="pro-item-name">${p.name || "Item"}</div>
+                ${
+                  p.details?.photoId
+                    ? `<div style="font-size: 0.7rem; color: #444; font-weight: 600;">PHOTO ID: ${p.details.photoId}</div>`
+                    : ""
+                }
+                ${
+                  p.details?.summary
+                    ? `<div style="font-size: 0.75rem; color: #666;">${p.details.summary.replace(
+                        p.name + " | ",
+                        "",
+                      )}</div>`
+                    : ""
+                }
                 ${p.sku ? `<small class="pro-item-sku">${p.sku}</small>` : ""}
               </td>
               <td class="text-center">${p.qty || 0}</td>
               <td class="text-right">${currencySymbol}${Number(
-                p.price || 0
+                p.price || 0,
               ).toFixed(2)}</td>
               <td class="text-right">${currencySymbol}${Number(
-                p.lineTotal || 0
+                p.lineTotal || 0,
               ).toFixed(2)}</td>
             </tr>
-          `
+          `,
             )
             .join("")}
         </tbody>
@@ -84,28 +97,28 @@ export const ProfessionalTemplate = ({
         </div>
         <div class="pro-totals">
           <div class="pro-total-row"><span>SUB TOTAL</span><span>${currencySymbol}${subtotal.toFixed(
-    2
-  )}</span></div>
+            2,
+          )}</span></div>
           <div class="pro-total-row"><span>TAX (GST)</span><span>${currencySymbol}${tax.toFixed(
-    2
-  )}</span></div>
+            2,
+          )}</span></div>
           ${
             discount > 0
               ? `<div class="pro-total-row" style="color: #000;"><span>DISCOUNT (-)</span><span>${currencySymbol}${discount.toFixed(
-                  2
+                  2,
                 )}</span></div>`
               : ""
           }
           ${
             Math.abs(roundingValue) > 0.01
               ? `<div class="pro-total-row"><span>ROUNDING</span><span>${currencySymbol}${roundingValue.toFixed(
-                  2
+                  2,
                 )}</span></div>`
               : ""
           }
           <div class="pro-total-row pro-grand-total"><span>TOTAL AMOUNT</span><span>${currencySymbol}${amount.toFixed(
-    2
-  )}</span></div>
+            2,
+          )}</span></div>
         </div>
       </div>
     </div>

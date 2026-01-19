@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useCustomer } from "../../Context/CustomerContext";
 
+import axios from "axios";
+import { API_ENDPOINTS } from "../../config/api";
+
 const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
   const { customers } = useCustomer();
+  const [accounts, setAccounts] = useState([]);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,7 +40,41 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
     interestType: "simple",
     startDate: new Date().toISOString().split("T")[0],
     status: "active",
+    paymentAccountId: "", // For initial investment reception
   });
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setIsLoadingAccounts(true);
+        const token = localStorage.getItem("accessToken");
+        const res = await axios.get(API_ENDPOINTS.BRANCH_ACCOUNTS, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success) {
+          // Filter out Credits account as we don't receive money IN to credits usually
+          // Or strictly Cash/Bank/UPI
+          const validAccounts = res.data.data.filter(
+            (acc) => acc.type !== "Credits",
+          );
+          setAccounts(validAccounts);
+          // Auto-select Cash if available
+          const cashAcc = validAccounts.find((a) => a.type === "Cash");
+          if (cashAcc) {
+            setFormData((prev) => ({ ...prev, paymentAccountId: cashAcc._id }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch accounts", err);
+      } finally {
+        setIsLoadingAccounts(false);
+      }
+    };
+
+    if (isOpen && !editMode) {
+      fetchAccounts();
+    }
+  }, [isOpen, editMode]);
 
   useEffect(() => {
     if (investor && editMode) {
@@ -101,6 +140,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
         interestType: "simple",
         startDate: new Date().toISOString().split("T")[0],
         status: "active",
+        paymentAccountId: "",
       });
     }
   }, [investor, editMode, isOpen]);
@@ -377,6 +417,49 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                     disabled={editMode}
                   />
                 </div>
+                {!editMode && (
+                  <div className="col-md-12">
+                    <label className="form-label fw-bold small">
+                      Received To Account <span className="text-danger">*</span>
+                    </label>
+                    <div className="d-grid gap-2 d-md-flex mb-2">
+                      {accounts.map((acc) => (
+                        <button
+                          key={acc._id}
+                          type="button"
+                          onClick={() =>
+                            handleChange("paymentAccountId", acc._id)
+                          }
+                          className={`btn btn-sm flex-fill fw-bold py-2 transition-all ${
+                            formData.paymentAccountId === acc._id
+                              ? "btn-success shadow border-0"
+                              : "btn-light border text-secondary hover-shadow"
+                          }`}
+                        >
+                          {acc.type === "Upi" ? (
+                            <span>
+                              <i className="bi bi-qr-code me-1"></i>UPI
+                            </span>
+                          ) : acc.type === "Credits" ||
+                            acc.type === "Credit" ? (
+                            <span>
+                              <i className="bi bi-person-badge me-1"></i>CREDIT
+                            </span>
+                          ) : (
+                            <span>
+                              <i className="bi bi-cash me-1"></i>
+                              {acc.type}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    <small className="text-muted d-block">
+                      Where is the investment amount deposited?
+                    </small>
+                  </div>
+                )}
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
                     Interest Rate (Paise per ₹1/month){" "}

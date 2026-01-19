@@ -93,8 +93,10 @@ const SaleHistoryTable = ({
                               isFullyRefunded
                                 ? "bg-secondary bg-opacity-10 text-muted text-decoration-line-through"
                                 : isPartiallyRefunded
-                                ? "bg-danger bg-opacity-10 border-danger border-opacity-25"
-                                : "bg-light text-muted"
+                                  ? "bg-danger bg-opacity-10 border-danger border-opacity-25"
+                                  : sale.isService
+                                    ? "bg-info bg-opacity-10 border-info border-opacity-25 text-info-emphasis"
+                                    : "bg-light text-muted"
                             }`}
                             title={`${p.sku} - ${p.name}`}
                           >
@@ -158,10 +160,10 @@ const SaleHistoryTable = ({
                         sale.status === "Paid"
                           ? "bg-success bg-opacity-10 text-success border border-success border-opacity-10"
                           : sale.status === "Cancelled"
-                          ? "bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10"
-                          : sale.status === "Refunded"
-                          ? "bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10"
-                          : "bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10"
+                            ? "bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10"
+                            : sale.status === "Refunded"
+                              ? "bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10"
+                              : "bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10"
                       }`}
                     >
                       {sale.status}
@@ -176,7 +178,8 @@ const SaleHistoryTable = ({
                       <i className="bi bi-eye text-primary"></i>
                     </button>
                     {sale.status !== "Refunded" &&
-                      sale.status !== "Cancelled" && (
+                      sale.status !== "Cancelled" &&
+                      !sale.isService && (
                         <button
                           className="btn btn-sm btn-light border me-2"
                           onClick={() => onRefundSale(sale)}

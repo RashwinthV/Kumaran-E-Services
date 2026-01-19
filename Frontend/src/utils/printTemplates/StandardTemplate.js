@@ -56,16 +56,31 @@ export const StandardTemplate = ({
             .map(
               (p) => `
             <tr>
-              <td><b>${p.name || "Item"}</b></td>
+              <td>
+                <div style="font-weight: bold;">${p.name || "Item"}</div>
+                ${
+                  p.details?.photoId
+                    ? `<div style="font-size: 0.75rem; color: #444;">Photo ID: ${p.details.photoId}</div>`
+                    : ""
+                }
+                ${
+                  p.details?.summary
+                    ? `<div style="font-size: 0.75rem; color: #666;">${p.details.summary.replace(
+                        p.name + " | ",
+                        "",
+                      )}</div>`
+                    : ""
+                }
+              </td>
               <td class="text-center">${p.qty || 0}</td>
               <td class="text-right">${currencySymbol}${Number(
-                p.price || 0
+                p.price || 0,
               ).toFixed(2)}</td>
               <td class="text-right">${currencySymbol}${Number(
-                p.lineTotal || 0
+                p.lineTotal || 0,
               ).toFixed(2)}</td>
             </tr>
-          `
+          `,
             )
             .join("")}
         </tbody>
@@ -77,28 +92,28 @@ export const StandardTemplate = ({
          </div>
          <div class="totals-box">
             <div class="total-row"><span>Subtotal</span><span>${currencySymbol}${subtotal.toFixed(
-    2
-  )}</span></div>
+              2,
+            )}</span></div>
             <div class="total-row"><span>GST</span><span>${currencySymbol}${tax.toFixed(
-    2
-  )}</span></div>
+              2,
+            )}</span></div>
             ${
               discount > 0
                 ? `<div class="total-row"><span>Discount (-)</span><span>${currencySymbol}${discount.toFixed(
-                    2
+                    2,
                   )}</span></div>`
                 : ""
             }
             ${
               Math.abs(roundingValue) > 0.01
                 ? `<div class="total-row"><span>Rounding</span><span>${currencySymbol}${roundingValue.toFixed(
-                    2
+                    2,
                   )}</span></div>`
                 : ""
             }
             <div class="total-row grand-total"><span>GRAND TOTAL</span><span>${currencySymbol}${amount.toFixed(
-    2
-  )}</span></div>
+              2,
+            )}</span></div>
          </div>
       </div>
     </div>

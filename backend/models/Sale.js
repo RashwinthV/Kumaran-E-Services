@@ -1,6 +1,83 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
+const serviceItemSchema = new Schema({
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  qty: { type: Number, required: true },
+  taxAmount: { type: Number, default: 0 },
+  lineTotal: { type: Number, required: true },
+  details: { type: Schema.Types.Mixed }, // Full detail capture (pages, imei, etc)
+});
+
+const individualServiceSaleSchema = new Schema({
+  billNumber: {
+    type: String,
+    required: true,
+    unique: true,
+    sparse: true,
+  },
+  customer: {
+    type: Schema.Types.ObjectId,
+    ref: "Customer",
+    required: true,
+  },
+  items: [serviceItemSchema],
+  subtotal: {
+    type: Number,
+    required: true,
+  },
+  totalTax: {
+    type: Number,
+    required: true,
+  },
+  grandTotal: {
+    type: Number,
+    required: true,
+  },
+  paymentMethod: {
+    type: Schema.Types.ObjectId,
+    ref: "Account",
+    required: true,
+  },
+  staff: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: [
+      "Completed",
+      "Pending",
+      "Refunded",
+      "Partially Refunded",
+      "Paid",
+      "Cancelled",
+    ],
+    default: "Completed",
+  },
+  paidAmount: {
+    type: Number,
+    default: 0,
+  },
+  totalRefundedAmount: {
+    type: Number,
+    default: 0,
+  },
+  cashRefundAmount: {
+    type: Number,
+    default: 0,
+  },
+  fieldService: {
+    type: String, // Module or primary service type (Xerox, Print, etc.)
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const saleItemSchema = new Schema({
   product: {
     type: Schema.Types.ObjectId,
@@ -93,6 +170,7 @@ const saleSchema = new Schema(
       required: true,
     },
     sales: [individualSaleSchema],
+    services: [individualServiceSaleSchema],
     daySubtotal: {
       type: Number,
       default: 0,
@@ -105,8 +183,20 @@ const saleSchema = new Schema(
       type: Number,
       default: 0,
     },
+    serviceDaySubtotal: {
+      type: Number,
+      default: 0,
+    },
+    serviceDayTotalTax: {
+      type: Number,
+      default: 0,
+    },
+    serviceDayGrandTotal: {
+      type: Number,
+      default: 0,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 saleSchema.index({ date: 1, branch: 1 }, { unique: true });

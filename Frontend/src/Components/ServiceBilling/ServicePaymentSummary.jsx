@@ -5,12 +5,15 @@ const ServicePaymentSummary = ({
   selectedService,
   currentBase,
   currentCharge,
+  currentTax,
   currentItemTotal,
+  serviceSettings,
   accounts,
   selectedAccountId,
   setSelectedAccountId,
   isProcessing,
   handleCompleteSale,
+  currentQty,
   currency,
   detailsDescription,
 }) => {
@@ -50,25 +53,39 @@ const ServicePaymentSummary = ({
           </div>
 
           <div className="d-flex justify-content-between mb-1">
-            <span className="text-secondary small">Base Amount</span>
+            <span className="text-secondary small">
+              Base Amount {currentQty > 1 && `(x${currentQty})`}
+            </span>
             <span className="fw-bold small">
               {getCurrencySymbol(currency)}
-              {currentBase.toFixed(2)}
+              {(currentBase * currentQty).toFixed(2)}
             </span>
           </div>
-          <div className="d-flex justify-content-between mb-2 border-bottom pb-2">
+          <div className="d-flex justify-content-between mb-2">
             <span className="text-secondary small">Service Charge</span>
             <span className="fw-bold text-success small">
               +{getCurrencySymbol(currency)}
-              {currentCharge.toFixed(2)}
+              {(currentCharge * currentQty).toFixed(2)}
             </span>
           </div>
 
+          {serviceSettings?.enableServiceTax && (
+            <div className="d-flex justify-content-between mb-2 border-bottom pb-2">
+              <span className="text-secondary small">
+                Service Tax ({serviceSettings.serviceTaxRate || 18}%)
+              </span>
+              <span className="fw-bold text-danger small">
+                +{getCurrencySymbol(currency)}
+                {currentTax.toFixed(2)}
+              </span>
+            </div>
+          )}
+
           <div className="d-flex justify-content-between mb-1 p-2 bg-light rounded">
-            <span className="fs-6 fw-bold text-dark">Total</span>
+            <span className="fs-6 fw-bold text-dark">Grand Total</span>
             <span className="fs-4 fw-bold text-success">
               {getCurrencySymbol(currency)}
-              {currentItemTotal.toFixed(2)}
+              {(currentItemTotal + currentTax).toFixed(2)}
             </span>
           </div>
         </div>
@@ -82,15 +99,19 @@ const ServicePaymentSummary = ({
               <button
                 key={acc._id}
                 onClick={() => setSelectedAccountId(acc._id)}
-                className={`btn btn-sm flex-fill fw-bold py-2 ${
+                className={`btn btn-sm flex-fill fw-bold py-2 transition-all ${
                   selectedAccountId === acc._id
-                    ? "btn-success shadow"
-                    : "btn-outline-secondary border-0 bg-light"
+                    ? "btn-success shadow border-0"
+                    : "btn-light border text-secondary hover-shadow"
                 }`}
               >
                 {acc.type === "Upi" ? (
                   <span>
                     <i className="bi bi-qr-code me-1"></i>UPI
+                  </span>
+                ) : acc.type === "Credits" || acc.type === "Credit" ? (
+                  <span>
+                    <i className="bi bi-person-badge me-1"></i>CREDIT
                   </span>
                 ) : (
                   <span>
@@ -102,19 +123,48 @@ const ServicePaymentSummary = ({
             ))}
           </div>
 
-          <button
-            onClick={handleCompleteSale}
-            disabled={isProcessing}
-            className="btn btn-primary w-100 py-3 fw-bold shadow-sm text-uppercase letter-spacing-1"
-          >
-            {isProcessing ? (
-              "Processing..."
-            ) : (
-              <span>
-                <i className="bi bi-check-circle-fill me-2"></i>CONFIRM & PAY
-              </span>
-            )}
-          </button>
+          {selectedAccountId && (
+            <div className="alert alert-secondary border-0 bg-light p-2 rounded-3 mb-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <small className="text-muted">Account Balance:</small>
+                <small className="fw-bold">
+                  {getCurrencySymbol(currency)}
+                  {accounts
+                    .find((a) => a._id === selectedAccountId)
+                    ?.currentBalance?.toFixed(2) || "0.00"}
+                </small>
+              </div>
+            </div>
+          )}
+
+          <div className="d-flex  gap-2">
+            <button
+              onClick={() => handleCompleteSale(false)}
+              disabled={isProcessing}
+              className="btn btn-primary flex-fill py-3 fw-bold shadow-sm text-uppercase"
+            >
+              {isProcessing ? (
+                "Processing..."
+              ) : (
+                <span>
+                  <i className="bi bi-save me-2"></i>Save 
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => handleCompleteSale(true)}
+              disabled={isProcessing}
+              className="btn btn-success flex-fill py-2 fw-bold shadow-sm text-uppercase letter-spacing-1"
+            >
+              {isProcessing ? (
+                "Processing..."
+              ) : (
+                <span>
+                  <i className="bi bi-printer-fill me-2"></i>Save & Print
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -39,6 +39,7 @@ const Reports = () => {
     branch: "all",
     startDate: "",
     endDate: "",
+    billType: "all",
   });
 
   const baseURL = `${import.meta.env.VITE_BACKEND_BASE_URI}/admin`;
@@ -110,6 +111,8 @@ const Reports = () => {
                 ? Number((item.totalTax - item.totalTax / 2).toFixed(2))
                 : 0,
               totalTax: item.totalTax || 0,
+              fieldService: item.fieldService || "",
+              isService: item.isService,
             };
           });
           setData(rawData);
@@ -118,7 +121,7 @@ const Reports = () => {
           await setCache(
             cacheKey,
             { sales: rawData, refunds: refundData },
-            TTL.SHORT
+            TTL.SHORT,
           );
           applyFilters(rawData, filters, refundData);
         }
@@ -151,7 +154,7 @@ const Reports = () => {
     ) {
       // Ensure IDs are strictly converted to strings for comparison
       result = result.filter(
-        (item) => String(item.rawBranchId) === String(currentFilters.branch)
+        (item) => String(item.rawBranchId) === String(currentFilters.branch),
       );
     }
 
@@ -170,11 +173,11 @@ const Reports = () => {
 
     if (currentFilters.dateRange === "today") {
       result = result.filter(
-        (item) => checkDate(item.date).getTime() === today.getTime()
+        (item) => checkDate(item.date).getTime() === today.getTime(),
       );
     } else if (currentFilters.dateRange === "yesterday") {
       result = result.filter(
-        (item) => checkDate(item.date).getTime() === yesterday.getTime()
+        (item) => checkDate(item.date).getTime() === yesterday.getTime(),
       );
     } else if (currentFilters.dateRange === "this_week") {
       const day = today.getDay();
@@ -223,6 +226,15 @@ const Reports = () => {
       }
     }
 
+    // Bill Type Filter
+    if (currentFilters.billType !== "all") {
+      result = result.filter((item) => {
+        if (currentFilters.billType === "services") return item.isService;
+        if (currentFilters.billType === "products") return !item.isService;
+        return true;
+      });
+    }
+
     // If Branch Performance, Aggregate Data by Branch
     if (currentFilters.type === "branch-performance") {
       const branchGroups = {};
@@ -268,12 +280,12 @@ const Reports = () => {
     // Stats calculation based on unique bills to avoid double counting items
     const uniqueSales = Array.from(
       new Map(
-        dataSet.map((item) => [item._id || item.billNumber, item])
-      ).values()
+        dataSet.map((item) => [item._id || item.billNumber, item]),
+      ).values(),
     );
     const totalSales = uniqueSales.reduce(
       (sum, item) => sum + (item.amount || 0),
-      0
+      0,
     );
     const totalRefunded = uniqueSales.reduce((sum, item) => {
       // If paymentMode is Credits, it's not a financial refund (no cash out)
@@ -338,6 +350,7 @@ const Reports = () => {
         { header: "Mode", key: "paymentMode", width: 15 },
         { header: "Status", key: "status", width: 18 },
         { header: "Branch", key: "branch", width: 20 },
+        { header: "Field Service", key: "fieldService", width: 20 },
         { header: "CP", key: "cp", width: 12 },
         { header: "Profit/Loss", key: "profit", width: 15 },
       ];
@@ -375,8 +388,8 @@ const Reports = () => {
         rowData.forEach((row) => {
           const excelRow = worksheet.addRow(row);
           excelRow.font = { size: 13 };
-          // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(16), Profit(17)
-          [8, 9, 10, 11, 12, 16, 17].forEach((colIndex) => {
+          // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(17), Profit(18)
+          [8, 9, 10, 11, 12, 17, 18].forEach((colIndex) => {
             const cell = excelRow.getCell(colIndex);
             cell.numFmt = `"₹"#,##0.00`;
           });
@@ -418,8 +431,8 @@ const Reports = () => {
             sale.formattedDate,
             sale.customerName,
             sale.customerPhone,
-            p.product?.sku || p.sku || "N/A",
-            p.product?.name || p.name || "N/A",
+            p.product?.sku || p.sku || (sale.isService ? "Service" : "N/A"),
+            p.name || p.product?.name || "N/A",
             p.qty,
             p.price,
             p.taxableValue || p.lineTotal - p.taxAmount,
@@ -429,6 +442,7 @@ const Reports = () => {
             sale.paymentMethod,
             itemStatus,
             sale.branchName,
+            sale.fieldService || "",
             cpValue,
             profitValue,
           ];
@@ -595,7 +609,7 @@ const Reports = () => {
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(
       new Blob([buffer]),
-      `Admin_Sales_Export_${new Date().toISOString().split("T")[0]}.xlsx`
+      `Admin_Sales_Export_${new Date().toISOString().split("T")[0]}.xlsx`,
     );
   };
 

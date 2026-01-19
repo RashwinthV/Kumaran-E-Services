@@ -7,6 +7,8 @@ const ServiceCart = ({
   onEditItem,
   editingItemId,
   grandTotal,
+  cartTax,
+  serviceSettings,
   accounts,
   selectedAccountId,
   setSelectedAccountId,
@@ -126,7 +128,7 @@ const ServiceCart = ({
             </span>
           </div>
           <div className="d-flex justify-content-between mb-1 small text-muted">
-            <span>Service Charge</span>
+            <span>Service Charges</span>
             <span>
               +{getCurrencySymbol(currency)}
               {cart
@@ -134,6 +136,15 @@ const ServiceCart = ({
                 .toFixed(2)}
             </span>
           </div>
+          {serviceSettings?.enableServiceTax && (
+            <div className="d-flex justify-content-between mb-1 small text-muted">
+              <span>Service Tax</span>
+              <span className="text-danger">
+                +{getCurrencySymbol(currency)}
+                {cartTax.toFixed(2)}
+              </span>
+            </div>
+          )}
           <div className="d-flex justify-content-between align-items-center mt-2">
             <span className="fw-bold text-dark">Grand Total</span>
             <span className="fw-bold text-success fs-4">
@@ -148,24 +159,57 @@ const ServiceCart = ({
             <button
               key={acc._id}
               onClick={() => setSelectedAccountId(acc._id)}
-              className={`btn btn-sm flex-fill fw-bold py-1 ${
+              className={`btn btn-sm flex-fill fw-bold py-1 transition-all ${
                 selectedAccountId === acc._id
-                  ? "btn-success shadow-sm"
-                  : "btn-outline-secondary border-0 bg-light"
+                  ? "btn-success shadow-sm border-0"
+                  : "btn-light border text-secondary shadow-hover"
               }`}
             >
-              {acc.type === "Upi" ? "UPI" : acc.type}
+              {acc.type === "Upi" ? (
+                <span>
+                  <i className="bi bi-qr-code me-1"></i>UPI
+                </span>
+              ) : acc.type === "Credits" || acc.type === "Credit" ? (
+                <span>
+                  <i className="bi bi-person-badge me-1"></i>CREDIT
+                </span>
+              ) : (
+                acc.type
+              )}
             </button>
           ))}
         </div>
 
-        <button
-          onClick={handleCompleteSale}
-          disabled={isProcessing || cart.length === 0}
-          className="btn btn-primary w-100 py-2 fw-bold shadow-sm text-uppercase small"
-        >
-          {isProcessing ? "Processing..." : "Process All Tickets"}
-        </button>
+        {selectedAccountId && (
+          <div className="alert alert-secondary border-0 bg-light p-2 rounded-3 mb-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <small className="text-muted small">Account Balance:</small>
+              <small className="fw-bold small">
+                {getCurrencySymbol(currency)}
+                {accounts
+                  .find((a) => a._id === selectedAccountId)
+                  ?.currentBalance?.toFixed(2) || "0.00"}
+              </small>
+            </div>
+          </div>
+        )}
+
+        <div className="d-flex w-100 gap-2">
+          <button
+            onClick={() => handleCompleteSale(false)}
+            disabled={isProcessing || cart.length === 0}
+            className="btn btn-primary flex-fill py-2 fw-bold shadow-sm text-uppercase small"
+          >
+            {isProcessing ? "Processing..." : "Save All"}
+          </button>
+          <button
+            onClick={() => handleCompleteSale(true)}
+            disabled={isProcessing || cart.length === 0}
+            className="btn btn-success flex-fill py-2 fw-bold shadow-sm text-uppercase small"
+          >
+            {isProcessing ? "Processing..." : "Save & Print All"}
+          </button>
+        </div>
       </div>
     </div>
   );

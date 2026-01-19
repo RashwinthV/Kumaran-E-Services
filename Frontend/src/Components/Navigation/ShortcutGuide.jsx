@@ -1,29 +1,37 @@
-import React from "react";
+import React, { useMemo } from "react";
 import "../../Styles/ShortcutGuide.css";
+import { useShortcutList } from "../../hooks/useGlobalShortcuts";
 
 const ShortcutGuide = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+  const globalConfig = useShortcutList();
 
-  const shortcuts = [
-    { key: "F1", desc: "New Customer" },
-    { key: "F2", desc: "Search Products" },
-    { key: "F4", desc: "Clear Bill" },
-    { key: "F6", desc: "Focus Search" },
-    { key: "F8", desc: "Focus Discount" },
-    { key: "F9", desc: "Save Sale" },
-    { key: "F10", desc: "Print & Save" },
-    { key: "F11", desc: "View Reports" },
-    { key: "F12", desc: "Shortcut Guide" },
-    { key: "Ctrl + Enter", desc: "Complete Sale" },
-    { key: "Esc", desc: "Cancel / Close Modals" },
-    { key: "Ctrl + Z", desc: "Remove Last Item" },
-    { key: "Ctrl + Y", desc: "Undo Removal (Redo)" },
-    { key: "Alt + a", desc: "Settings" },
-    { key: "Alt + L", desc: "Logout" },
-    { key: "Alt + c", desc: "Credit Customers" },
-    { key: "Ctrl + F", desc: "Product Catalog" },
-    { key: "Alt + s", desc: "Sale History" },
-  ];
+  const shortcuts = useMemo(() => {
+    const local = [
+      { key: "F1", desc: "New Customer" },
+      { key: "F2", desc: "Focus Search" },
+      { key: "F4", desc: "Clear Bill" },
+      { key: "F9", desc: "Save Sale" },
+      { key: "F10", desc: "Print & Save" },
+      { key: "F12", desc: "Shortcut Guide" },
+      { key: "Ctrl + Enter", desc: "Complete Sale" },
+      { key: "Esc", desc: "Cancel / Close Modals" },
+      { key: "Ctrl + Z", desc: "Remove Last Item" },
+      { key: "Ctrl + Y", desc: "Undo Removal (Redo)" },
+    ];
+
+    const formattedGlobal = globalConfig.map((s) => {
+      let keyStr = "";
+      if (s.ctrlKey) keyStr += "Ctrl + ";
+      if (s.altKey) keyStr += "Alt + ";
+      if (s.shiftKey) keyStr += "Shift + ";
+      keyStr += s.key.toUpperCase();
+      return { key: keyStr, desc: s.description };
+    });
+
+    return [...local, ...formattedGlobal];
+  }, [globalConfig]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="shortcut-guide-overlay" onClick={onClose}>

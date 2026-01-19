@@ -6,8 +6,10 @@ const ServiceCustomerSelect = ({
   selectedCustomerId,
   selectedCustomerName,
   selectedCustomerPhone,
+  selectedCustomerCredit,
   onSelectCustomer,
   onClearCustomer,
+  onAddNewCustomer,
 }) => {
   return (
     <div className="card shadow-sm mb-2 flex-shrink-0">
@@ -21,7 +23,7 @@ const ServiceCustomerSelect = ({
             <CustomerSearch
               customers={customers}
               onSelectCustomer={onSelectCustomer}
-              onAddNewCustomer={() => {}} // Provide a no-op or handle appropriately if modal is needed
+              onAddNewCustomer={onAddNewCustomer}
             />
           </div>
           <div className="col-md-7">
@@ -29,7 +31,7 @@ const ServiceCustomerSelect = ({
               <i className="bi bi-check-circle text-primary"></i>
               <h6 className="fw-bold mb-0 small">SELECTED CUSTOMER</h6>
             </div>
-            {selectedCustomerId ? (
+            {selectedCustomerId || selectedCustomerName ? (
               <div className="card bg-light border-0">
                 <div className="card-body p-2 d-flex justify-content-between align-items-center">
                   <div>
@@ -41,6 +43,18 @@ const ServiceCustomerSelect = ({
                       <i className="bi bi-phone me-1"></i>
                       {selectedCustomerPhone}
                     </span>
+                    {selectedCustomerCredit !== undefined && (
+                      <span
+                        className={`badge ms-3 ${
+                          selectedCustomerCredit > 0
+                            ? "bg-danger-subtle text-danger"
+                            : "bg-success-subtle text-success"
+                        } border px-2 py-1`}
+                      >
+                        <i className="bi bi-credit-card me-1"></i>
+                        Credit: {selectedCustomerCredit.toFixed(2)}
+                      </span>
+                    )}
                   </div>
                   <button
                     className="btn btn-sm btn-link text-danger p-0"

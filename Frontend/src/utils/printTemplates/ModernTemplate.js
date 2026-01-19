@@ -58,13 +58,28 @@ export const ModernTemplate = ({
                 .map(
                   (p) => `
                 <tr>
-                  <td style="padding-left: 15px;">${p.name || "Item"}</td>
+                <td style="padding-left: 15px;">
+                  <div style="font-weight: 700;">${p.name || "Item"}</div>
+                  ${
+                    p.details?.photoId
+                      ? `<div style="font-size: 0.7rem; color: #444;">ID: ${p.details.photoId}</div>`
+                      : ""
+                  }
+                  ${
+                    p.details?.summary
+                      ? `<div style="font-size: 0.75rem; color: #666; font-weight: 400;">${p.details.summary.replace(
+                          p.name + " | ",
+                          "",
+                        )}</div>`
+                      : ""
+                  }
+                </td>
                   <td class="text-center">${p.qty || 0}</td>
                   <td class="text-right" style="padding-right: 15px;">${currencySymbol}${Number(
-                    p.lineTotal || 0
+                    p.lineTotal || 0,
                   ).toFixed(2)}</td>
                 </tr>
-              `
+              `,
                 )
                 .join("")}
             </tbody>
@@ -80,28 +95,28 @@ export const ModernTemplate = ({
           </div>
           <div class="modern-summary">
             <div class="modern-summary-item"><span>Subtotal</span><span>${currencySymbol}${subtotal.toFixed(
-    2
-  )}</span></div>
+              2,
+            )}</span></div>
             <div class="modern-summary-item"><span>GST Amount</span><span>${currencySymbol}${tax.toFixed(
-    2
-  )}</span></div>
+              2,
+            )}</span></div>
             ${
               discount > 0
                 ? `<div class="modern-summary-item"><span>Discount Applied</span><span>-${currencySymbol}${discount.toFixed(
-                    2
+                    2,
                   )}</span></div>`
                 : ""
             }
             ${
               Math.abs(roundingValue) > 0.01
                 ? `<div class="modern-summary-item"><span>Rounding</span><span>${currencySymbol}${roundingValue.toFixed(
-                    2
+                    2,
                   )}</span></div>`
                 : ""
             }
             <div class="modern-summary-item modern-total"><span>TOTAL </span><span>${currencySymbol}${amount.toFixed(
-    2
-  )}</span></div>
+              2,
+            )}</span></div>
           </div>
         </div>
       </div>

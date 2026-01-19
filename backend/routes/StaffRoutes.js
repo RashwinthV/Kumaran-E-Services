@@ -5,6 +5,7 @@ const {
   getSales,
   refundSale,
 } = require("../controller/SalesController");
+const { createServiceSale } = require("../controller/ServiceBillingController");
 const {
   getMyBranchAccounts,
   closeAccount,
@@ -18,6 +19,7 @@ const {
   getCustomerPaymentHistory,
   checkMaturity,
   closeInvestment,
+  processPrincipalTransaction,
   deleteInvestorInvestment,
 } = require("../controller/CustomerController");
 const {
@@ -30,6 +32,7 @@ const { getAllCategories } = require("../controller/CategoryController");
 
 // Sales routes
 router.post("/", protect, createSale);
+router.post("/services", protect, createServiceSale);
 router.get("/", protect, getSales);
 router.post("/refund", protect, refundSale);
 
@@ -44,6 +47,7 @@ router.post("/accounts/:id/close", protect, closeAccount);
 router.get("/customers/my-branch", protect, getMyBranchCustomers);
 router.get("/customers/investors/my-branch", protect, getBranchInvestors);
 router.post("/customers", protect, upsertCustomer);
+router.post("/customers/transaction", protect, processPrincipalTransaction);
 router.post("/customers/check-maturity", protect, checkMaturity);
 router.post(
   "/customers/:customerId/investment/:investmentId/close",

@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { API_ENDPOINTS } from "../../config/api";
 
 const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
   const [formData, setFormData] = useState({
@@ -9,7 +11,41 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
     reason: "",
     notes: "",
     type: "payout", // "payout" or "payin"
+    paymentAccountId: "",
   });
+
+  const [accounts, setAccounts] = useState([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setLoadingAccounts(true);
+        const token = localStorage.getItem("accessToken");
+        const res = await axios.get(API_ENDPOINTS.BRANCH_ACCOUNTS, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.success) {
+          const validAccounts = res.data.data.filter(
+            (acc) => acc.type !== "Credits",
+          );
+          setAccounts(validAccounts);
+          const cashAcc = validAccounts.find((a) => a.type === "Cash");
+          if (cashAcc) {
+            setFormData((prev) => ({ ...prev, paymentAccountId: cashAcc._id }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch accounts", err);
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchAccounts();
+    }
+  }, [isOpen]);
 
   const [error, setError] = useState("");
   // Initialize with the default bank account ID or the first one if available
@@ -77,6 +113,10 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
     }
     if (amt <= 0) {
       setError("Amount must be greater than 0");
+      return;
+    }
+    if (!formData.paymentAccountId) {
+      setError("Please select a transaction account.");
       return;
     }
 
@@ -218,6 +258,45 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     </small>
                   )}
                 </div>
+
+                <div className="col-md-12">
+                  <label className="form-label fw-bold small">
+                    {isPayin ? "Received To Account" : "Paid From Account"}{" "}
+                    <span className="text-danger">*</span>
+                  </label>
+                  <div className="d-grid gap-2 d-md-flex mb-2">
+                    {accounts.map((acc) => (
+                      <button
+                        key={acc._id}
+                        type="button"
+                        onClick={() =>
+                          handleChange("paymentAccountId", acc._id)
+                        }
+                        className={`btn btn-sm flex-fill fw-bold py-2 transition-all ${
+                          formData.paymentAccountId === acc._id
+                            ? "btn-success shadow border-0"
+                            : "btn-light border text-secondary hover-shadow"
+                        }`}
+                      >
+                        {acc.type === "Upi" ? (
+                          <span>
+                            <i className="bi bi-qr-code me-1"></i>UPI
+                          </span>
+                        ) : acc.type === "Credits" || acc.type === "Credit" ? (
+                          <span>
+                            <i className="bi bi-person-badge me-1"></i>CREDIT
+                          </span>
+                        ) : (
+                          <span>
+                            <i className="bi bi-cash me-1"></i>
+                            {acc.type}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
                     {isPayin ? "Payin" : "Payout"} Date{" "}

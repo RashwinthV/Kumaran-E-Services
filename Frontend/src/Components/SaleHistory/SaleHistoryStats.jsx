@@ -1,6 +1,6 @@
 import React from "react";
 
-const SaleHistoryStats = ({ data }) => {
+const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
   // Revenue is now tracked by paidAmount on every sale (including partial credit payments)
   // Sales card displays the Net Revenue (Total bill value minus total value of items returned)
   // This matches the "Total Amount" column displayed in the transaction table.
@@ -18,7 +18,7 @@ const SaleHistoryStats = ({ data }) => {
   }, 0);
 
   const countActiveSales = data.filter(
-    (item) => item.status !== "Refunded" && item.status !== "Cancelled"
+    (item) => item.status !== "Refunded" && item.status !== "Cancelled",
   );
   const totalTransactions = countActiveSales.length;
   const averageValue =
@@ -27,7 +27,7 @@ const SaleHistoryStats = ({ data }) => {
   return (
     <div className="row g-3 mb-4">
       {/* Total Revenue */}
-      <div className="col-md-3">
+      <div className="col-md">
         <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
           <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-4">
             <i className="bi bi-currency-rupee fs-4"></i>
@@ -44,7 +44,7 @@ const SaleHistoryStats = ({ data }) => {
       </div>
 
       {/* Total Refunded */}
-      <div className="col-md-3">
+      <div className="col-md">
         <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
           <div className="bg-danger bg-opacity-10 text-danger p-3 rounded-4">
             <i className="bi bi-arrow-counterclockwise fs-4"></i>
@@ -61,7 +61,7 @@ const SaleHistoryStats = ({ data }) => {
       </div>
 
       {/* Transactions */}
-      <div className="col-md-3">
+      <div className="col-md">
         <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
           <div className="bg-success bg-opacity-10 text-success p-3 rounded-4">
             <i className="bi bi-receipt fs-4"></i>
@@ -76,7 +76,7 @@ const SaleHistoryStats = ({ data }) => {
       </div>
 
       {/* Average Bill */}
-      <div className="col-md-3">
+      <div className="col-md">
         <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
           <div className="bg-warning bg-opacity-10 text-warning p-3 rounded-4">
             <i className="bi bi-graph-up-arrow fs-4"></i>
@@ -87,6 +87,23 @@ const SaleHistoryStats = ({ data }) => {
             </p>
             <h4 className="fw-bold mb-0 text-dark">
               ₹{averageValue.toFixed(0)}
+            </h4>
+          </div>
+        </div>
+      </div>
+
+      {/* Total Investment */}
+      <div className="col-md">
+        <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
+          <div className="bg-info bg-opacity-10 text-info p-3 rounded-4">
+            <i className="bi bi-cash-stack fs-4"></i>
+          </div>
+          <div>
+            <p className="text-muted small mb-1 fw-bold text-uppercase">
+              Investment
+            </p>
+            <h4 className="fw-bold mb-0 text-dark">
+              ₹{totalInvestment.toLocaleString()}
             </h4>
           </div>
         </div>
