@@ -96,6 +96,7 @@ import useGlobalShortcuts from "./hooks/useGlobalShortcuts";
 import SaleHistory from "./Pages/Branch/SaleHistory";
 import Investors from "./Pages/Branch/Investors";
 import Customer from "./Pages/Branch/Customer";
+import Expenses from "./Pages/Branch/Expenses";
 
 function GlobalKeyboardListener() {
   useGlobalShortcuts();
@@ -126,6 +127,7 @@ function AppContent() {
             <Route path="/investors" element={<Investors />} />
             <Route path="/customers" element={<Customer />} />
             <Route path="/sale-history" element={<SaleHistory />} />
+            <Route path="/expenses" element={<Expenses />} />
 
             {/* Add more protected routes here */}
           </Route>

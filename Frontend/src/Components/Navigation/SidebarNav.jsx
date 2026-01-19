@@ -26,9 +26,41 @@ const SidebarNav = () => {
     },
     {
       id: "product-catalog",
-      label: "Product Catalog",
+      label: "Products",
       icon: "bi-box-seam",
       path: "/product-catalog",
+    },
+    {
+      id: "Product&expenses",
+      label: "Product & Expenses",
+      icon: "bi-wallet2",
+      path: "/expenses",
+      subItems: [
+        {
+          id: "expense-product",
+          label: "Product",
+          icon: "bi-box-seam",
+          path: "/expenses#product",
+        },
+        {
+          id: "expense-employee",
+          label: "Employee",
+          icon: "bi-person-badge",
+          path: "/expenses#employee",
+        },
+        {
+          id: "expense-rent",
+          label: "Rent",
+          icon: "bi-house-door",
+          path: "/expenses#rent",
+        },
+        {
+          id: "expense-other",
+          label: "Other",
+          icon: "bi-three-dots",
+          path: "/expenses#other",
+        },
+      ],
     },
     {
       id: "customer",
@@ -134,7 +166,13 @@ const SidebarNav = () => {
               const isActive =
                 location.pathname === item.path ||
                 (item.path.startsWith("#") &&
-                  window.location.hash === item.path);
+                  window.location.hash === item.path) ||
+                (item.subItems &&
+                  item.subItems.some(
+                    (sub) =>
+                      location.pathname + window.location.hash === sub.path,
+                  ));
+
               return (
                 <li key={item.id} className="nav-item">
                   <Link
@@ -163,7 +201,7 @@ const SidebarNav = () => {
                       }
                     }}
                   >
-                    {/* Fixed Icon Container - exactly 80px/sidebar width minus padding to center the icon */}
+                    {/* Fixed Icon Container */}
                     <div
                       className="d-flex justify-content-center align-items-center nav-icon-wrapper"
                       style={{ width: "64px", minWidth: "64px", flexShrink: 0 }}
@@ -206,6 +244,53 @@ const SidebarNav = () => {
                       </div>
                     )}
                   </Link>
+
+                  {/* Sub-items */}
+                  {item.subItems && sidebarOpen && (
+                    <ul className="nav flex-column ps-4 mt-1 gap-1">
+                      {item.subItems.map((subItem) => {
+                        const isSubActive =
+                          location.pathname + window.location.hash ===
+                          subItem.path;
+                        return (
+                          <li key={subItem.id} className="nav-item">
+                            <Link
+                              to={subItem.path}
+                              className={`nav-link d-flex align-items-center rounded-2 px-2 py-2 ${
+                                isSubActive
+                                  ? "bg-white bg-opacity-25"
+                                  : "text-white"
+                              }`}
+                              style={{
+                                fontSize: "0.85rem",
+                                textDecoration: "none",
+                                color: "rgba(255,255,255,0.9)",
+                                opacity: isSubActive ? 1 : 0.7,
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "rgba(255, 255, 255, 0.15)";
+                                e.currentTarget.style.opacity = "1";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSubActive) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "transparent";
+                                  e.currentTarget.style.opacity = "0.7";
+                                }
+                              }}
+                            >
+                              <i
+                                className={`bi ${subItem.icon} me-2`}
+                                style={{ fontSize: "0.9rem" }}
+                              ></i>
+                              {subItem.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })}

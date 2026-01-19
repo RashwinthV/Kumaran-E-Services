@@ -133,7 +133,7 @@
 .sidebar-link:hover i,
 .nav-link:hover .nav-icon-wrapper i,
 .nav-link.active:hover i {
-  transform: scale(1.3) rotate(-360deg) !important;
+  transform: scale(1.5)  !important;
 }
 
 .sidebar-nav.closed .sidebar-link {
