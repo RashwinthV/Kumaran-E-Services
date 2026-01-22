@@ -58,7 +58,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Token refresh failed");
       }
     } catch (error) {
-      toast.error("ℹ️ Auto-login logic: No active cookie/session found");
       clearAuthState();
       throw error;
     }

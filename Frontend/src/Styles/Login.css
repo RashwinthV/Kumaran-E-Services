@@ -29,7 +29,8 @@
   width: 100%;
   height: 100%;
   z-index: 0;
-  background: radial-gradient(circle at 0% 0%, #e0e7ff 0%, transparent 40%),
+  background:
+    radial-gradient(circle at 0% 0%, #e0e7ff 0%, transparent 40%),
     radial-gradient(circle at 100% 100%, #f0fdf4 0%, transparent 40%), #f8fafc;
 }
 
@@ -143,7 +144,6 @@
   object-fit: contain;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
   border-radius: 20px;
-  
 }
 
 .company-name-large {
@@ -312,11 +312,20 @@
   margin-top: -0.5rem;
 }
 
-.form-utils a {
+.form-utils .forgot-password-trigger {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--primary);
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.form-utils .forgot-password-trigger:hover {
+  color: var(--primary-dark);
 }
 
 .login-button-elegant {

@@ -112,6 +112,12 @@ const InvestorDetailsModal = ({
                     </div>
                   </div>
                   <div className="col-md-4">
+                    <small className="text-muted">Aadhar Number:</small>
+                    <div className="fw-bold font-monospace">
+                      {investor.aadharNumber || "N/A"}
+                    </div>
+                  </div>
+                  <div className="col-md-4">
                     <small className="text-muted">KYC Status:</small>
                     <div>
                       <span

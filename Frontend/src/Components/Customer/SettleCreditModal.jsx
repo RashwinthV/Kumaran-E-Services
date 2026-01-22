@@ -291,10 +291,10 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   <div className="input-group input-group-sm w-50">
                                     <span className="input-group-text bg-white border-end-0">
                                       ₹
-                                    </span>
+                                
                                     <input
                                       type="number"
-                                      className="form-control border-start-0 text-end fw-bold"
+                                      className="form-control border-0 outline-0 text-end fw-bold"
                                       placeholder="0.00"
                                       value={billAmounts[credit._id] || ""}
                                       onChange={(e) =>
@@ -308,6 +308,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                       step="0.01"
                                       min="0"
                                     />
+                                        </span>
                                   </div>
                                 )}
                               </div>

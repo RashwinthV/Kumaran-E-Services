@@ -1,5 +1,8 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const { sendOTP } = require("../utils/emailUtils");
+
+const otpStore = new Map();
 
 // Generate Access Token (short-lived - 15 minutes)
 const generateAccessToken = (id) => {
@@ -333,6 +336,156 @@ exports.updatePassword = async (req, res) => {
     });
   } catch (error) {
     console.error("Update password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an email",
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No user found with that email",
+      });
+    }
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 3 * 60 * 1000; // 3 minutes
+
+    otpStore.set(email.toLowerCase(), { otp, expires });
+
+    const emailSent = await sendOTP(user.email, otp);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Error sending email. Please try again later.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent to your email",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide email and OTP",
+      });
+    }
+
+    const storedData = otpStore.get(email.toLowerCase());
+
+    if (!storedData) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired or not requested",
+      });
+    }
+
+    if (storedData.expires < Date.now()) {
+      otpStore.delete(email.toLowerCase());
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired",
+      });
+    }
+
+    if (storedData.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    console.error("Verify OTP error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    const storedData = otpStore.get(email.toLowerCase());
+
+    if (
+      !storedData ||
+      storedData.otp !== otp ||
+      storedData.expires < Date.now()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP session",
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.password = newPassword;
+    user.credentials.tokenVersion += 1; // Revoke old tokens
+    await user.save();
+
+    // Clear OTP from store
+    otpStore.delete(email.toLowerCase());
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Password reset successful. You can now login with your new password.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
       message: "Server error",

@@ -6,6 +6,9 @@ const {
   logout,
   getMe,
   updatePassword,
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
 } = require("../controller/AuthController");
 const { verifyBranch } = require("../controller/PublicBranchController");
 const { protect } = require("../middleware/auth");
@@ -18,6 +21,9 @@ router.get("/", (req, res) => {
 router.post("/login", login);
 router.post("/refresh", refreshToken);
 router.post("/branches/verify", verifyBranch);
+router.post("/forgot-password", forgotPassword);
+router.post("/verify-otp", verifyOTP);
+router.post("/reset-password", resetPassword);
 
 // Protected routes
 router.post("/logout", protect, logout);

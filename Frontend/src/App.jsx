@@ -1,5 +1,5 @@
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -14,7 +14,6 @@ import "./App.css";
 // Pages
 import Login from "./Pages/User/Login";
 import BranchLogin from "./Pages/Branch/BranchLogin";
-import AutoLogin from "./Pages/User/AutoLogin";
 import ProductBilling from "./Pages/Billing/ProductBilling";
 import ServiceBilling from "./Pages/Billing/ServiceBilling";
 import Loader from "./Components/Loading/universalLoader";
@@ -51,13 +50,7 @@ import GlobalHeader from "./Components/Navigation/GlobalHeader";
 // Layout wrapper to conditionally show Header and Sidebar
 const Layout = ({ children }) => {
   const location = useLocation();
-  const noHeaderRoutes = [
-    "/",
-    "/login",
-    "/register",
-    "/branch-login",
-    "/auto-login",
-  ];
+  const noHeaderRoutes = ["/", "/login", "/register", "/branch-login"];
 
   const hideHeader = noHeaderRoutes.includes(location.pathname);
 
@@ -116,7 +109,6 @@ function AppContent() {
           <Route path="/" element={<LoadingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/branch-login" element={<BranchLogin />} />
-          <Route path="/auto-login" element={<AutoLogin />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
@@ -133,7 +125,7 @@ function AppContent() {
           </Route>
 
           {/* Fallback */}
-          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
     </Router>

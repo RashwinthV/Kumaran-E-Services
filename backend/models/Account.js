@@ -61,8 +61,17 @@ const accountSchema = new Schema(
       default: "Active",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
+
+// Virtual for display name
+accountSchema.virtual("name").get(function () {
+  return this.type === "Upi" ? this.upiAccountName : this.type;
+});
 
 // Pre-validate hook to fix legacy data and ensure dateStr is present
 accountSchema.pre("validate", function () {

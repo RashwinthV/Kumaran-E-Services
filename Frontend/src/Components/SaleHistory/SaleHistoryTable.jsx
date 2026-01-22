@@ -8,7 +8,7 @@ const SaleHistoryTable = ({
   currencySymbol = "₹",
 }) => {
   return (
-    <div className="bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 overflow-hidden">
+    <div className="premium-card overflow-hidden">
       <div className="table-responsive">
         <table className="table table-hover align-middle mb-0">
           <thead className="bg-light">

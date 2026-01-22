@@ -67,8 +67,8 @@ const CustomerSearch = ({ customers, onSelectCustomer, onAddNewCustomer }) => {
     <div className="position-relative mb-2">
       <div className="input-group input-group-sm">
         <span className="input-group-text bg-transparent border-end-0">
-          <i className="bi bi-search text-secondary"></i>
-        </span>
+          <i className="bi bi-search text-secondary me-2"></i>
+     
         <input
           type="text"
           className="form-control border-start-0 ps-0"
@@ -80,6 +80,7 @@ const CustomerSearch = ({ customers, onSelectCustomer, onAddNewCustomer }) => {
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           autoComplete="off"
         />
+           </span>
       </div>
 
       {showSuggestions && suggestions.length > 0 && (

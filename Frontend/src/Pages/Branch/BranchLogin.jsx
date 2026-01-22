@@ -44,7 +44,7 @@ const BranchLogin = () => {
       const response = await axios.post(
         API_ENDPOINTS.AUTH.VERIFY_BRANCH,
         formData,
-        { skipAuthRefresh: true }
+        { skipAuthRefresh: true },
       );
 
       if (response.data.success) {
@@ -54,13 +54,13 @@ const BranchLogin = () => {
         localStorage.setItem("branchToken", `verified_${Date.now()}`);
         toast.success("Branch authenticated successfully!");
         setTimeout(() => {
-          navigate("/auto-login");
+          navigate("/login");
         }, 1500);
       }
     } catch (error) {
       console.error("Branch Assignment error:", error);
       toast.error(
-        error.response?.data?.message || "Failed to authenticate branch"
+        error.response?.data?.message || "Failed to authenticate branch",
       );
     } finally {
       setLoading(false);

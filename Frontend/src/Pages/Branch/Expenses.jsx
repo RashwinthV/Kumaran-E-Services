@@ -4,9 +4,12 @@ import "../../Styles/Expenses.css";
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import { toast } from "react-toastify";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Expenses = () => {
   const { user, accessToken } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("Product");
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
@@ -17,24 +20,29 @@ const Expenses = () => {
   const [expenseHistory, setExpenseHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1); // Current month
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear()); // Current year
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-  // Hash-based routing
+  // Hash-based routing using useLocation
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace("#", "");
-      const validCategories = ["Product", "Employee", "Rent", "Other"];
-      const category = validCategories.find(
-        (cat) => cat.toLowerCase() === hash.toLowerCase(),
-      );
-      if (category) {
-        setSelectedCategory(category);
-      }
-    };
+    const hash = location.hash.replace("#", "");
 
-    handleHashChange();
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
+    // If no hash is present, default to 'product'
+    if (!hash) {
+      navigate("#product", { replace: true });
+      return;
+    }
+
+    const validCategories = ["Product", "Employee", "Rent", "Other"];
+    const category = validCategories.find(
+      (cat) => cat.toLowerCase() === hash.toLowerCase(),
+    );
+    if (category) {
+      setSelectedCategory(category);
+    }
+  }, [location.hash, navigate]);
 
   // Fetch Expense History
   const fetchExpenses = useCallback(async () => {
@@ -53,6 +61,54 @@ const Expenses = () => {
       setLoadingHistory(false);
     }
   }, [accessToken]);
+
+  // Handle Filtering and Pagination logic
+  const months = [
+    { value: 0, label: "All Months" },
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
+  ];
+
+  const years = React.useMemo(() => {
+    const uniqueYears = new Set();
+    uniqueYears.add(new Date().getFullYear()); // Always include current year
+
+    expenseHistory.forEach((exp) => {
+      if (exp.date) {
+        uniqueYears.add(new Date(exp.date).getFullYear());
+      }
+    });
+
+    return ["All", ...Array.from(uniqueYears).sort((a, b) => b - a)];
+  }, [expenseHistory]);
+
+  const filteredExpenses = expenseHistory.filter((exp) => {
+    const expDate = new Date(exp.date);
+    const mMatch = filterMonth === 0 || expDate.getMonth() + 1 === filterMonth;
+    const yMatch =
+      filterYear === "All" || expDate.getFullYear() === parseInt(filterYear);
+    return mMatch && yMatch;
+  });
+
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+  const paginatedExpenses = filteredExpenses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [filterMonth, filterYear]);
 
   // Fetch Payment Accounts
   useEffect(() => {
@@ -152,7 +208,7 @@ const Expenses = () => {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
-    window.location.hash = category.toLowerCase();
+    navigate(`/expenses#${category.toLowerCase()}`);
   };
 
   const [formData, setFormData] = useState({
@@ -510,19 +566,19 @@ const Expenses = () => {
                 <div className="col-md-3">
                   <label className="premium-form-label">Unit Price</label>
                   <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
+                    <span className="input-group-text border-0">
                       ₹
+                      <input
+                        type="number"
+                        className="form-control premium-input border-0"
+                        value={formData.unitPrice}
+                        onChange={(e) =>
+                          handleInputChange("unitPrice", e.target.value)
+                        }
+                        placeholder="0.00"
+                        required
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control premium-input border-start-0"
-                      value={formData.unitPrice}
-                      onChange={(e) =>
-                        handleInputChange("unitPrice", e.target.value)
-                      }
-                      placeholder="0.00"
-                      required
-                    />
                   </div>
                 </div>
                 <div className="col-md-6">
@@ -575,19 +631,19 @@ const Expenses = () => {
                     Total Amount Paid
                   </label>
                   <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
+                    <span className="input-group-text input-group-text-premium me-2">
                       ₹
+                      <input
+                        type="number"
+                        className="form-control  input-group-text-premium  premium-input border-0"
+                        value={formData.unitPrice}
+                        onChange={(e) =>
+                          handleInputChange("unitPrice", e.target.value)
+                        }
+                        placeholder="0.00"
+                        required
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control premium-input border-start-0"
-                      value={formData.unitPrice}
-                      onChange={(e) =>
-                        handleInputChange("unitPrice", e.target.value)
-                      }
-                      placeholder="0.00"
-                      required
-                    />
                   </div>
                 </div>
                 <div className="col-md-6">
@@ -715,12 +771,12 @@ const Expenses = () => {
                 <div className="col-md-3">
                   <label className="premium-form-label">Pay Per Day</label>
                   <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
+                    <span className="input-group-text border-0 ps-3 bg-light text-muted">
                       ₹
                     </span>
                     <input
                       type="number"
-                      className="form-control premium-input border-start-0"
+                      className="form-control premium-input border-0 bg-light"
                       value={formData.payPerDay}
                       onChange={(e) =>
                         handleInputChange("payPerDay", e.target.value)
@@ -829,12 +885,12 @@ const Expenses = () => {
                 <div className="col-md-6">
                   <label className="premium-form-label">Advance Amount</label>
                   <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
+                    <span className="input-group-text border-0 ps-3 bg-light text-muted">
                       ₹
                     </span>
                     <input
                       type="number"
-                      className="form-control premium-input border-start-0"
+                      className="form-control premium-input border-0 bg-light"
                       value={formData.advance}
                       onChange={(e) =>
                         handleInputChange("advance", e.target.value)
@@ -878,12 +934,12 @@ const Expenses = () => {
             <div className="col-md-4">
               <label className="premium-form-label">Rent Amount</label>
               <div className="input-group">
-                <span className="input-group-text input-group-text-premium">
+                <span className="input-group-text border-0 ps-3 bg-light text-muted">
                   ₹
                 </span>
                 <input
                   type="number"
-                  className="form-control premium-input border-start-0 bg-light"
+                  className="form-control premium-input border-0 bg-light"
                   value={formData.rentAmount}
                   readOnly
                   placeholder="0.00"
@@ -934,12 +990,12 @@ const Expenses = () => {
             <div className="col-md-4">
               <label className="premium-form-label">Amount</label>
               <div className="input-group">
-                <span className="input-group-text input-group-text-premium">
+                <span className="input-group-text border-0 ps-3 bg-light text-muted">
                   ₹
                 </span>
                 <input
                   type="number"
-                  className="form-control premium-input border-start-0"
+                  className="form-control premium-input border-0 bg-light"
                   value={formData.amount}
                   onChange={(e) => handleInputChange("amount", e.target.value)}
                   placeholder="0.00"
@@ -1074,6 +1130,9 @@ const Expenses = () => {
                           handleInputChange("paymentMode", acc._id)
                         }
                       >
+                        {formData.paymentMode === acc._id && (
+                          <i className="bi bi-check-lg select-icon"></i>
+                        )}
                         <div className="acc-type-badge">{acc.type}</div>
                         <div className="acc-name">{acc.name}</div>
                         <div className="acc-balance">
@@ -1126,16 +1185,39 @@ const Expenses = () => {
         </div>
 
         {/* Bottom: History Summary */}
-        <div className="col-12">
+        <div className="col-12 mb-5">
           <div className="premium-card d-flex flex-column overflow-hidden">
             <div className="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
-              <div className="card-title-premium">
+              <div className="card-title-premium d-flex align-items-center gap-3">
                 <i className="bi bi-clock-history text-secondary fs-5"></i>{" "}
                 Recent Log
+                <div className="d-flex gap-2 ms-4">
+                  <select
+                    className="form-select form-select-sm border-0 bg-light rounded-pill px-3"
+                    value={filterMonth}
+                    onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                    style={{ width: "auto", minWidth: "130px" }}
+                  >
+                    {months.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="form-select form-select-sm border-0 bg-light rounded-pill px-3"
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    style={{ width: "auto", minWidth: "100px" }}
+                  >
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <button className="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3 border">
-                View All
-              </button>
             </div>
 
             <div className="card-body p-0 overflow-auto">
@@ -1169,7 +1251,19 @@ const Expenses = () => {
                       </tr>
                     )}
                     {!loadingHistory &&
-                      expenseHistory.map((expense) => (
+                      filteredExpenses.length > 0 &&
+                      paginatedExpenses.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan="6"
+                            className="text-center py-5 text-muted"
+                          >
+                            No expenses found for the selected period.
+                          </td>
+                        </tr>
+                      )}
+                    {!loadingHistory &&
+                      paginatedExpenses.map((expense) => (
                         <tr key={expense._id} className="history-row-premium">
                           <td className="fw-bold text-muted small">
                             {new Date(expense.date).toLocaleDateString()}
@@ -1218,12 +1312,44 @@ const Expenses = () => {
                 <div className="text-muted fw-bold small">MONTHLY SNAPSHOT</div>
                 <div className="fw-bold text-dark">
                   ₹{" "}
-                  {expenseHistory
+                  {filteredExpenses
                     .reduce((s, e) => s + e.amount, 0)
                     .toLocaleString()}
                 </div>
               </div>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="p-3 border-top bg-white d-flex align-items-center justify-content-center gap-3">
+                <button
+                  className="btn btn-sm btn-light rounded-circle p-2 d-flex align-items-center justify-content-center border"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+
+                <span className="small fw-bold text-muted">
+                  Page <span className="text-dark">{currentPage}</span> of{" "}
+                  {totalPages}
+                </span>
+
+                <button
+                  className="btn btn-sm btn-light rounded-circle p-2 d-flex align-items-center justify-content-center border"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <i className="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

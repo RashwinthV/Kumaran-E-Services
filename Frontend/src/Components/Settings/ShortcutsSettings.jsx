@@ -87,7 +87,7 @@ const ShortcutsSettings = () => {
 
   const updateShortcut = (id, field, value) => {
     setShortcuts((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
     );
   };
 
@@ -136,68 +136,77 @@ const ShortcutsSettings = () => {
       </div>
       <div className="card-body p-4 pt-0">
         <div
-          className="table-responsive rounded-3 shadow-sm border"
-          style={{ maxHeight: "60vh" }}
+          className="table-responsive rounded-3 border"
+          style={{ maxHeight: "65vh", overflowY: "auto" }}
         >
-          <table className="table table-hover align-middle mb-0 bg-white">
-            <thead className="table-light sticky-top" style={{ zIndex: 1 }}>
+          <table className="table table-hover align-middle mb-0 bg-white shadow-sm">
+            <thead className="table-light sticky-top" style={{ zIndex: 5 }}>
               <tr>
-                <th style={{ width: "25%" }}>Action Name</th>
+                <th className="ps-4" style={{ width: "25%" }}>
+                  Action Name
+                </th>
                 <th style={{ width: "15%" }}>Modifiers</th>
-                <th style={{ width: "10%" }}>Key</th>
-                <th style={{ width: "35%" }}>Function / Target Path</th>
-                <th style={{ width: "15%" }} className="text-end">
+                <th className="text-center" style={{ width: "12%" }}>
+                  Key
+                </th>
+                <th style={{ width: "33%" }}>Function / Target Path</th>
+                <th style={{ width: "15%" }} className="text-end pe-4">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
               {shortcuts.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm border-0 bg-transparent fw-bold"
-                      value={s.description}
-                      onChange={(e) =>
-                        updateShortcut(s.id, "description", e.target.value)
-                      }
-                      placeholder="Description"
-                    />
-                    {s.isCustom && (
-                      <span
-                        className="badge bg-info text-dark rounded-pill"
-                        style={{ fontSize: "0.6em" }}
-                      >
-                        Custom
-                      </span>
-                    )}
+                <tr key={s.id} className="history-item-premium">
+                  <td className="ps-4">
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        type="text"
+                        className={`form-control form-control-sm border-0 bg-transparent fw-bold ${s.isCustom ? "text-primary" : "text-dark"}`}
+                        value={s.description}
+                        onChange={(e) =>
+                          updateShortcut(s.id, "description", e.target.value)
+                        }
+                        placeholder="Description"
+                        style={{ paddingLeft: 0 }}
+                      />
+                      {s.isCustom && (
+                        <span
+                          className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill"
+                          style={{ fontSize: "0.65em" }}
+                        >
+                          Custom
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>
-                    <div className="d-flex gap-3">
-                      <div className="form-check form-switch mb-0">
+                    <div className="d-flex gap-3 align-items-center">
+                      <div className="form-check form-switch mb-0 d-flex align-items-center gap-2">
                         <input
-                          className="form-check-input"
+                          className="form-check-input mt-0"
                           type="checkbox"
                           checked={s.ctrlKey}
                           onChange={(e) =>
                             updateShortcut(s.id, "ctrlKey", e.target.checked)
                           }
                           title="Ctrl / Cmd"
+                          style={{ cursor: "pointer" }}
                         />
                         <label className="form-check-label small text-muted fw-bold">
                           Ctrl
                         </label>
                       </div>
-                      <div className="form-check form-switch mb-0">
+                      <div className="form-check form-switch mb-0 d-flex align-items-center gap-2">
                         <input
-                          className="form-check-input"
+                          className="form-check-input mt-0"
                           type="checkbox"
                           checked={s.altKey}
                           onChange={(e) =>
                             updateShortcut(s.id, "altKey", e.target.checked)
                           }
                           title="Alt / Option"
+                          style={{ cursor: "pointer" }}
                         />
                         <label className="form-check-label small text-muted fw-bold">
                           Alt
@@ -205,53 +214,63 @@ const ShortcutsSettings = () => {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td className="text-center">
                     <input
                       type="text"
-                      className="form-control form-control-sm text-center fw-bold font-monospace text-uppercase bg-light"
+                      className="form-control form-control-sm text-center fw-bold font-monospace text-uppercase bg-light border-0 shadow-sm mx-auto"
                       value={s.key}
                       maxLength={10}
                       onChange={(e) =>
                         updateShortcut(s.id, "key", e.target.value)
                       }
                       placeholder="KEY"
+                      style={{
+                        width: "80px",
+                        borderRadius: "6px",
+                        borderBottom: "3px solid #dee2e6",
+                      }}
                     />
                   </td>
                   <td>
-                    <div className="input-group input-group-sm">
+                    <div className="d-flex gap-2 align-items-center">
                       <select
-                        className="form-select bg-light fw-bold"
-                        value={s.action}
+                        className="form-select form-select-sm bg-light border-0 fw-bold text-muted"
+                        value={s.action || "navigate"}
                         onChange={(e) =>
                           updateShortcut(s.id, "action", e.target.value)
                         }
-                        style={{ maxWidth: "110px" }}
+                        style={{ width: "100px", fontSize: "0.85rem" }}
                       >
                         <option value="navigate">Go To</option>
                         <option value="logout">Function</option>
                       </select>
+
                       {s.action === "navigate" ? (
-                        <input
-                          type="text"
-                          className="form-control font-monospace"
-                          value={s.target || ""}
-                          onChange={(e) =>
-                            updateShortcut(s.id, "target", e.target.value)
-                          }
-                          placeholder="/route-path"
-                        />
+                        <div className="flex-grow-1 position-relative">
+                          <input
+                            type="text"
+                            className="form-control form-control-sm font-monospace border-0 bg-light"
+                            value={s.target || ""}
+                            onChange={(e) =>
+                              updateShortcut(s.id, "target", e.target.value)
+                            }
+                            placeholder="/route-path"
+                            style={{ fontSize: "0.85rem" }}
+                          />
+                        </div>
                       ) : (
-                        <select
-                          className="form-select font-monospace"
-                          value={s.action}
-                          disabled
+                        <span
+                          className="badge bg-light text-dark border py-2 px-3 flex-grow-1 text-start"
+                          style={{ fontSize: "0.85rem", fontWeight: "500" }}
                         >
-                          <option value="logout">Logout User</option>
-                        </select>
+                          {s.action === "logout"
+                            ? "User Logout Sequence"
+                            : s.action}
+                        </span>
                       )}
                     </div>
                   </td>
-                  <td className="text-end">
+                  <td className="text-end pe-4">
                     {s.isCustom ? (
                       <button
                         className="btn btn-sm btn-outline-danger border-0 rounded-circle"
@@ -261,7 +280,12 @@ const ShortcutsSettings = () => {
                         <i className="bi bi-trash"></i>
                       </button>
                     ) : (
-                      <small className="text-muted opacity-50">Standard</small>
+                      <span
+                        className="text-muted opacity-50 small fw-bold"
+                        style={{ letterSpacing: "1px" }}
+                      >
+                        STANDARD
+                      </span>
                     )}
                   </td>
                 </tr>

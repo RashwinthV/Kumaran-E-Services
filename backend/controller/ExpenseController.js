@@ -98,11 +98,17 @@ exports.createExpense = async (req, res) => {
       { session },
     );
 
+    // Populate the newly created expense
+    const populatedExpense = await Expense.findById(expense[0]._id)
+      .populate("paymentAccount", "type upiAccountName")
+      .populate("recordedBy", "name")
+      .session(session);
+
     await session.commitTransaction();
     res.status(201).json({
       success: true,
       message: "Expense recorded successfully",
-      data: expense[0],
+      data: populatedExpense,
     });
   } catch (error) {
     if (session.inTransaction()) {
@@ -131,7 +137,7 @@ exports.getExpenses = async (req, res) => {
     const query = req.user.role === "admin" ? {} : { branch: branch._id };
 
     const expenses = await Expense.find(query)
-      .populate("paymentAccount", "name type")
+      .populate("paymentAccount", "type upiAccountName")
       .populate("recordedBy", "name")
       .sort({ date: -1 });
 

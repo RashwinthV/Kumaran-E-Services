@@ -796,24 +796,24 @@ const ProductBilling = () => {
                                 className="input-group input-group-sm mx-auto"
                                 style={{ width: "70px" }}
                               >
-                                <input
-                                  type="number"
-                                  className="form-control text-end small border-0 bg-light pe-1"
-                                  value={item.discount}
-                                  ref={(el) =>
-                                    (discountRefs.current[item._id] = el)
-                                  }
-                                  onChange={(e) =>
-                                    updateDiscount(item._id, e.target.value)
-                                  }
-                                  min="0"
-                                  max="100"
-                                  style={{ fontSize: "0.8rem" }}
-                                />
                                 <span
                                   className="input-group-text bg-light border-0 ps-0 pe-2 small text-muted"
                                   style={{ fontSize: "0.7rem" }}
                                 >
+                                  <input
+                                    type="number"
+                                    className="form-control text-end small border-0 bg-light pe-1"
+                                    value={item.discount}
+                                    ref={(el) =>
+                                      (discountRefs.current[item._id] = el)
+                                    }
+                                    onChange={(e) =>
+                                      updateDiscount(item._id, e.target.value)
+                                    }
+                                    min="0"
+                                    max="100"
+                                    style={{ fontSize: "0.8rem" }}
+                                  />
                                   %
                                 </span>
                               </div>

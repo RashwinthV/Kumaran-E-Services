@@ -31,6 +31,11 @@ const investorDetailsSchema = new mongoose.Schema(
       get: decrypt,
       set: encrypt,
     },
+    aadharNumber: {
+      type: String,
+      get: decrypt,
+      set: encrypt,
+    },
     kycStatus: {
       type: String,
       enum: ["pending", "verified", "rejected"],

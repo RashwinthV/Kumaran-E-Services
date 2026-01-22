@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "../../Context/AuthContext";
 import Powered from "../../Components/Loading/Powered";
 import { getDecrypted } from "../../utils/storage";
+import ForgotPasswordModal from "../../Components/Modals/ForgotPasswordModal";
 import "../../Styles/Login.css";
 
 const Login = () => {
@@ -18,6 +19,7 @@ const Login = () => {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -40,7 +42,7 @@ const Login = () => {
       const result = await login(
         formData.identifier.trim(),
         formData.password,
-        branchCode
+        branchCode,
       );
 
       if (result.success) {
@@ -197,7 +199,13 @@ const Login = () => {
               </div>
 
               <div className="form-utils">
-                <Link to="/forgot-password">Forgot Password?</Link>
+                <button
+                  type="button"
+                  className="forgot-password-trigger"
+                  onClick={() => setIsForgotPasswordOpen(true)}
+                >
+                  Forgot Password?
+                </button>
               </div>
 
               <button
@@ -236,6 +244,11 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+      />
     </div>
   );
 };

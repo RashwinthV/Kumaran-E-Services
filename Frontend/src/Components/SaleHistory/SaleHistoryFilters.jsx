@@ -8,39 +8,30 @@ const SaleHistoryFilters = ({
   availableYears,
 }) => {
   return (
-    <div className="bg-white p-4 rounded-4 shadow-sm border border-secondary border-opacity-10 mb-4">
+    <div className="premium-card p-4 mb-4 border-0">
       <div className="row g-3">
-        {/* Search */}
+        {/* Row 1: Search and Date/Time Context */}
         <div className="col-md-4">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Detailed Search
-          </label>
-          <div className="input-group input-group-sm">
-            <span className="input-group-text bg-light border-end-0">
-              <i className="bi bi-search text-muted"></i>
+          <label className="premium-form-label">Detailed Search</label>
+          <div className="input-group">
+            <span className="input-group-text bg-light border-0">
+              <i className="bi bi-search "></i>
+
+              <input
+                type="text"
+                className="form-control premium-input border-0 bg-light shadow-none"
+                placeholder="Search Bill No, Customer..."
+                value={filters.search}
+                onChange={(e) => onFilterChange("search", e.target.value)}
+              />
             </span>
-            <input
-              type="text"
-              className="form-control bg-light border-start-0 ps-0 shadow-none"
-              placeholder="Search Bill No, Customer..."
-              value={filters.search}
-              onChange={(e) => onFilterChange("search", e.target.value)}
-            />
           </div>
         </div>
-        {/* Month */}
+
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Month
-          </label>
+          <label className="premium-form-label">Month</label>
           <select
-            className="form-select form-select-sm bg-light shadow-none"
+            className="form-select premium-input border-0 bg-light shadow-none"
             value={filters.month}
             onChange={(e) => onFilterChange("month", e.target.value)}
           >
@@ -66,16 +57,10 @@ const SaleHistoryFilters = ({
           </select>
         </div>
 
-        {/* Year */}
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Year
-          </label>
+          <label className="premium-form-label">Year</label>
           <select
-            className="form-select form-select-sm bg-light shadow-none"
+            className="form-select premium-input border-0 bg-light shadow-none"
             value={filters.year}
             onChange={(e) => onFilterChange("year", e.target.value)}
           >
@@ -88,46 +73,31 @@ const SaleHistoryFilters = ({
           </select>
         </div>
 
-        {/* Date Filters */}
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Start Date
-          </label>
+          <label className="premium-form-label">Start Date</label>
           <input
             type="date"
-            className="form-control form-control-sm bg-light shadow-none"
+            className="form-control premium-input border-0 bg-light shadow-none"
             value={filters.startDate}
             onChange={(e) => onFilterChange("startDate", e.target.value)}
           />
         </div>
+
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            End Date
-          </label>
+          <label className="premium-form-label">End Date</label>
           <input
             type="date"
-            className="form-control form-control-sm bg-light shadow-none"
+            className="form-control premium-input border-0 bg-light shadow-none"
             value={filters.endDate}
             onChange={(e) => onFilterChange("endDate", e.target.value)}
           />
         </div>
 
-        {/* Payment Mode */}
+        {/* Row 2: Categorical Filters and Sort */}
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Mode
-          </label>
+          <label className="premium-form-label">Mode</label>
           <select
-            className="form-select form-select-sm bg-light shadow-none"
+            className="form-select premium-input border-0 bg-light shadow-none"
             value={filters.paymentMode}
             onChange={(e) => onFilterChange("paymentMode", e.target.value)}
           >
@@ -139,35 +109,23 @@ const SaleHistoryFilters = ({
           </select>
         </div>
 
-        {/* Bill Type Filter */}
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Bill Type
-          </label>
+          <label className="premium-form-label">Bill Type</label>
           <select
-            className="form-select form-select-sm bg-light shadow-none"
+            className="form-select premium-input border-0 bg-light shadow-none"
             value={filters.billType}
             onChange={(e) => onFilterChange("billType", e.target.value)}
           >
             <option value="All">All Types</option>
-            <option value="Products">Products </option>
-            <option value="Services">Services </option>
+            <option value="Products">Products</option>
+            <option value="Services">Services</option>
           </select>
         </div>
 
-        {/* Status */}
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Status
-          </label>
+          <label className="premium-form-label">Status</label>
           <select
-            className="form-select form-select-sm bg-light shadow-none"
+            className="form-select premium-input border-0 bg-light shadow-none"
             value={filters.status}
             onChange={(e) => onFilterChange("status", e.target.value)}
           >
@@ -181,16 +139,10 @@ const SaleHistoryFilters = ({
           </select>
         </div>
 
-        {/* Sort By */}
         <div className="col-md-2">
-          <label
-            className="form-label small text-muted fw-bold text-uppercase"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-          >
-            Sort By
-          </label>
+          <label className="premium-form-label">Sort By</label>
           <select
-            className="form-select form-select-sm bg-light shadow-none"
+            className="form-select premium-input border-0 bg-light shadow-none"
             value={filters.sortBy}
             onChange={(e) => onFilterChange("sortBy", e.target.value)}
           >
@@ -201,16 +153,16 @@ const SaleHistoryFilters = ({
           </select>
         </div>
 
-        {/* Export / Reset Actions */}
-        <div className="col-md-6 d-flex align-items-end gap-2 justify-content-end ms-auto">
+        {/* Actions */}
+        <div className="col-md-4 d-flex align-items-end gap-2 justify-content-end">
           <button
-            className="btn btn-sm btn-outline-secondary px-3 fw-bold border-opacity-25 shadow-none"
+            className="btn btn-light rounded-pill px-4 fw-bold shadow-sm"
             onClick={onExport}
           >
             <i className="bi bi-download me-2"></i>Export
           </button>
           <button
-            className="btn btn-sm btn-outline-danger px-3 fw-bold border-opacity-25 shadow-none"
+            className="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm"
             onClick={onReset}
           >
             <i className="bi bi-arrow-counterclockwise me-2"></i>Reset

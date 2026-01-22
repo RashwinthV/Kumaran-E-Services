@@ -42,12 +42,25 @@ const ServiceBilling = () => {
     () => getDecrypted("service_settings") || {},
   );
   const [selectedModule, setSelectedModule] = useState(() => {
-    const hash = window.location.hash.replace("#", "");
-    return hash && SERVICE_MODULES[hash] ? hash : "LOCAL";
+    // Correctly parse hash from location or window specifically for HashRouter fragments
+    const rawHash = window.location.hash;
+    const fragment = rawHash.includes("#", 2)
+      ? rawHash.split("#")[2]
+      : rawHash.split("#")[1] === "/service-billing"
+        ? "LOCAL"
+        : rawHash.split("#")[1];
+
+    return SERVICE_MODULES[fragment] ? fragment : "LOCAL";
   });
   const [selectedService, setSelectedService] = useState(() => {
-    const hash = window.location.hash.replace("#", "");
-    const initialModule = hash && SERVICE_MODULES[hash] ? hash : "LOCAL";
+    const rawHash = window.location.hash;
+    const fragment = rawHash.includes("#", 2)
+      ? rawHash.split("#")[2]
+      : rawHash.split("#")[1] === "/service-billing"
+        ? "LOCAL"
+        : rawHash.split("#")[1];
+
+    const initialModule = SERVICE_MODULES[fragment] ? fragment : "LOCAL";
     return SERVICE_MODULES[initialModule]?.services?.[0] || "";
   });
 

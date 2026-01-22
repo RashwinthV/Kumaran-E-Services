@@ -49,7 +49,7 @@ function LoadingPage() {
               if (isAuthenticated) {
                 navigate("/billing");
               } else {
-                navigate("/auto-login");
+                navigate("/login");
               }
             }
           }, 1000);
@@ -67,7 +67,7 @@ function LoadingPage() {
         setMessage("Connection timeout. Server might be starting up...");
       } else {
         setMessage(
-          "Unable to connect to server. Please check your connection."
+          "Unable to connect to server. Please check your connection.",
         );
       }
 
@@ -101,6 +101,9 @@ function LoadingPage() {
             <span></span>
             <span></span>
           </div>
+          <div className="loading-powered">
+        <Powered theme="dark" />
+      </div>
         </div>
       </div>
     );

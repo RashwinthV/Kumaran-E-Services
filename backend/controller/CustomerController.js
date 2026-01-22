@@ -45,7 +45,7 @@ exports.getBranchInvestors = async (req, res) => {
     // Filter out soft-deleted investments and enrich with bill numbers
     const investors = result
       .map((customer) => {
-        const doc = customer.toObject();
+        const doc = customer.toObject({ getters: true });
         if (doc.investmentDetails) {
           doc.investmentDetails = doc.investmentDetails
             .filter((inv) => !inv.isDeleted)
@@ -121,7 +121,6 @@ exports.getMyBranchCustomers = async (req, res) => {
         $sort: { name: 1 },
       },
     ]);
-
     res.status(200).json({
       success: true,
       count: customers.length,
@@ -189,10 +188,7 @@ exports.upsertCustomer = async (req, res) => {
             (inv) => inv._id.toString() === investorDetails._id,
           );
           if (idx !== -1) {
-            customer.investmentDetails[idx] = {
-              ...customer.investmentDetails[idx].toObject(),
-              ...investorDetails,
-            };
+            Object.assign(customer.investmentDetails[idx], investorDetails);
             investmentFound = true;
           }
         } else if (investorDetails.id) {
@@ -200,10 +196,7 @@ exports.upsertCustomer = async (req, res) => {
             (inv) => inv._id.toString() === investorDetails.id,
           );
           if (idx !== -1) {
-            customer.investmentDetails[idx] = {
-              ...customer.investmentDetails[idx].toObject(),
-              ...investorDetails,
-            };
+            Object.assign(customer.investmentDetails[idx], investorDetails);
             investmentFound = true;
           }
         }
@@ -267,6 +260,7 @@ exports.upsertCustomer = async (req, res) => {
     }
 
     await session.commitTransaction();
+
     res.status(200).json({
       success: true,
       data: customer,

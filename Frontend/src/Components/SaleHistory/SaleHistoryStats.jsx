@@ -39,14 +39,12 @@ const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
     <div className="row g-3 mb-4">
       {/* Total Revenue */}
       <div className="col-md">
-        <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
+        <div className="premium-card p-3 d-flex align-items-center gap-3 h-100 border-0">
           <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-4">
             <i className="bi bi-currency-rupee fs-4"></i>
           </div>
           <div>
-            <p className="text-muted small mb-1 fw-bold text-uppercase">
-              Sales{" "}
-            </p>
+            <p className="premium-form-label mb-1">Sales</p>
             <h4 className="fw-bold mb-0 text-dark">
               ₹{totalRevenue.toLocaleString()}
             </h4>
@@ -56,14 +54,12 @@ const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
 
       {/* Total Refunded */}
       <div className="col-md">
-        <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
+        <div className="premium-card p-3 d-flex align-items-center gap-3 h-100 border-0">
           <div className="bg-danger bg-opacity-10 text-danger p-3 rounded-4">
             <i className="bi bi-arrow-counterclockwise fs-4"></i>
           </div>
           <div>
-            <p className="text-muted small mb-1 fw-bold text-uppercase">
-              Total Refunded
-            </p>
+            <p className="premium-form-label mb-1">Total Refunded</p>
             <h4 className="fw-bold mb-0 text-danger">
               ₹{totalRefunded.toLocaleString()}
             </h4>
@@ -73,14 +69,12 @@ const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
 
       {/* Transactions */}
       <div className="col-md">
-        <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
+        <div className="premium-card p-3 d-flex align-items-center gap-3 h-100 border-0">
           <div className="bg-success bg-opacity-10 text-success p-3 rounded-4">
             <i className="bi bi-receipt fs-4"></i>
           </div>
           <div>
-            <p className="text-muted small mb-1 fw-bold text-uppercase">
-              Transactions
-            </p>
+            <p className="premium-form-label mb-1">Transactions</p>
             <h4 className="fw-bold mb-0 text-dark">{totalTransactions}</h4>
           </div>
         </div>
@@ -88,14 +82,12 @@ const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
 
       {/* Average Bill */}
       <div className="col-md">
-        <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
+        <div className="premium-card p-3 d-flex align-items-center gap-3 h-100 border-0">
           <div className="bg-warning bg-opacity-10 text-warning p-3 rounded-4">
             <i className="bi bi-graph-up-arrow fs-4"></i>
           </div>
           <div>
-            <p className="text-muted small mb-1 fw-bold text-uppercase">
-              Avg. Net Bill
-            </p>
+            <p className="premium-form-label mb-1">Avg. Net Bill</p>
             <h4 className="fw-bold mb-0 text-dark">
               ₹{averageValue.toFixed(0)}
             </h4>
@@ -105,14 +97,12 @@ const SaleHistoryStats = ({ data, totalInvestment = 0 }) => {
 
       {/* Total Investment */}
       <div className="col-md">
-        <div className="bg-white p-3 rounded-4 shadow-sm border border-secondary border-opacity-10 d-flex align-items-center gap-3 h-100">
+        <div className="premium-card p-3 d-flex align-items-center gap-3 h-100 border-0">
           <div className="bg-info bg-opacity-10 text-info p-3 rounded-4">
             <i className="bi bi-cash-stack fs-4"></i>
           </div>
           <div>
-            <p className="text-muted small mb-1 fw-bold text-uppercase">
-              Investment
-            </p>
+            <p className="premium-form-label mb-1">Investment</p>
             <h4 className="fw-bold mb-0 text-dark">
               ₹{totalInvestment.toLocaleString()}
             </h4>

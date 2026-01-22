@@ -111,7 +111,7 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
               <div className="input-group">
                 <span className="input-group-text bg-white">
                   <i className="bi bi-percent"></i>
-                </span>
+            
                 <input
                   type="number"
                   className="form-control"
@@ -120,8 +120,9 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
                     handleChange("serviceTaxRate", parseFloat(e.target.value))
                   }
                 />
-                <div className="input-group-text bg-light p-0">
-                  <div className="form-check form-switch mx-2">
+                 
+                <div className="input-group-text bg-light p-0 mx-1">
+                  <div className="form-check form-switch me-2">
                     <input
                       className="form-check-input"
                       type="checkbox"
@@ -130,8 +131,10 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
                         handleChange("enableServiceTax", e.target.checked)
                       }
                     />
+                    
                   </div>
                 </div>
+                   </span>
               </div>
               <small className="text-muted">
                 Enable to apply tax by default on taxable services
@@ -142,11 +145,11 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
               <label className="form-label fw-bold small">
                 Default Service Charge (Fixed ₹)
               </label>
-              <div className="input-group">
-                <span className="input-group-text bg-white">₹</span>
+              <div className="input-group ">
+                <span className="input-group-text bg-white">₹ 
                 <input
                   type="number"
-                  className="form-control"
+                  className="form-control mx-2"
                   value={localSettings.defaultServiceCharge}
                   onChange={(e) =>
                     handleChange(
@@ -155,6 +158,7 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
                     )
                   }
                 />
+                </span>
               </div>
             </div>
 
