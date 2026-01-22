@@ -38,7 +38,7 @@ export const handlePrint = (sale, options = {}) => {
   const discount = Number(sale.discount || 0);
   const itemsTotal = (sale.products || []).reduce(
     (sum, p) => sum + Number(p.lineTotal || 0),
-    0
+    0,
   );
   const roundingValue = amount - itemsTotal;
   const subtotal = amount - tax + discount - roundingValue;
@@ -56,13 +56,28 @@ export const handlePrint = (sale, options = {}) => {
   };
 
   const getTemplateContent = () => {
-    switch (settings.billTemplate) {
+    let templateId = settings.billTemplate;
+
+    // Support dynamic template lookup
+    if (templateId === "dynamic") {
+      templateId = settings.templateMap?.[settings.paperSize] || "standard";
+    }
+
+    // Determine if it's an A5 variant
+    const isA5 = settings.paperSize === "A5" || templateId.includes("_a5");
+
+    switch (templateId) {
       case "professional":
-        return ProfessionalTemplate(templateProps);
+      case "professional_a5":
+        return ProfessionalTemplate({ ...templateProps, isA5 });
       case "preview":
-        return ModernTemplate(templateProps);
+      case "modern":
+        return ModernTemplate({ ...templateProps, isA5 });
+      case "standard":
+      case "standard_a5":
+        return StandardTemplate({ ...templateProps, isA5 });
       default:
-        return StandardTemplate(templateProps);
+        return StandardTemplate({ ...templateProps, isA5 });
     }
   };
 
@@ -77,8 +92,8 @@ export const handlePrint = (sale, options = {}) => {
           @page {
             margin: 0; /* Let the body padding handle margins for better control */
             size: ${settings.paperSize || "A4"} ${
-    settings.orientation || "portrait"
-  };
+              settings.orientation || "portrait"
+            };
           }
           
           body { 

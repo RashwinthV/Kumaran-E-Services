@@ -330,7 +330,7 @@ const validateAccessCode = (AccessCode) => {
   const hasLowerCase = /[a-z]/.test(AccessCode);
   const hasNumber = /\d/.test(AccessCode);
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(
-    AccessCode
+    AccessCode,
   );
 
   if (!hasUpperCase)
@@ -699,7 +699,7 @@ exports.getBranchBycode = async (req, res) => {
     const { branchcode } = req.params;
 
     const branch = await Branch.findOne({ code: branchcode }).select(
-      "-password -AccessCode -contact  -OwnerShip -leasedetails -rentdetails -address"
+      "-password -AccessCode -contact -address",
     );
 
     if (!branch) {

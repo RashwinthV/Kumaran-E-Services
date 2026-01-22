@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
-import PrintTemplate from "../Billing/PrintTemplate";
+import LiveTemplatePreview from "../Billing/LiveTemplatePreview";
 import { getSystemPrinters } from "../../utils/printerService";
 
-const TemplatePreview = ({ settings, branchInfo }) => {
+const HardwareSettings = ({
+  settings,
+  handleChange,
+  handleToggle,
+  branchInfo,
+}) => {
+  const [printers, setPrinters] = useState([]);
+  const [loadingPrinters, setLoadingPrinters] = useState(true);
+
   const dummySale = {
     billNo: "PV-2024-001",
     formattedDate: new Date().toLocaleDateString(),
@@ -34,75 +42,6 @@ const TemplatePreview = ({ settings, branchInfo }) => {
     ],
   };
 
-  // Calculate scale based on paper size and orientation to fit the preview container
-  let scale = 0.35;
-  if (settings.paperSize === "A5") scale = 0.5;
-  if (settings.orientation === "landscape") scale = scale * 0.7; // Shrink more for landscape to fit width
-
-  return (
-    <div className="mini-preview-container mt-4 p-3 bg-white rounded-4 border shadow-sm">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="mb-0 fw-bold text-dark" style={{ fontSize: "0.95rem" }}>
-          <i className="bi bi-eye me-2 text-primary"></i>Live Template Preview
-        </h5>
-        <span
-          className="badge bg-light text-primary border border-primary-subtle"
-          style={{ fontSize: "0.75rem" }}
-        >
-          {settings.billTemplate?.toUpperCase()}
-        </span>
-      </div>
-      <div
-        className="preview-outer shadow-inner"
-        style={{
-          height: "400px",
-          overflow: "auto",
-          background: "#f1f5f9",
-          borderRadius: "12px",
-          padding: "20px",
-          display: "flex",
-          justifyContent: "center",
-          border: "1px inset rgba(0,0,0,0.05)",
-        }}
-      >
-        <div
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "top center",
-            width: "fit-content",
-            height: "fit-content",
-            background: "white",
-            boxShadow:
-              "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-          }}
-        >
-          <PrintTemplate
-            sale={dummySale}
-            settings={settings}
-            branchInfo={branchInfo}
-          />
-        </div>
-      </div>
-      <div
-        className="d-flex align-items-center gap-2 mt-3 text-muted"
-        style={{ fontSize: "0.75rem" }}
-      >
-        <i className="bi bi-info-circle-fill text-primary"></i>
-        <span>This preview updates instantly when you change settings.</span>
-      </div>
-    </div>
-  );
-};
-
-const HardwareSettings = ({
-  settings,
-  handleChange,
-  handleToggle,
-  branchInfo,
-}) => {
-  const [printers, setPrinters] = useState([]);
-  const [loadingPrinters, setLoadingPrinters] = useState(true);
-
   useEffect(() => {
     const fetchPrinters = async () => {
       setLoadingPrinters(true);
@@ -110,7 +49,6 @@ const HardwareSettings = ({
       setPrinters(systemPrinters);
       setLoadingPrinters(false);
 
-      // If no printer is selected yet, pick the default one
       if (!settings.selectedPrinter && systemPrinters.length > 0) {
         const defaultPrinter =
           systemPrinters.find((p) => p.isDefault) || systemPrinters[0];
@@ -121,256 +59,258 @@ const HardwareSettings = ({
     fetchPrinters();
   }, []);
 
-  const selectedPrinterInfo = printers.find(
-    (p) => p.name === settings.selectedPrinter
-  );
-
   return (
     <div className="settings-section">
       <div className="row g-4">
         <div className="col-lg-7">
           <h3 className="settings-section-title mb-4">
-            Hardware & POS Settings
+            Hardware & POS Configuration
           </h3>
-          <div className="mt-4 pt-3 border-top">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <label className="fw-bold mb-0 d-flex align-items-center gap-2">
-                  <i className="bi bi-upc-scan text-primary"></i>
-                  Barcode Scanner Support
-                </label>
-                <p className="text-muted small mb-0">
-                  Enable automatic detection of barcode scanner input
-                </p>
-              </div>
-              <div className="form-check form-switch fs-4">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  checked={settings.barcodeScanner}
-                  onChange={() => handleToggle("barcodeScanner")}
-                />
-              </div>
-            </div>
-          </div>
-          <hr className="my-4 opacity-50" />
 
           <div className="settings-card bg-white p-4 rounded-4 shadow-sm border mb-4">
-            <h5 className="fw-bold mb-3 border-bottom pb-2">
-              Printing Configuration
+            <h5 className="fw-bold mb-3 border-bottom pb-2 text-primary">
+              <i className="bi bi-printer me-2"></i>Output Printer
             </h5>
-
-            <div className="setting-row-v2 mb-4">
-              <div className="setting-info">
-                <label className="fw-bold d-block mb-1">
-                  Select Output Printer
-                </label>
-                <p className="text-muted small mb-2">
-                  Switch between different connected printers
-                </p>
-                <div className="printer-selector">
-                  {loadingPrinters ? (
-                    <div className="p-3 text-center border rounded-3 bg-light">
-                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                      <small>Scanning for system printers...</small>
-                    </div>
-                  ) : (
-                    <div className="d-flex flex-wrap gap-2">
-                      {printers.map((printer) => (
-                        <div
-                          key={printer.name}
-                          className={`printer-card ${
-                            settings.selectedPrinter === printer.name
-                              ? "active"
-                              : ""
-                          }`}
-                          onClick={() =>
-                            handleChange("selectedPrinter", printer.name)
-                          }
-                        >
-                          <i
-                            className={`bi bi-${
-                              printer.name.toLowerCase().includes("pdf")
-                                ? "file-pdf"
-                                : "printer"
-                            } fs-4`}
-                          ></i>
-                          <div className="printer-details">
-                            <span className="printer-name">{printer.name}</span>
-                            {printer.isDefault && (
-                              <span className="default-badge">DEFAULT</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            <div className="printer-selector">
+              {loadingPrinters ? (
+                <div className="p-3 text-center border rounded-3 bg-light">
+                  <div className="spinner-border spinner-border-sm text-primary me-2"></div>
+                  <small>Scanning for system printers...</small>
                 </div>
-              </div>
-            </div>
-
-            <div className="row g-3">
-              <div className="col-md-3">
-                <label className="fw-bold small text-muted text-uppercase mb-2">
-                  Paper Size
-                </label>
-                <select
-                  className="form-select settings-select-v2"
-                  value={settings.paperSize}
-                  onChange={(e) => handleChange("paperSize", e.target.value)}
-                >
-                  <option value="A4">A4</option>
-                  <option value="A5">A5</option>
-                  <option value="Letter">Letter</option>
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="fw-bold small text-muted text-uppercase mb-2">
-                  Color Mode
-                </label>
-                <select
-                  className="form-select settings-select-v2"
-                  value={settings.colorMode || "color"}
-                  onChange={(e) => handleChange("colorMode", e.target.value)}
-                >
-                  <option value="color">Color</option>
-                  <option value="bw">B&W</option>
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="fw-bold small text-muted text-uppercase mb-2">
-                  Margins
-                </label>
-                <select
-                  className="form-select settings-select-v2"
-                  value={settings.printMargin || "none"}
-                  onChange={(e) => handleChange("printMargin", e.target.value)}
-                >
-                  <option value="none">None</option>
-                  <option value="5mm">Narrow</option>
-                  <option value="10mm">Normal</option>
-                  <option value="20mm">Wide</option>
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="fw-bold small text-muted text-uppercase mb-2">
-                  Orientation
-                </label>
-                <select
-                  className="form-select settings-select-v2"
-                  value={settings.orientation || "portrait"}
-                  onChange={(e) => handleChange("orientation", e.target.value)}
-                >
-                  <option value="portrait">Portrait</option>
-                  <option value="landscape">Landscape</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="setting-row-v2 mb-4">
-              <div className="setting-info">
-                <label className="fw-bold d-block mb-1">
-                  Bill Template Style
-                </label>
-                <div className="template-selector-grid mt-2">
-                  {[
-                    {
-                      id: "standard",
-                      label: "Standard",
-                      desc: "Classic layout",
-                    },
-                    {
-                      id: "professional",
-                      label: "Professional",
-                      desc: "Corporate look",
-                    },
-                    { id: "preview", label: "Modern", desc: "Clean & fresh" },
-                  ].map((tmpl) => (
+              ) : (
+                <div className="d-flex flex-wrap gap-2">
+                  {printers.map((printer) => (
                     <div
-                      key={tmpl.id}
-                      className={`template-option ${
-                        settings.billTemplate === tmpl.id ? "active" : ""
+                      key={printer.name}
+                      className={`printer-card ${
+                        settings.selectedPrinter === printer.name
+                          ? "active"
+                          : ""
                       }`}
-                      onClick={() => handleChange("billTemplate", tmpl.id)}
+                      onClick={() =>
+                        handleChange("selectedPrinter", printer.name)
+                      }
                     >
-                      <div className="tmpl-label">{tmpl.label}</div>
                       <i
                         className={`bi bi-${
-                          settings.billTemplate === tmpl.id
-                            ? "check-circle-fill text-primary"
-                            : "circle text-muted"
-                        }`}
+                          printer.name.toLowerCase().includes("pdf")
+                            ? "file-pdf"
+                            : "printer"
+                        } fs-4`}
                       ></i>
+                      <div className="printer-details">
+                        <span className="printer-name">{printer.name}</span>
+                        {printer.isDefault && (
+                          <span className="default-badge">DEFAULT</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-
-            <div className="setting-row-toggle d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <label className="fw-bold mb-0">Auto-Print on Save</label>
-                <p className="text-muted small mb-0">
-                  Bypass print dialog in Electron mode
-                </p>
-              </div>
-              <div className="form-check form-switch fs-4">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  checked={settings.autoPrint}
-                  onChange={() => handleToggle("autoPrint")}
-                />
-              </div>
+              )}
             </div>
           </div>
 
-          <div className="printer-info-card bg-primary bg-opacity-10 p-4 rounded-4 border border-primary border-opacity-25">
-            <div className="d-flex align-items-center gap-3">
-              <div className="printer-icon-bg">
-                <i className="bi bi-cpu-fill text-primary fs-3"></i>
+          <div className="settings-card bg-white p-4 rounded-4 shadow-sm border mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+              <h5 className="fw-bold mb-0 text-primary">
+                <i className="bi bi-layers-half me-2"></i>Template Mapper
+              </h5>
+              <div className="text-muted small">
+                Assign a default style for each paper size
               </div>
-              <div>
-                <h6 className="fw-bold text-primary mb-1">
-                  Active Printer Profile
-                </h6>
-                <p className="mb-0 text-dark opacity-75 small">
-                  Using <b>{settings.selectedPrinter}</b> for{" "}
-                  <b>{settings.billTemplate}</b> bills.
-                  {selectedPrinterInfo && (
-                    <span className="ms-2 badge bg-success">
-                      {selectedPrinterInfo.status || "Ready"}
+            </div>
+
+            {(() => {
+              const sizes = ["A4", "A5", "Letter"];
+              const templatesBySize = {
+                A4: [
+                  {
+                    id: "standard",
+                    label: "Standard Invoice",
+                    desc: "Classic style",
+                  },
+                  {
+                    id: "professional",
+                    label: "Professional",
+                    desc: "Bold headers",
+                  },
+                  {
+                    id: "preview",
+                    label: "Modern Template",
+                    desc: "Minimalist",
+                  },
+                ],
+                A5: [
+                  { id: "standard_a5", label: "Compact A5", desc: "Half-page" },
+                  {
+                    id: "professional_a5",
+                    label: "Pro A5",
+                    desc: "Corporate A5",
+                  },
+                  {
+                    id: "modern_a5",
+                    label: "Modern A5",
+                    desc: "Clean A5 style",
+                  },
+                ],
+                Letter: [
+                  { id: "standard", label: "US Letter Std", desc: "Standard" },
+                  {
+                    id: "professional",
+                    label: "US Letter Pro",
+                    desc: "Professional",
+                  },
+                ],
+              };
+
+              return sizes.map((size) => (
+                <div
+                  key={size}
+                  className="paper-size-mapping-block mb-4 p-3 rounded-4 bg-light bg-opacity-50 border"
+                >
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <span
+                      className="badge bg-primary px-3 py-2 rounded-3"
+                      style={{ fontSize: "0.85rem" }}
+                    >
+                      {size}
                     </span>
-                  )}
-                </p>
+                    <span className="text-dark small fw-bold text-uppercase opacity-75">
+                      Template Mapper
+                    </span>
+                  </div>
+                  <div className="template-selector-grid">
+                    {(templatesBySize[size] || []).map((tmpl) => {
+                      const isSelected =
+                        (settings.templateMap?.[size] ||
+                          (size === "A4" ? "standard" : "")) === tmpl.id;
+                      return (
+                        <div
+                          key={tmpl.id}
+                          className={`template-option-v2 ${isSelected ? "active" : ""}`}
+                          onClick={() => {
+                            const newMap = {
+                              ...(settings.templateMap || {}),
+                              [size]: tmpl.id,
+                            };
+                            handleChange("templateMap", newMap);
+                            // Set this as active preview
+                            handleChange("paperSize", size);
+                            handleChange("billTemplate", "dynamic");
+                          }}
+                        >
+                          <div className="tmpl-info">
+                            <div className="tmpl-label">{tmpl.label}</div>
+                            <div className="tmpl-desc">{tmpl.desc}</div>
+                          </div>
+                          <i
+                            className={`bi bi-${isSelected ? "check-circle-fill text-primary" : "circle text-muted"}`}
+                          ></i>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+
+          <div className="settings-card bg-white p-4 rounded-4 shadow-sm border mb-4">
+            <h5 className="fw-bold mb-3 border-bottom pb-2 text-primary">
+              <i className="bi bi-gear-wide-connected me-2"></i>Operation
+              Settings
+            </h5>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div className="setting-toggle-card p-3 rounded-3 border bg-light bg-opacity-25 d-flex justify-content-between align-items-center">
+                  <div>
+                    <div className="fw-bold small">Auto-Print</div>
+                    <div className="text-muted extra-small">
+                      Silent printing on save
+                    </div>
+                  </div>
+                  <div className="form-check form-switch ps-0">
+                    <input
+                      className="form-check-input ms-0"
+                      type="checkbox"
+                      checked={settings.autoPrint}
+                      onChange={() => handleToggle("autoPrint")}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="setting-toggle-card p-3 rounded-3 border bg-light bg-opacity-25 d-flex justify-content-between align-items-center">
+                  <div>
+                    <div className="fw-bold small">Barcode Scanner</div>
+                    <div className="text-muted extra-small">
+                      Enable input detection
+                    </div>
+                  </div>
+                  <div className="form-check form-switch ps-0">
+                    <input
+                      className="form-check-input ms-0"
+                      type="checkbox"
+                      checked={settings.barcodeScanner}
+                      onChange={() => handleToggle("barcodeScanner")}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div className="col-lg-5">
-          <TemplatePreview settings={settings} branchInfo={branchInfo} />
+          <div className="sticky-top" style={{ top: "1rem", zIndex: 10 }}>
+            <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+              <h6
+                className="fw-bold mb-0 text-uppercase text-muted small"
+                style={{ letterSpacing: "1px" }}
+              >
+                Preview Inspector
+              </h6>
+              <select
+                className="form-select form-select-sm w-auto border-0 bg-transparent fw-bold text-primary"
+                value={settings.paperSize}
+                onChange={(e) => handleChange("paperSize", e.target.value)}
+              >
+                <option value="A4">A4</option>
+                <option value="A5">A5</option>
+                <option value="Letter">Letter</option>
+              </select>
+            </div>
+            <LiveTemplatePreview
+              settings={settings}
+              sale={dummySale}
+              branchInfo={branchInfo}
+              scale={0.35}
+            />
 
-          <div className="mt-4 p-4 border rounded-4 bg-white shadow-sm">
-            <h6 className="fw-bold small mb-3 text-uppercase text-primary">
-              System Interface Info
-            </h6>
-            <div className="info-list">
-              <div className="info-item">
-                <span className="label">Environment:</span>
-                <span className="value">
-                  {window.electron ? "Desktop App (Electron)" : "Web Browser"}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="label">Print Method:</span>
-                <span className="value">
-                  {window.electron ? "Silent Direct" : "Browser Dialog"}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="label">OS Detection:</span>
-                <span className="value">{navigator.platform}</span>
+            <div className="mt-4 p-4 border rounded-4 bg-white shadow-sm">
+              <h6 className="fw-bold small mb-3 text-uppercase text-primary border-bottom pb-2">
+                Print Intelligence
+              </h6>
+              <div className="info-list">
+                <div className="info-item">
+                  <span className="label">Print Environment:</span>
+                  <span className="value">
+                    {window.electron ? "Desktop (Silent)" : "Web (Dialog)"}
+                  </span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Active Size:</span>
+                  <span className="value fw-bold">{settings.paperSize}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Mapped Template:</span>
+                  <span className="value fw-bold text-primary">
+                    {settings.templateMap?.[
+                      settings.paperSize
+                    ]?.toUpperCase() || "STANDARD"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -378,16 +318,12 @@ const HardwareSettings = ({
       </div>
 
       <style>{`
-        .printer-selector {
-           max-height: 200px;
-           overflow-y: auto;
-           padding: 5px;
-        }
+        .settings-card { transition: all 0.3s ease; }
         .printer-card {
            flex: 1;
-           min-width: 140px;
+           min-width: 160px;
            padding: 12px;
-           border: 2px solid #e2e8f0;
+           border: 2px solid #f1f5f9;
            border-radius: 12px;
            cursor: pointer;
            display: flex;
@@ -398,24 +334,35 @@ const HardwareSettings = ({
         }
         .printer-card:hover { border-color: #cbd5e1; background: #f8fafc; }
         .printer-card.active { border-color: #6366f1; background: #f5f3ff; }
-        .printer-details { display: flex; flex-direction: column; }
-        .printer-name { font-size: 0.8rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+        .printer-name { font-size: 0.8rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
         .default-badge { font-size: 0.6rem; color: #6366f1; font-weight: 800; }
         
-        .template-selector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .template-option { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .template-option.active { border-color: #6366f1; background: #f5f3ff; }
-        .tmpl-label { font-size: 0.8rem; font-weight: 600; }
+        .template-selector-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .template-option-v2 { 
+           padding: 12px; 
+           border: 1px solid #e2e8f0; 
+           border-radius: 12px; 
+           display: flex; 
+           justify-content: space-between; 
+           align-items: center; 
+           cursor: pointer; 
+           background: white;
+           transition: all 0.2s ease;
+        }
+        .template-option-v2:hover { border-color: #6366f1; transform: translateY(-1px); }
+        .template-option-v2.active { border-color: #6366f1; background: #f5f3ff; border-width: 2px; padding: 11px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .tmpl-label { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+        .tmpl-desc { font-size: 0.7rem; color: #64748b; }
         
+        .extra-small { font-size: 0.7rem; }
         .info-list { display: flex; flex-direction: column; gap: 10px; }
         .info-item { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
         .info-item:last-child { border-bottom: none; }
         .info-item .label { font-size: 0.75rem; color: #64748b; }
         .info-item .value { font-size: 0.75rem; font-weight: 600; color: #0f172a; }
 
-        .printer-icon-bg { width: 48px; height: 48px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .settings-select-v2 { border-radius: 10px; border: 2px solid #e2e8f0; padding: 8px; font-weight: 600; font-size: 0.9rem; }
-        .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06); }
+        .paper-size-mapping-block { transition: all 0.2s ease; border: 1px solid transparent; }
+        .paper-size-mapping-block:hover { border-color: #e2e8f0 !important; background-opacity: 0.8 !important; }
       `}</style>
     </div>
   );

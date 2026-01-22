@@ -11,6 +11,11 @@ const {
   closeAccount,
 } = require("../controller/AccountController");
 const {
+  createExpense,
+  getExpenses,
+  getEmployeeExpenseSummary,
+} = require("../controller/ExpenseController");
+const {
   getMyBranchCustomers,
   getBranchInvestors,
   upsertCustomer,
@@ -25,6 +30,7 @@ const {
 const {
   getInventoryByBranchStaff,
 } = require("../controller/InventoryController");
+const { GetEmployee } = require("../controller/EmployeeController");
 const { protect } = require("../middleware/auth");
 const { getBranchBycode } = require("../controller/BranchController");
 const { GetProdctBYBranch } = require("../controller/ProductController");
@@ -35,6 +41,15 @@ router.post("/", protect, createSale);
 router.post("/services", protect, createServiceSale);
 router.get("/", protect, getSales);
 router.post("/refund", protect, refundSale);
+
+// Expense routes
+router.post("/expenses", protect, createExpense);
+router.get("/expenses", protect, getExpenses);
+router.get(
+  "/expenses/employee/:name/summary",
+  protect,
+  getEmployeeExpenseSummary,
+);
 
 // Inventory routes for staff
 router.get("/inventory/my-branch", protect, getInventoryByBranchStaff);
@@ -76,6 +91,7 @@ router.get("/products/:BranchId", protect, GetProdctBYBranch);
 
 //branch route
 router.get("/Branch/:branchcode", protect, getBranchBycode);
+router.get("/employees/:branchcode", protect, GetEmployee);
 router.get("/categories", protect, getAllCategories);
 
 module.exports = router;

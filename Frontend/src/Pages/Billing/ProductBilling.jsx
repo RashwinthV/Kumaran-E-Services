@@ -102,7 +102,7 @@ const ProductBilling = () => {
 
   const rawGrandTotal = cartWithTotals.reduce(
     (acc, item) => acc + item.lineTotal,
-    0
+    0,
   );
 
   // Apply Rounding Logic
@@ -122,14 +122,14 @@ const ProductBilling = () => {
 
   const totalTax = cartWithTotals.reduce(
     (acc, item) => acc + item.taxAmount,
-    0
+    0,
   );
   const subtotal = grandTotal - totalTax; // Base taxable amount (adjusted for rounding)
   const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
 
   const totalDiscount = cartWithTotals.reduce(
     (acc, item) => acc + item.discountAmount,
-    0
+    0,
   );
 
   // Cart Functions
@@ -143,12 +143,12 @@ const ProductBilling = () => {
       if (existing) {
         if (existing.qty + 1 > product.availableQty) {
           toast.error(
-            `Only ${product.availableQty} units available for ${product.name}`
+            `Only ${product.availableQty} units available for ${product.name}`,
           );
           return prev;
         }
         return prev.map((item) =>
-          item._id === product._id ? { ...item, qty: item.qty + 1 } : item
+          item._id === product._id ? { ...item, qty: item.qty + 1 } : item,
         );
       }
       return [...prev, { ...product, qty: 1, discount: 0 }];
@@ -163,14 +163,14 @@ const ProductBilling = () => {
         if (item._id === id) {
           if (requestedQty > item.availableQty) {
             toast.error(
-              `Only ${item.availableQty} units available for ${item.name}`
+              `Only ${item.availableQty} units available for ${item.name}`,
             );
             return { ...item, qty: item.availableQty };
           }
           return { ...item, qty: requestedQty };
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -191,8 +191,8 @@ const ProductBilling = () => {
         if (discount > maxDiscountPercent) {
           toast.warning(
             `Discount capped at ${maxDiscountPercent.toFixed(
-              2
-            )}% to maintain cost price (₹${costPrice.toFixed(2)})`
+              2,
+            )}% to maintain cost price (₹${costPrice.toFixed(2)})`,
           );
           discount = maxDiscountPercent;
         }
@@ -200,7 +200,7 @@ const ProductBilling = () => {
         // Selling price is already at or below CP
         if (discount > 0) {
           toast.warning(
-            "Cannot apply discount: selling price is already at/below cost price."
+            "Cannot apply discount: selling price is already at/below cost price.",
           );
           discount = 0;
         }
@@ -208,7 +208,7 @@ const ProductBilling = () => {
     }
 
     setCart((prev) =>
-      prev.map((item) => (item._id === id ? { ...item, discount } : item))
+      prev.map((item) => (item._id === id ? { ...item, discount } : item)),
     );
   };
 
@@ -229,7 +229,7 @@ const ProductBilling = () => {
         return prev.map((item) =>
           item._id === lastRemoved._id
             ? { ...item, qty: item.qty + lastRemoved.qty }
-            : item
+            : item,
         );
       }
       return [...prev, lastRemoved];
@@ -244,7 +244,7 @@ const ProductBilling = () => {
     setSelectedCustomerPhone(customer.phone);
     const totalCredit = (customer.credits || []).reduce(
       (sum, c) => sum + (c.totalAmount || 0),
-      0
+      0,
     );
     setSelectedCustomerCredit(totalCredit);
   };
@@ -318,20 +318,20 @@ const ProductBilling = () => {
     const stockError = cart.find((item) => item.qty > item.availableQty);
     if (stockError) {
       return toast.error(
-        `Stock mismatch for ${stockError.name}. Available: ${stockError.availableQty}`
+        `Stock mismatch for ${stockError.name}. Available: ${stockError.availableQty}`,
       );
     }
 
     const selectedAccount = accounts.find((a) => a._id === selectedAccountId);
     if (selectedAccount?.currentStatus === "Closed") {
       return toast.error(
-        "This account is closed for today. Please use another account."
+        "This account is closed for today. Please use another account.",
       );
     }
 
     if (selectedAccount?.type === "Credits" && !selectedCustomerId) {
       return toast.warning(
-        "Please select/register a customer for Credit payments!"
+        "Please select/register a customer for Credit payments!",
       );
     }
 
@@ -343,7 +343,7 @@ const ProductBilling = () => {
           const discountAmountPerUnit = (item.price * item.discount) / 100;
           const effectivePrice = Math.max(
             0,
-            item.price - discountAmountPerUnit
+            item.price - discountAmountPerUnit,
           );
           const qty = item.qty;
 
@@ -387,7 +387,7 @@ const ProductBilling = () => {
 
       if (res.data.success) {
         toast.success(
-          shouldPrint ? "Sale saved & printing..." : "Sale saved successfully!"
+          shouldPrint ? "Sale saved & printing..." : "Sale saved successfully!",
         );
 
         if (shouldPrint) {
@@ -403,7 +403,7 @@ const ProductBilling = () => {
               staffName: res.data.staff?.name || user?.name || "Staff",
               paymentMode:
                 accounts.find(
-                  (a) => a._id.toString() === selectedAccountId.toString()
+                  (a) => a._id.toString() === selectedAccountId.toString(),
                 )?.type || "N/A",
               products: cartWithTotals.map((item) => ({
                 name: item.name,
@@ -413,7 +413,7 @@ const ProductBilling = () => {
                 sku: item.sku,
               })),
             },
-            { silent: true }
+            { silent: true },
           );
         }
 
@@ -514,7 +514,7 @@ const ProductBilling = () => {
       // Only runs if scanner is enabled in settings
       if (appSettings?.barcodeScanner) {
         const isInputFocused = ["INPUT", "TEXTAREA", "SELECT"].includes(
-          document.activeElement.tagName
+          document.activeElement.tagName,
         );
 
         // If search bar is NOT focused and user starts "typing" alphanumeric characters
@@ -966,8 +966,8 @@ const ProductBilling = () => {
                             acc.type === "Cash"
                               ? "bi-cash-stack"
                               : acc.type === "Upi"
-                              ? "bi-qr-code"
-                              : "bi-credit-card"
+                                ? "bi-qr-code"
+                                : "bi-credit-card"
                           }`}
                         ></i>
                         <span className="small fw-500">

@@ -8,9 +8,10 @@ export const ModernTemplate = ({
   roundingValue,
   amount,
   staffName,
+  isA5 = false,
 }) => {
   return `
-    <div class="invoice-box modern-style">
+    <div class="invoice-box modern-style ${isA5 ? "a5-variant" : ""}">
       <div class="modern-top-bar"></div>
       <div class="modern-body">
         <div class="modern-header">

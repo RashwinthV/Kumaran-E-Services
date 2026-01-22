@@ -22,7 +22,39 @@ const SidebarNav = () => {
       id: "service-billing",
       label: "Service Billing",
       icon: "bi-ticket-perforated",
-      path: "/service-billing",
+      path: "/service-billing#LOCAL",
+      subItems: [
+        {
+          id: "service-local",
+          label: "Local",
+          icon: "bi-shop",
+          path: "/service-billing#LOCAL",
+        },
+        {
+          id: "service-mobile",
+          label: "Mobile",
+          icon: "bi-phone",
+          path: "/service-billing#MOBILE_SERVICE",
+        },
+        {
+          id: "service-travel",
+          label: "Travel",
+          icon: "bi-bus-front",
+          path: "/service-billing#TRAVEL",
+        },
+        {
+          id: "service-utility",
+          label: "Utility",
+          icon: "bi-lightning-charge",
+          path: "/service-billing#UTILITY",
+        },
+        {
+          id: "service-gov",
+          label: "Government",
+          icon: "bi-building",
+          path: "/service-billing#GOVT",
+        },
+      ],
     },
     {
       id: "product-catalog",
@@ -33,8 +65,8 @@ const SidebarNav = () => {
     {
       id: "Product&expenses",
       label: "Product & Expenses",
-      icon: "bi-wallet2",
-      path: "/expenses",
+      icon: "bi-clipboard-data",
+      path: "/expenses#product",
       subItems: [
         {
           id: "expense-product",
@@ -163,15 +195,12 @@ const SidebarNav = () => {
         <nav className="px-2">
           <ul className="nav flex-column gap-2">
             {navItems.map((item) => {
+              const currentFullPath = location.pathname + location.hash;
               const isActive =
+                currentFullPath === item.path ||
                 location.pathname === item.path ||
-                (item.path.startsWith("#") &&
-                  window.location.hash === item.path) ||
                 (item.subItems &&
-                  item.subItems.some(
-                    (sub) =>
-                      location.pathname + window.location.hash === sub.path,
-                  ));
+                  item.subItems.some((sub) => currentFullPath === sub.path));
 
               return (
                 <li key={item.id} className="nav-item">
@@ -249,9 +278,7 @@ const SidebarNav = () => {
                   {item.subItems && sidebarOpen && (
                     <ul className="nav flex-column ps-4 mt-1 gap-1">
                       {item.subItems.map((subItem) => {
-                        const isSubActive =
-                          location.pathname + window.location.hash ===
-                          subItem.path;
+                        const isSubActive = currentFullPath === subItem.path;
                         return (
                           <li key={subItem.id} className="nav-item">
                             <Link

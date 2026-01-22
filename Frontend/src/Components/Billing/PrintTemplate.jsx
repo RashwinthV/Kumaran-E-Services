@@ -2,7 +2,14 @@ import React from "react";
 import "../../Styles/PrintTemplates.css";
 
 const PrintTemplate = ({ sale, settings, branchInfo }) => {
-  const { paperSize, billTemplate } = settings;
+  const { paperSize } = settings;
+
+  // Dynamic template selection based on map
+  const billTemplate =
+    settings.billTemplate === "dynamic"
+      ? settings.templateMap?.[paperSize] || "standard"
+      : settings.billTemplate || "standard";
+
   const currencySymbol = settings.currency
     ? settings.currency.match(/\(([^)]+)\)/)?.[1] || "₹"
     : "₹";
@@ -14,7 +21,7 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
   // Sum of item totals to detect rounding
   const itemsTotal = (sale.products || []).reduce(
     (sum, p) => sum + Number(p.lineTotal || 0),
-    0
+    0,
   );
   const roundingValue = amount - itemsTotal;
 
@@ -36,6 +43,8 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
     A4: { portrait: ["210mm", "297mm"], landscape: ["297mm", "210mm"] },
     A5: { portrait: ["148mm", "210mm"], landscape: ["210mm", "148mm"] },
     Letter: { portrait: ["216mm", "279mm"], landscape: ["279mm", "216mm"] },
+    "80mm": { portrait: ["80mm", "auto"], landscape: ["80mm", "auto"] },
+    "58mm": { portrait: ["58mm", "auto"], landscape: ["58mm", "auto"] },
   };
 
   const currentOrientation = settings.orientation || "portrait";
@@ -69,13 +78,36 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
       formattedAddress,
     };
 
+    const isA5 = billTemplate.includes("_a5") || paperSize === "A5";
+
     switch (billTemplate) {
       case "professional":
-        return <ProfessionalInvoice {...props} />;
+      case "professional_a5":
+        return <ProfessionalInvoice {...props} isA5={isA5} />;
       case "preview":
-        return <ModernPreviewInvoice {...props} />;
+      case "modern":
+      case "modern_a5":
+        return <ModernPreviewInvoice {...props} isA5={isA5} />;
+      case "standard":
+      case "standard_a5":
+        return <StandardInvoice {...props} isA5={isA5} />;
+      case "thermal":
+      case "thermal_compact":
+      case "thermal_detailed":
+      case "thermal_eco":
+        return (
+          <ThermalReceipt
+            {...props}
+            compact={
+              billTemplate === "thermal_compact" ||
+              billTemplate === "thermal_eco"
+            }
+            detailed={billTemplate === "thermal_detailed"}
+            eco={billTemplate === "thermal_eco"}
+          />
+        );
       default:
-        return <StandardInvoice {...props} />;
+        return <StandardInvoice {...props} isA5={isA5} />;
     }
   };
 
@@ -102,8 +134,9 @@ const StandardInvoice = ({
   subtotal,
   staffName,
   formattedAddress,
+  isA5 = false,
 }) => (
-  <div className="invoice-box standard-style">
+  <div className={`invoice-box standard-style ${isA5 ? "a5-variant" : ""}`}>
     <div className="invoice-header">
       <div className="branch-info">
         <h2 style={{ marginBottom: "2px" }}>Kumaran E-Services</h2>
@@ -240,8 +273,9 @@ const ProfessionalInvoice = ({
   subtotal,
   staffName,
   formattedAddress,
+  isA5 = false,
 }) => (
-  <div className="invoice-box professional-style">
+  <div className={`invoice-box professional-style ${isA5 ? "a5-variant" : ""}`}>
     <div className="pro-header">
       <div className="pro-logo-section">
         <h1>Kumaran E-Services</h1>
@@ -377,15 +411,20 @@ const ModernPreviewInvoice = ({
   subtotal,
   staffName,
   formattedAddress,
+  isA5 = false,
 }) => (
-  <div className="invoice-box modern-style">
+  <div className={`invoice-box modern-style ${isA5 ? "a5-variant" : ""}`}>
     <div className="modern-top-bar"></div>
     <div className="modern-body">
       <div className="modern-header">
         <div className="modern-brand">
-          <div className="modern-logo">K</div>
+          <div className="modern-logo">
+            {branchInfo?.name?.charAt(0) || "K"}
+          </div>
           <div className="modern-brand-info">
-            <h4 style={{ margin: 0, lineHeight: 1 }}>Kumaran E-Services</h4>
+            <h4 style={{ margin: 0, lineHeight: 1 }}>
+              {branchInfo?.name || "Kumaran E-Services"}
+            </h4>
             <p
               style={{
                 margin: "5px 0 0 0",
@@ -498,6 +537,169 @@ const ModernPreviewInvoice = ({
         </div>
       </div>
     </div>
+  </div>
+);
+
+export const ThermalReceipt = ({
+  sale,
+  branchInfo,
+  currencySymbol,
+  amount,
+  tax,
+  discount,
+  roundingValue,
+  subtotal,
+  staffName,
+  formattedAddress,
+  compact = false,
+  detailed = false,
+  eco = false,
+}) => (
+  <div
+    className={`thermal-receipt ${compact ? "compact" : ""} ${eco ? "eco-mode" : ""}`}
+  >
+    <div className="receipt-header">
+      <h3 className="branch-name" style={{ fontSize: eco ? "14px" : "18px" }}>
+        Kumaran E-Services
+      </h3>
+      {!eco && (
+        <p className="branch-sub">{branchInfo?.name || "Main Branch"}</p>
+      )}
+      {!compact && <p className="branch-detail">{formattedAddress}</p>}
+      <p className="branch-detail">
+        Ph: {branchInfo?.contact?.phone || branchInfo?.contact}
+      </p>
+    </div>
+
+    <div className="receipt-divider"></div>
+
+    <div className="receipt-meta">
+      <p>
+        <span>INV:</span> <span>{sale.billNo}</span>
+      </p>
+      <p>
+        <span>Date:</span>{" "}
+        <span>
+          {eco ? sale.formattedDate : `${sale.formattedDate} ${sale.time}`}
+        </span>
+      </p>
+      {!eco && (
+        <p>
+          <span>Staff:</span> <span>{staffName}</span>
+        </p>
+      )}
+    </div>
+
+    {detailed && (
+      <>
+        <div className="receipt-divider"></div>
+        <div className="receipt-customer">
+          <p>
+            <span>Client:</span> <span>{sale.customerName}</span>
+          </p>
+        </div>
+      </>
+    )}
+
+    <div className="receipt-divider"></div>
+
+    <table className="receipt-table">
+      <thead>
+        <tr>
+          <th className="text-left">{eco ? "Item" : "Description"}</th>
+          <th className="text-center">Qty</th>
+          <th className="text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sale.products?.map((p, i) => (
+          <tr key={i}>
+            <td className="text-left">
+              <div className="item-name">{p.name}</div>
+              {detailed && p.sku && (
+                <small className="item-sku">SKU: {p.sku}</small>
+              )}
+              {!compact && !eco && (
+                <small className="item-price">
+                  {p.qty} x {currencySymbol}
+                  {Number(p.price || 0).toFixed(2)}
+                </small>
+              )}
+            </td>
+            <td className="text-center">{p.qty}</td>
+            <td className="text-right">
+              {currencySymbol}
+              {Number(p.lineTotal || 0).toFixed(2)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <div className="receipt-divider"></div>
+
+    <div className="receipt-summary">
+      <div className="summary-row">
+        <span>Subtotal</span>
+        <span>
+          {currencySymbol}
+          {subtotal.toFixed(2)}
+        </span>
+      </div>
+      {discount > 0 && (
+        <div className="summary-row">
+          <span>Discount</span>
+          <span>
+            -{currencySymbol}
+            {discount.toFixed(2)}
+          </span>
+        </div>
+      )}
+      {!eco && (
+        <div className="summary-row">
+          <span>Tax</span>
+          <span>
+            {currencySymbol}
+            {tax.toFixed(2)}
+          </span>
+        </div>
+      )}
+      <div className="summary-row total">
+        <span>TOTAL</span>
+        <span>
+          {currencySymbol}
+          {amount.toFixed(2)}
+        </span>
+      </div>
+    </div>
+
+    <div className="receipt-divider"></div>
+
+    <div className="receipt-footer">
+      <p className="text-center" style={{ fontSize: "0.9em" }}>
+        {eco ? "Visit again!" : "--- Thank You! Come Again ---"}
+      </p>
+      {!eco && (
+        <p className="powered text-center">Powered by Tharbyte Technologies</p>
+      )}
+    </div>
+
+    <style>{`
+      .thermal-receipt { padding: 4mm; color: #000; font-family: 'monospace'; font-size: 11px; }
+      .compact { padding: 2mm; font-size: 10px; }
+      .eco-mode { padding: 1mm; font-size: 9px; }
+      .receipt-header { text-align: center; }
+      .branch-name { margin: 0; text-transform: uppercase; }
+      .receipt-divider { border-top: 1px dashed #000; margin: 2mm 0; }
+      .receipt-meta p, .summary-row { display: flex; justify-content: space-between; margin: 0.5mm 0; }
+      .receipt-table { width: 100%; }
+      .item-name { font-weight: bold; }
+      .summary-row.total { font-weight: bold; font-size: 1.2em; margin-top: 2mm; border-top: 1px solid #000; padding-top: 1mm; }
+      .a5-variant { font-size: 12px; }
+      .a5-variant .invoice-header { padding-bottom: 0.5rem; margin-bottom: 1rem; }
+      .a5-variant table th, .a5-variant table td { padding: 6px; }
+      .a5-variant .pro-header { padding: 1rem; margin-bottom: 1rem; }
+    `}</style>
   </div>
 );
 

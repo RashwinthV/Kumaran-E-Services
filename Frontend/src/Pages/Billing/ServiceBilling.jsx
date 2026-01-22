@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../Context/AuthContext";
 import { useBilling } from "../../Context/BillingContext";
@@ -28,6 +29,8 @@ import ShortcutGuide from "../../Components/Navigation/ShortcutGuide";
 const ServiceBilling = () => {
   const { accessToken } = useAuth();
   const { refreshSales } = useBilling();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [appSettings] = useState(() => getDecrypted("app_settings"));
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -38,10 +41,15 @@ const ServiceBilling = () => {
   const [serviceSettings, setServiceSettings] = useState(
     () => getDecrypted("service_settings") || {},
   );
-  const [selectedModule, setSelectedModule] = useState("LOCAL");
-  const [selectedService, setSelectedService] = useState(
-    SERVICE_MODULES.LOCAL.services[0],
-  );
+  const [selectedModule, setSelectedModule] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    return hash && SERVICE_MODULES[hash] ? hash : "LOCAL";
+  });
+  const [selectedService, setSelectedService] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    const initialModule = hash && SERVICE_MODULES[hash] ? hash : "LOCAL";
+    return SERVICE_MODULES[initialModule]?.services?.[0] || "";
+  });
 
   // Unified Form Data State
   const [formData, setFormData] = useState({
@@ -249,6 +257,37 @@ const ServiceBilling = () => {
     }
   };
 
+  const handleModuleChange = (moduleKey, shouldNavigate = true) => {
+    if (moduleKey === selectedModule) return;
+
+    setSelectedModule(moduleKey);
+    setSelectedService(SERVICE_MODULES[moduleKey]?.services?.[0] || "");
+
+    if (shouldNavigate) {
+      navigate(`#${moduleKey}`, { replace: true });
+    }
+
+    // Reset form data
+    setFormData((prev) => ({
+      ...prev,
+      consumerId: "",
+      providerName: "",
+      referenceId: "",
+      planDetails: "",
+      customerNameField: selectedCustomerName,
+      travelDate: "",
+      fromLoc: "",
+      toLoc: "",
+      transportName: "",
+      passengerAge: "",
+      description: "",
+      baseAmount: "",
+      serviceCharge: serviceSettings.defaultServiceCharge || "",
+    }));
+    setCart([]);
+    setSelectedComplaintId(null);
+  };
+
   useEffect(() => {
     if (accessToken) {
       fetchAccounts();
@@ -256,6 +295,14 @@ const ServiceBilling = () => {
       fetchComplaints();
     }
   }, [accessToken]);
+
+  // --- HASH ROUTING ---
+  useEffect(() => {
+    const hash = location.hash.replace("#", "");
+    if (hash && SERVICE_MODULES[hash] && hash !== selectedModule) {
+      handleModuleChange(hash, false); // Update state but don't navigate again
+    }
+  }, [location.hash]); // Only sync when hash changes
 
   // --- UPDATERS ---
   const handleSelectCustomer = (customer) => {
@@ -401,30 +448,6 @@ const ServiceBilling = () => {
       });
     }
   }, [selectedService]);
-
-  const handleModuleChange = (moduleKey) => {
-    setSelectedModule(moduleKey);
-    setSelectedService(SERVICE_MODULES[moduleKey].services[0]);
-    // Reset specific fields
-    setFormData((prev) => ({
-      ...prev,
-      consumerId: "",
-      providerName: "",
-      referenceId: "",
-      planDetails: "",
-      customerNameField: "",
-      travelDate: "",
-      fromLoc: "",
-      toLoc: "",
-      transportName: "",
-      passengerAge: "",
-      description: "",
-      baseAmount: "",
-      serviceCharge: serviceSettings.defaultServiceCharge || "",
-    }));
-    // Clear cart on module switch? Maybe safer to clear to avoid mixing types messily
-    setCart([]);
-  };
 
   // --- DESCRIPTION GENERATOR ---
   const getFormattedDescription = () => {

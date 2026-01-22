@@ -484,7 +484,7 @@ const AddEmployeeModal = ({
     role: "staff",
     branchId: branchId,
     branchCode: "",
-    EmployeeSalary: "",
+    PayPerDay: "",
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -523,7 +523,7 @@ const AddEmployeeModal = ({
         role: employeeToEdit.role || "staff",
         branchId: branchId,
         branchCode: employeeToEdit.branchCode || "",
-        EmployeeSalary: employeeToEdit.EmployeeSalary || "",
+        PayPerDay: employeeToEdit.PayPerDay || "",
         password: "", // Don't pre-fill password
         confirmPassword: "",
       });
@@ -539,7 +539,7 @@ const AddEmployeeModal = ({
         role: "staff",
         branchId: branchId,
         branchCode: branch?.code || "", // fallback if branch not set yet
-        EmployeeSalary: "",
+        PayPerDay: "",
       });
     }
   }, [branchId, branches, accessToken, getBranches, isOpen, employeeToEdit]);
@@ -598,7 +598,7 @@ const AddEmployeeModal = ({
     }
     if (!hasSpecialChar) {
       toast.error(
-        "Password must contain at least 1 special character (@$!%*?&)"
+        "Password must contain at least 1 special character (@$!%*?&)",
       );
       return false;
     }
@@ -659,7 +659,7 @@ const AddEmployeeModal = ({
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
       } else {
         // Register new employee
@@ -670,7 +670,7 @@ const AddEmployeeModal = ({
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
       }
 
@@ -678,7 +678,7 @@ const AddEmployeeModal = ({
         toast.success(
           employeeToEdit
             ? "Employee updated successfully!"
-            : "Employee registered successfully!"
+            : "Employee registered successfully!",
         );
         if (onSuccess) onSuccess();
         onClose();
@@ -686,7 +686,7 @@ const AddEmployeeModal = ({
     } catch (error) {
       console.error("Operation error:", error);
       toast.error(
-        error.response?.data?.message || "An error occurred. Please try again."
+        error.response?.data?.message || "An error occurred. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -812,15 +812,15 @@ const AddEmployeeModal = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="EmployeeSalary">
-                <i className="bi bi-cash"></i>
-                Salary
+              <label htmlFor="PayPerDay">
+                <i className="bi bi-currency-rupee"></i>
+                Pay Per Day
               </label>
               <input
                 type="number"
-                id="EmployeeSalary"
-                name="EmployeeSalary"
-                value={formData.EmployeeSalary}
+                id="PayPerDay"
+                name="PayPerDay"
+                value={formData.PayPerDay}
                 onChange={handleChange}
                 placeholder="Enter monthly salary"
                 min="0"

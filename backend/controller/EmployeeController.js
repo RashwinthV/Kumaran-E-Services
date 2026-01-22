@@ -11,7 +11,7 @@ exports.register = async (req, res) => {
       role,
       branchCode,
       branchId,
-      EmployeeSalary,
+      PayPerDay,
     } = req.body;
 
     if (!name || !email || !phone || !age || !password || !branchCode) {
@@ -48,7 +48,7 @@ exports.register = async (req, res) => {
       password,
       role: role || "staff",
       branchCode,
-      EmployeeSalary,
+      PayPerDay,
     });
 
     res.status(201).json({
@@ -143,8 +143,7 @@ exports.deleteEmployee = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, age, role, EmployeeSalary, password } =
-      req.body;
+    const { name, email, phone, age, role, PayPerDay, password } = req.body;
 
     let employee = await User.findById(id);
 
@@ -183,7 +182,7 @@ exports.updateEmployee = async (req, res) => {
     employee.phone = phone || employee.phone;
     employee.age = age || employee.age;
     employee.role = role || employee.role;
-    employee.EmployeeSalary = EmployeeSalary || employee.EmployeeSalary;
+    employee.PayPerDay = PayPerDay || employee.PayPerDay;
 
     // Only update password if provided
     if (password) {

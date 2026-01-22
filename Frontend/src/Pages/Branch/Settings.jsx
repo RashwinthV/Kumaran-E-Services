@@ -58,9 +58,19 @@ function Settings() {
         localStorage.getItem("setting_barcode_enabled") === "true",
       rounding: saved?.rounding || "none",
       roundingValue: saved?.roundingValue || 10,
-      billTemplate: saved?.billTemplate || "standard",
+      billTemplate: saved?.billTemplate || "dynamic",
       selectedPrinter: saved?.selectedPrinter || "System Default Printer",
       colorMode: saved?.colorMode || "color",
+      printMargin: saved?.printMargin || "default",
+      printScale: saved?.printScale || 100,
+      showMoreSettings: saved?.showMoreSettings ?? true,
+      templateMap: saved?.templateMap || {
+        A4: "standard",
+        A5: "standard_a5",
+        Letter: "standard",
+        "80mm": "thermal",
+        "58mm": "thermal_compact",
+      },
     };
   });
 
@@ -87,11 +97,19 @@ function Settings() {
   }, [user]);
 
   const handleToggle = (key) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    setSettings((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      saveEncrypted("app_settings", updated);
+      return updated;
+    });
   };
 
   const handleChange = (key, value) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    setSettings((prev) => {
+      const updated = { ...prev, [key]: value };
+      saveEncrypted("app_settings", updated);
+      return updated;
+    });
   };
 
   const saveSettings = () => {

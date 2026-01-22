@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
-    EmployeeSalary: { type: Number, trim: true, default: 0 },
+    PayPerDay: { type: Number, trim: true, default: 0 },
     phone: {
       type: String,
       required: [true, "Please provide a phone number"],
@@ -96,7 +96,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Generate employee ID and encrypt password before saving
@@ -110,7 +110,7 @@ userSchema.pre("save", async function (next) {
         .countDocuments({ branchCode: this.branchCode });
       this.employeeId = `${this.branchCode}-EMP${String(count + 1).padStart(
         2,
-        "0"
+        "0",
       )}`;
     }
 

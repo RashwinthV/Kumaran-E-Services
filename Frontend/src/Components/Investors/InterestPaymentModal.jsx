@@ -20,8 +20,6 @@ const InterestPaymentModal = ({
     paidDate: new Date().toISOString().split("T")[0],
     mode: investor?.paymentMode || "cash",
     products: "",
-    mode: investor?.paymentMode || "cash",
-    products: "",
     notes: "",
     paymentAccountId: "",
   });

@@ -8,9 +8,10 @@ export const ProfessionalTemplate = ({
   roundingValue,
   amount,
   staffName,
+  isA5 = false,
 }) => {
   return `
-    <div class="invoice-box professional-style">
+    <div class="invoice-box professional-style ${isA5 ? "a5-variant" : ""}">
       <div class="pro-header">
         <div class="pro-logo-section">
           <h1>${branchDetails.name}</h1>

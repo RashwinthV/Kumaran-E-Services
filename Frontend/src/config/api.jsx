@@ -22,6 +22,10 @@ export const API_ENDPOINTS = {
   INVESTORS: `${API_BASE}/api/staff/customers/investors`,
   CUSTOMER_SEARCH: `${API_BASE}/api/staff/customers/search`,
   BRANCH: `${API_BASE}/api/staff/Branch`,
+  EMPLOYEES: (code) => `${API_BASE}/api/staff/employees/${code}`,
+  EXPENSES: `${API_BASE}/api/staff/expenses`,
+  EMPLOYEE_EXPENSE_SUMMARY: (name) =>
+    `${API_BASE}/api/staff/expenses/employee/${name}/summary`,
   COMPLAINTS: {
     BASE: `${API_BASE}/api/complaints`,
     BY_ID: (id) => `${API_BASE}/api/complaints/${id}`,

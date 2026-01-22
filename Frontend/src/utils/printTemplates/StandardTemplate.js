@@ -8,9 +8,10 @@ export const StandardTemplate = ({
   roundingValue,
   amount,
   staffName,
+  isA5 = false,
 }) => {
   return `
-    <div class="invoice-box standard-style">
+    <div class="invoice-box standard-style ${isA5 ? "a5-variant" : ""}">
       <div class="invoice-header">
         <div class="branch-info">
           <h2 style="margin-bottom: 2px;">${branchDetails.name}</h2>

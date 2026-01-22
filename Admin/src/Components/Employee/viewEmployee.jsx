@@ -30,7 +30,7 @@ const ViewEmployee = ({ BranchCode, onEdit }) => {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
 
         if (response.data.success) {
@@ -42,7 +42,7 @@ const ViewEmployee = ({ BranchCode, onEdit }) => {
           error.response?.data?.message !== "No employee found for this branch"
         ) {
           toast.error(
-            error.response?.data?.message || "Failed to load employees"
+            error.response?.data?.message || "Failed to load employees",
           );
         } else {
           setEmployees([]);
@@ -71,7 +71,7 @@ const ViewEmployee = ({ BranchCode, onEdit }) => {
 
       toast.success("Employee deleted successfully");
       setEmployees((prev) =>
-        prev.filter((e) => e._id !== employeeToDelete._id)
+        prev.filter((e) => e._id !== employeeToDelete._id),
       );
       setDeleteModalOpen(false);
       setEmployeeToDelete(null);
@@ -147,10 +147,10 @@ const ViewEmployee = ({ BranchCode, onEdit }) => {
                   <i className="bi bi-calendar"></i>
                   <span>{employee.age} years old</span>
                 </div>
-                {employee.EmployeeSalary && (
+                {employee.PayPerDay && (
                   <div className="info-row">
                     <i className="bi bi-cash"></i>
-                    <span>₹{employee.EmployeeSalary}</span>
+                    <span>₹{employee.PayPerDay}</span>
                   </div>
                 )}
               </div>

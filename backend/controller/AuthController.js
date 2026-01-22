@@ -13,7 +13,7 @@ const generateRefreshToken = (id, tokenVersion) => {
   return jwt.sign(
     { id, type: "refresh", version: tokenVersion },
     process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 };
 
@@ -92,7 +92,7 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(
       user._id,
-      user.credentials.tokenVersion
+      user.credentials.tokenVersion,
     );
 
     // Store refresh token in database
@@ -121,6 +121,7 @@ exports.login = async (req, res) => {
         phone: user.phone,
         role: user.role,
         branchCode: user.branchCode,
+        PayPerDay: user.PayPerDay,
         lastLogin: user.lastLogin,
       },
     });
@@ -148,7 +149,7 @@ exports.refreshToken = async (req, res) => {
     // Verify refresh token
     const decoded = jwt.verify(
       refreshToken,
-      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
+      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
     );
 
     if (decoded.type !== "refresh") {
@@ -160,7 +161,7 @@ exports.refreshToken = async (req, res) => {
 
     // Get user and check if refresh token matches
     const user = await User.findById(decoded.id).select(
-      "+credentials.refreshToken +credentials.tokenVersion"
+      "+credentials.refreshToken +credentials.tokenVersion",
     );
 
     if (!user) {
@@ -207,6 +208,7 @@ exports.refreshToken = async (req, res) => {
         phone: user.phone,
         role: user.role,
         branchCode: user.branchCode,
+        PayPerDay: user.PayPerDay,
       },
     });
   } catch (error) {
@@ -308,7 +310,7 @@ exports.updatePassword = async (req, res) => {
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(
       user._id,
-      user.credentials.tokenVersion
+      user.credentials.tokenVersion,
     );
 
     user.credentials.refreshToken = refreshToken;
