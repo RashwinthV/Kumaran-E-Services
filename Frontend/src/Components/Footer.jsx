@@ -13,7 +13,7 @@ function Footer() {
             reserved.
           </p>
           <div className="footer-v-divider"></div>
-          <p className="footer-version">v 0.1.0 Billing Terminal</p>
+          <p className="footer-version">v {import.meta.env.VITE_TERMINAL_VERSION} Billing Terminal</p>
         </div>
 
         <div className="footer-right">

@@ -8,7 +8,7 @@ import { ModernTemplate } from "./printTemplates/ModernTemplate";
  * Optimized for Black & White (Monochrome) but matching the exact preview layouts.
  * Removes browser headers/footers (like the URL at bottom).
  */
-export const handlePrint = (sale, options = {}) => {
+export const handlePrint = async (sale, options = {}) => {
   const settings = getDecrypted("app_settings") || {
     paperSize: "A4",
     billTemplate: "standard",
@@ -58,12 +58,12 @@ export const handlePrint = (sale, options = {}) => {
   const getTemplateContent = () => {
     let templateId = settings.billTemplate;
 
-    // Support dynamic template lookup
+    // Support dynamic template lookup based on Paper Size
     if (templateId === "dynamic") {
       templateId = settings.templateMap?.[settings.paperSize] || "standard";
     }
 
-    // Determine if it's an A5 variant
+    // Determine if it's an A5 variant (from ID or Paper Size)
     const isA5 = settings.paperSize === "A5" || templateId.includes("_a5");
 
     switch (templateId) {
@@ -72,11 +72,13 @@ export const handlePrint = (sale, options = {}) => {
         return ProfessionalTemplate({ ...templateProps, isA5 });
       case "preview":
       case "modern":
+      case "modern_a5":
         return ModernTemplate({ ...templateProps, isA5 });
       case "standard":
       case "standard_a5":
         return StandardTemplate({ ...templateProps, isA5 });
       default:
+        // Fallback to standard if templateId is unknown
         return StandardTemplate({ ...templateProps, isA5 });
     }
   };
@@ -200,24 +202,34 @@ export const handlePrint = (sale, options = {}) => {
     </html>
   `;
 
-  // --- Electron Direct Print Handling ---
-  if (window.electron && window.electron.print) {
-    const isSilent = options.silent || settings.autoPrint;
-    window.electron.print({
-      html,
-      silent: isSilent,
-      printerName:
-        settings.selectedPrinter !== "System Default Printer"
-          ? settings.selectedPrinter
-          : null,
-      color: settings.colorMode !== "bw",
-      pageSize: settings.paperSize || "A4",
-      landscape: settings.orientation === "landscape",
-      margins: {
-        marginType: settings.printMargin === "none" ? "none" : "default",
-      },
-    });
-    return;
+  const isSilent = options.silent || settings.autoPrint;
+
+  // --- Electron Direct Print Handling (Desktop App) ---
+  // Only use IPC for silent/auto-print. For manual print, we rely on the renderer's window.print()
+  // which now uses Chrome's native preview (thanks to enable-print-preview switch in main).
+  if (
+    window.electron &&
+    window.electron.print &&
+    isSilent &&
+    !options.forceBrowserPrint
+  ) {
+    try {
+      await window.electron.print({
+        html,
+        silent: true,
+        printerName:
+          settings.selectedPrinter !== "System Default Printer"
+            ? settings.selectedPrinter
+            : null,
+        color: settings.colorMode !== "bw",
+        pageSize: settings.paperSize || "A4",
+        landscape: settings.orientation === "landscape",
+      });
+      return; // Stop here if silent print was successful
+    } catch (error) {
+      console.error("Electron print error:", error);
+      // If silent print fails, fall through to dialog
+    }
   }
 
   // --- Browser Iframe Handling ---

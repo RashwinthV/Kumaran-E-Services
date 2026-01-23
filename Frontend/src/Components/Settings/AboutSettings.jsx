@@ -10,7 +10,7 @@ const AboutSettings = () => {
             <h4>App Version</h4>
             <p>Current software build version</p>
           </div>
-          <div className="fw-bold text-primary">v1.2.0-pro</div>
+          <div className="fw-bold text-primary">v {import.meta.env.VITE_TERMINAL_VERSION}</div>
         </div>
 
         <div className="setting-row">

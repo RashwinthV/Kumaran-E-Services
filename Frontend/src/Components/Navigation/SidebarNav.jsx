@@ -23,38 +23,38 @@ const SidebarNav = () => {
       label: "Service Billing",
       icon: "bi-ticket-perforated",
       path: "/service-billing#LOCAL",
-      subItems: [
-        {
-          id: "service-local",
-          label: "Local",
-          icon: "bi-shop",
-          path: "/service-billing#LOCAL",
-        },
-        {
-          id: "service-mobile",
-          label: "Mobile",
-          icon: "bi-phone",
-          path: "/service-billing#MOBILE_SERVICE",
-        },
-        {
-          id: "service-travel",
-          label: "Travel",
-          icon: "bi-bus-front",
-          path: "/service-billing#TRAVEL",
-        },
-        {
-          id: "service-utility",
-          label: "Utility",
-          icon: "bi-lightning-charge",
-          path: "/service-billing#UTILITY",
-        },
-        {
-          id: "service-gov",
-          label: "Government",
-          icon: "bi-building",
-          path: "/service-billing#GOVT",
-        },
-      ],
+      // subItems: [
+      //   {
+      //     id: "service-local",
+      //     label: "Local",
+      //     icon: "bi-shop",
+      //     path: "/service-billing#LOCAL",
+      //   },
+      //   {
+      //     id: "service-mobile",
+      //     label: "Mobile",
+      //     icon: "bi-phone",
+      //     path: "/service-billing#MOBILE_SERVICE",
+      //   },
+      //   {
+      //     id: "service-travel",
+      //     label: "Travel",
+      //     icon: "bi-bus-front",
+      //     path: "/service-billing#TRAVEL",
+      //   },
+      //   {
+      //     id: "service-utility",
+      //     label: "Utility",
+      //     icon: "bi-lightning-charge",
+      //     path: "/service-billing#UTILITY",
+      //   },
+      //   {
+      //     id: "service-gov",
+      //     label: "Government",
+      //     icon: "bi-building",
+      //     path: "/service-billing#GOVT",
+      //   },
+      // ],
     },
     {
       id: "product-catalog",
@@ -62,38 +62,7 @@ const SidebarNav = () => {
       icon: "bi-box-seam",
       path: "/product-catalog",
     },
-    {
-      id: "Product&expenses",
-      label: "Product & Expenses",
-      icon: "bi-clipboard-data",
-      path: "/expenses#product",
-      subItems: [
-        {
-          id: "expense-product",
-          label: "Product",
-          icon: "bi-box-seam",
-          path: "/expenses#product",
-        },
-        {
-          id: "expense-employee",
-          label: "Employee",
-          icon: "bi-person-badge",
-          path: "/expenses#employee",
-        },
-        {
-          id: "expense-rent",
-          label: "Rent",
-          icon: "bi-house-door",
-          path: "/expenses#rent",
-        },
-        {
-          id: "expense-other",
-          label: "Other",
-          icon: "bi-three-dots",
-          path: "/expenses#other",
-        },
-      ],
-    },
+   
     {
       id: "customer",
       label: "Customer",
@@ -112,6 +81,38 @@ const SidebarNav = () => {
       label: "Sale History",
       icon: "bi-graph-up",
       path: "/sale-history",
+    },
+     {
+      id: "Product&expenses",
+      label: "Product & Expenses",
+      icon: "bi-clipboard-data",
+      path: "/expenses#product",
+      // subItems: [
+      //   {
+      //     id: "expense-product",
+      //     label: "Product",
+      //     icon: "bi-box-seam",
+      //     path: "/expenses#product",
+      //   },
+      //   {
+      //     id: "expense-employee",
+      //     label: "Employee",
+      //     icon: "bi-person-badge",
+      //     path: "/expenses#employee",
+      //   },
+      //   {
+      //     id: "expense-rent",
+      //     label: "Rent",
+      //     icon: "bi-house-door",
+      //     path: "/expenses#rent",
+      //   },
+      //   {
+      //     id: "expense-other",
+      //     label: "Other",
+      //     icon: "bi-three-dots",
+      //     path: "/expenses#other",
+      //   },
+      // ],
     },
     {
       id: "settings",

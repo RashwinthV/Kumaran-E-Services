@@ -427,6 +427,9 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                         <button
                           key={acc._id}
                           type="button"
+                             disabled={
+                           acc.currentStatus === "Closed"
+                        }
                           onClick={() =>
                             handleChange("paymentAccountId", acc._id)
                           }
@@ -439,16 +442,19 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                           {acc.type === "Upi" ? (
                             <span>
                               <i className="bi bi-qr-code me-1"></i>UPI
+                                {acc.currentStatus === "Closed" && " (Closed)"}
                             </span>
                           ) : acc.type === "Credits" ||
                             acc.type === "Credit" ? (
                             <span>
                               <i className="bi bi-person-badge me-1"></i>CREDIT
+                                {acc.currentStatus === "Closed" && " (Closed)"}
                             </span>
                           ) : (
                             <span>
                               <i className="bi bi-cash me-1"></i>
                               {acc.type}
+                                {acc.currentStatus === "Closed" && " (Closed)"}
                             </span>
                           )}
                         </button>

@@ -99,6 +99,7 @@ const ServicePaymentSummary = ({
               <button
                 key={acc._id}
                 onClick={() => setSelectedAccountId(acc._id)}
+                disabled={isProcessing || acc.currentStatus === "Closed"}
                 className={`btn btn-sm flex-fill fw-bold py-2 transition-all ${
                   selectedAccountId === acc._id
                     ? "btn-success shadow border-0"
@@ -147,7 +148,7 @@ const ServicePaymentSummary = ({
                 "Processing..."
               ) : (
                 <span>
-                  <i className="bi bi-save me-2"></i>Save 
+                  <i className="bi bi-save me-2"></i>Save
                 </span>
               )}
             </button>

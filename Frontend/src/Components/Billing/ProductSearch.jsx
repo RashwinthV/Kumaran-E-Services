@@ -210,13 +210,13 @@ const ProductSearch = ({
     <div className="position-relative w-100">
       <form onSubmit={handleSearchSubmit} className="d-flex gap-2">
         <div className="input-group flex-grow-1 shadow-sm rounded-3 overflow-hidden">
-          <span className="input-group-text bg-white border-end-0">
+          <span className="input-group-text bg-white border-0">
             <i className="bi bi-search text-primary me-2"></i>
      
           <input
             ref={searchInputRef}
             type="text"
-            className="form-control border-start-0 ps-0 fw-medium"
+            className="form-control border-0 ps-0 fw-medium"
             placeholder={
               placeholder ||
               (barcodeScannerEnabled
@@ -230,18 +230,19 @@ const ProductSearch = ({
             autoComplete="off"
             style={{ height: "45px", outline: "none", boxShadow: "none" }}
           />
-               </span>
+         
           {barcodeScannerEnabled && (
             <button
               type="button"
-              className="btn btn-light border-start"
+              className="btn btn-light border-0"
               onClick={handleScannerFocus}
               title="Focus for Scanner"
-              style={{ width: "45px" }}
+              style={{ width: "50px",height:"50px" }}
             >
               <i className="bi bi-upc-scan text-primary"></i>
             </button>
           )}
+                </span>
         </div>
 
         {showButton && (

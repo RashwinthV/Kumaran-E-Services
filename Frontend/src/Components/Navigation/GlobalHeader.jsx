@@ -35,7 +35,7 @@ const GlobalHeader = () => {
               style={{ width: "32px", height: "32px" }}
             >
               <img
-                src="/kes_logo.jpeg"
+                src="kes_logo.jpeg"
                 alt="KES"
                 style={{ width: "32px", height: "32px" }}
                 className="rounded"

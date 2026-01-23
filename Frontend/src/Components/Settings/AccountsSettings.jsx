@@ -275,16 +275,16 @@ const AccountsSettings = () => {
 
 
               <div className="input-group input-group-lg">
-                <span className="input-group-text bg-white">₹</span>
+                <span className="input-group-text bg-white">₹
                 <input
                   type="number"
-                  className="form-control form-control-lg"
+                  className="form-control form-control-lg border-0"
                   value={closingBalance}
                   onChange={(e) => setClosingBalance(e.target.value)}
                   placeholder="0.00"
                   autoFocus
                   style={{ fontSize: "1.25rem", fontWeight: 600 }}
-                />
+                /></span>
               </div>
             </div>
 

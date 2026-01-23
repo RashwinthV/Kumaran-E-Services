@@ -122,7 +122,7 @@ const HardwareSettings = ({
             </div>
 
             {(() => {
-              const sizes = ["A4", "A5", "Letter"];
+              const sizes = [ "A5"];
               const templatesBySize = {
                 A4: [
                   {
@@ -136,7 +136,7 @@ const HardwareSettings = ({
                     desc: "Bold headers",
                   },
                   {
-                    id: "preview",
+                    id: "modern",
                     label: "Modern Template",
                     desc: "Minimalist",
                   },
@@ -260,35 +260,8 @@ const HardwareSettings = ({
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="col-lg-5">
-          <div className="sticky-top" style={{ top: "1rem", zIndex: 10 }}>
-            <div className="d-flex justify-content-between align-items-center mb-2 px-1">
-              <h6
-                className="fw-bold mb-0 text-uppercase text-muted small"
-                style={{ letterSpacing: "1px" }}
-              >
-                Preview Inspector
-              </h6>
-              <select
-                className="form-select form-select-sm w-auto border-0 bg-transparent fw-bold text-primary"
-                value={settings.paperSize}
-                onChange={(e) => handleChange("paperSize", e.target.value)}
-              >
-                <option value="A4">A4</option>
-                <option value="A5">A5</option>
-                <option value="Letter">Letter</option>
-              </select>
-            </div>
-            <LiveTemplatePreview
-              settings={settings}
-              sale={dummySale}
-              branchInfo={branchInfo}
-              scale={0.35}
-            />
-
-            <div className="mt-4 p-4 border rounded-4 bg-white shadow-sm">
+          <div className="mt-4 p-4 border rounded-4 bg-white shadow-sm">
               <h6 className="fw-bold small mb-3 text-uppercase text-primary border-bottom pb-2">
                 Print Intelligence
               </h6>
@@ -313,6 +286,33 @@ const HardwareSettings = ({
                 </div>
               </div>
             </div>
+        </div>
+
+        <div className="col-5">
+          <div className="sticky-top" style={{ top: "1rem", zIndex: 10 }}>
+            <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+              <h6
+                className="fw-bold mb-0 text-uppercase text-muted small"
+                style={{ letterSpacing: "1px" }}
+              >
+                Preview Inspector
+              </h6>
+              <select
+                className="form-select form-select-sm w-auto border-0 bg-transparent fw-bold text-primary"
+                value={settings.paperSize}
+                onChange={(e) => handleChange("paperSize", e.target.value)}
+              >
+                <option value="A5">A5</option>
+              </select>
+            </div>
+            <LiveTemplatePreview
+              settings={settings}
+              sale={dummySale}
+              branchInfo={branchInfo}
+              scale={0.35}
+            />
+
+            
           </div>
         </div>
       </div>

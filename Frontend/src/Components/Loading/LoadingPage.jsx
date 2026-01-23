@@ -46,11 +46,7 @@ function LoadingPage() {
               navigate("/branch-login");
             } else {
               // ASSIGNED - Continue to login flow
-              if (isAuthenticated) {
-                navigate("/billing");
-              } else {
                 navigate("/login");
-              }
             }
           }, 1000);
         } else {
@@ -134,9 +130,11 @@ function LoadingPage() {
 
         {/* Retry Button */}
         {status === "error" && (
-          <button id="retry" className="retry-button" onClick={handleRetry}>
-            <RefreshCw size={20} />
+          <button id="retry" className="retry-button " onClick={handleRetry}>
+            <div className="text-center d-flex align-items-center justify-content-center mx-5">
+            <RefreshCw className="text-center mx-5 me-2" size={20} />
             Retry Connection
+            </div>
           </button>
         )}
 

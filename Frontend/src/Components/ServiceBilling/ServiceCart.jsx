@@ -46,6 +46,7 @@ const ServiceCart = ({
                 customerNameField,
                 passengerAge,
                 passengerGender,
+                referenceId,
               } = item.details;
 
               return (
@@ -62,7 +63,10 @@ const ServiceCart = ({
                   <div className="d-flex justify-content-between align-items-start mb-1">
                     {/* Date & Transport Header */}
                     <div>
-                      <div className="badge bg-light text-dark border mb-1">
+                      <span className="fw-bold text-dark  ">
+                        PNR No: { referenceId}
+                      </span>                      <br />
+                      <div className="badge bg-light text-dark border mb-1 mt-2">
                         {travelDate || "Date N/A"}{" "}
                         {transportName ? `| ${transportName}` : ""}
                       </div>

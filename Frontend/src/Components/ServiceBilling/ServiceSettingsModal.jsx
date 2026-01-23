@@ -11,6 +11,21 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
     autoPrintServiceReceipt: true,
   });
 
+  const [expandedSections, setExpandedSections] = useState({
+    xerox: true,
+    print: false,
+    scan: false,
+    photo: false,
+    lamination: false,
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
   useEffect(() => {
     if (isOpen) {
       const saved = getDecrypted("service_settings") || {};
@@ -36,7 +51,7 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
       className="modal show d-block"
       style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}
     >
-      <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-dialog modal-dialog-centered" style={{minWidth:"800px"}}>
         <div className="modal-content shadow-lg border-0 rounded-4">
           <div className="modal-header bg-primary text-white rounded-top-4">
             <h5 className="modal-title fw-bold ">
@@ -111,30 +126,29 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
               <div className="input-group">
                 <span className="input-group-text bg-white">
                   <i className="bi bi-percent"></i>
-            
-                <input
-                  type="number"
-                  className="form-control"
-                  value={localSettings.serviceTaxRate}
-                  onChange={(e) =>
-                    handleChange("serviceTaxRate", parseFloat(e.target.value))
-                  }
-                />
-                 
-                <div className="input-group-text bg-light p-0 mx-1">
-                  <div className="form-check form-switch me-2">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      checked={localSettings.enableServiceTax}
-                      onChange={(e) =>
-                        handleChange("enableServiceTax", e.target.checked)
-                      }
-                    />
-                    
+
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={localSettings.serviceTaxRate}
+                    onChange={(e) =>
+                      handleChange("serviceTaxRate", parseFloat(e.target.value))
+                    }
+                  />
+
+                  <div className="input-group-text bg-light p-0 mx-1">
+                    <div className="form-check form-switch me-2">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        checked={localSettings.enableServiceTax}
+                        onChange={(e) =>
+                          handleChange("enableServiceTax", e.target.checked)
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-                   </span>
+                </span>
               </div>
               <small className="text-muted">
                 Enable to apply tax by default on taxable services
@@ -146,18 +160,19 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
                 Default Service Charge (Fixed ₹)
               </label>
               <div className="input-group ">
-                <span className="input-group-text bg-white">₹ 
-                <input
-                  type="number"
-                  className="form-control mx-2"
-                  value={localSettings.defaultServiceCharge}
-                  onChange={(e) =>
-                    handleChange(
-                      "defaultServiceCharge",
-                      parseFloat(e.target.value),
-                    )
-                  }
-                />
+                <span className="input-group-text bg-white">
+                  ₹
+                  <input
+                    type="number"
+                    className="form-control mx-2 border-0"
+                    value={localSettings.defaultServiceCharge}
+                    onChange={(e) =>
+                      handleChange(
+                        "defaultServiceCharge",
+                        parseFloat(e.target.value),
+                      )
+                    }
+                  />
                 </span>
               </div>
             </div>
@@ -170,90 +185,29 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
 
             {/* Xerox Rates */}
             <div className="border rounded p-3 mb-3 bg-white shadow-sm">
-              <label className="fw-bold text-primary small mb-2 d-block">
-                XEROX RATES
-              </label>
-              <div className="row g-2">
-                {[
-                  "A4 B&W",
-                  "A4 Color",
-                  "A3 B&W",
-                  "A3 Color",
-                  "Legal Size",
-                  "ID Card Size",
-                ].map((type) => (
-                  <div className="col-6 col-md-4" key={type}>
-                    <label
-                      className="x-small text-muted mb-1"
-                      style={{ fontSize: "0.7rem" }}
-                    >
-                      {type}
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      value={
-                        localSettings[`xerox_${type.replace(/\s/g, "_")}`] || ""
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          `xerox_${type.replace(/\s/g, "_")}`,
-                          parseFloat(e.target.value),
-                        )
-                      }
-                    />
-                  </div>
-                ))}
+              <div
+                className="d-flex justify-content-between align-items-center"
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleSection("xerox")}
+              >
+                <label className="fw-bold text-primary small mb-0">
+                  XEROX RATES
+                </label>
+                <i
+                  className={`bi bi-chevron-${expandedSections.xerox ? "up" : "down"} text-primary`}
+                  style={{ fontSize: "1.2rem" }}
+                ></i>
               </div>
-            </div>
-
-            {/* Printout Rates */}
-            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
-              <label className="fw-bold text-success small mb-2 d-block">
-                PRINTOUT RATES
-              </label>
-              <div className="row g-2">
-                {[
-                  "A4 B&W",
-                  "A4 Color",
-                  "A3 B&W",
-                  "A3 Color",
-                  "Legal Size",
-                  "ID Card Size",
-                ].map((type) => (
-                  <div className="col-6 col-md-4" key={type}>
-                    <label
-                      className="x-small text-muted mb-1"
-                      style={{ fontSize: "0.7rem" }}
-                    >
-                      {type}
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      value={
-                        localSettings[`print_${type.replace(/\s/g, "_")}`] || ""
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          `print_${type.replace(/\s/g, "_")}`,
-                          parseFloat(e.target.value),
-                        )
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Scan Rates */}
-            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
-              <label className="fw-bold text-info small mb-2 d-block">
-                SCAN RATES
-              </label>
-              <div className="row g-2">
-                {["A4 Size", "A3 Size", "Legal Size", "ID Card Size"].map(
-                  (type) => (
+              {expandedSections.xerox && (
+                <div className="row g-2 mt-2">
+                  {[
+                    "A4 B&W",
+                    "A4 Color",
+                    "A3 B&W",
+                    "A3 Color",
+                    "Legal Size",
+                    "ID Card Size",
+                  ].map((type) => (
                     <div className="col-6 col-md-4" key={type}>
                       <label
                         className="x-small text-muted mb-1"
@@ -264,103 +218,237 @@ const ServiceSettingsModal = ({ isOpen, onClose, onSave }) => {
                       <input
                         type="number"
                         className="form-control form-control-sm"
+                        min="0"
+                        step="1"
                         value={
-                          localSettings[`scan_${type.replace(/\s/g, "_")}`] ||
+                          localSettings[`xerox_${type.replace(/\s/g, "_")}`] ||
                           ""
                         }
                         onChange={(e) =>
                           handleChange(
-                            `scan_${type.replace(/\s/g, "_")}`,
+                            `xerox_${type.replace(/\s/g, "_")}`,
                             parseFloat(e.target.value),
                           )
                         }
                       />
                     </div>
-                  ),
-                )}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Printout Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <div
+                className="d-flex justify-content-between align-items-center"
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleSection("print")}
+              >
+                <label className="fw-bold text-success small mb-0">
+                  PRINTOUT RATES
+                </label>
+                <i
+                  className={`bi bi-chevron-${expandedSections.print ? "up" : "down"} text-success`}
+                  style={{ fontSize: "1.2rem" }}
+                ></i>
               </div>
+              {expandedSections.print && (
+                <div className="row g-2 mt-2">
+                  {[
+                    "A4 B&W",
+                    "A4 Color",
+                    "A3 B&W",
+                    "A3 Color",
+                    "Legal Size",
+                    "ID Card Size",
+                  ].map((type) => (
+                    <div className="col-6 col-md-4" key={type}>
+                      <label
+                        className="x-small text-muted mb-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {type}
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        min="0"
+                        step="1"
+                        value={
+                          localSettings[`print_${type.replace(/\s/g, "_")}`] ||
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleChange(
+                            `print_${type.replace(/\s/g, "_")}`,
+                            parseFloat(e.target.value),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Scan Rates */}
+            <div className="border rounded p-3 mb-3 bg-white shadow-sm">
+              <div
+                className="d-flex justify-content-between align-items-center"
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleSection("scan")}
+              >
+                <label className="fw-bold text-info small mb-0">
+                  SCAN RATES
+                </label>
+                <i
+                  className={`bi bi-chevron-${expandedSections.scan ? "up" : "down"} text-info`}
+                  style={{ fontSize: "1.2rem" }}
+                ></i>
+              </div>
+              {expandedSections.scan && (
+                <div className="row g-2 mt-2">
+                  {["A4 Size", "A3 Size", "Legal Size", "ID Card Size"].map(
+                    (type) => (
+                      <div className="col-6 col-md-4" key={type}>
+                        <label
+                          className="x-small text-muted mb-1"
+                          style={{ fontSize: "0.7rem" }}
+                        >
+                          {type}
+                        </label>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm"
+                          min="0"
+                          step="1"
+                          value={
+                            localSettings[`scan_${type.replace(/\s/g, "_")}`] ||
+                            ""
+                          }
+                          onChange={(e) =>
+                            handleChange(
+                              `scan_${type.replace(/\s/g, "_")}`,
+                              parseFloat(e.target.value),
+                            )
+                          }
+                        />
+                      </div>
+                    ),
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Photo Rates */}
             <div className="border rounded p-3 mb-3 bg-white shadow-sm">
-              <label className="fw-bold text-warning small mb-2 d-block">
-                PHOTOGRAPH RATES
-              </label>
-              <div className="row g-2">
-                {[
-                  "Passport Size",
-                  "Stamp Size",
-                  "4x6 (Postcard)",
-                  "5x7",
-                  "6x8",
-                  "8x10",
-                  "A4 Size",
-                ].map((type) => (
-                  <div className="col-6 col-md-4" key={type}>
-                    <label
-                      className="x-small text-muted mb-1"
-                      style={{ fontSize: "0.7rem" }}
-                    >
-                      {type}
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      value={
-                        localSettings[
-                          `photo_${type.replace(/[()\s]/g, "_")}`
-                        ] || ""
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          `photo_${type.replace(/[()\s]/g, "_")}`,
-                          parseFloat(e.target.value),
-                        )
-                      }
-                    />
-                  </div>
-                ))}
+              <div
+                className="d-flex justify-content-between align-items-center"
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleSection("photo")}
+              >
+                <label className="fw-bold text-warning small mb-0">
+                  PHOTOGRAPH RATES
+                </label>
+                <i
+                  className={`bi bi-chevron-${expandedSections.photo ? "up" : "down"} text-warning`}
+                  style={{ fontSize: "1.2rem" }}
+                ></i>
               </div>
+              {expandedSections.photo && (
+                <div className="row g-2 mt-2">
+                  {[
+                    "Passport Size",
+                    "Stamp Size",
+                    "4x6 (Postcard)",
+                    "5x7",
+                    "6x8",
+                    "8x10",
+                    "A4 Size",
+                  ].map((type) => (
+                    <div className="col-6 col-md-4" key={type}>
+                      <label
+                        className="x-small text-muted mb-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {type}
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        min="0"
+                        step="1"
+                        value={
+                          localSettings[
+                            `photo_${type.replace(/[()\s]/g, "_")}`
+                          ] || ""
+                        }
+                        onChange={(e) =>
+                          handleChange(
+                            `photo_${type.replace(/[()\s]/g, "_")}`,
+                            parseFloat(e.target.value),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Lamination Rates */}
             <div className="border rounded p-3 mb-3 bg-white shadow-sm">
-              <label className="fw-bold text-danger small mb-2 d-block">
-                LAMINATION RATES
-              </label>
-              <div className="row g-2">
-                {[
-                  "ID Card / Aadhaar",
-                  "A4 Size",
-                  "A3 Size",
-                  "Legal Size",
-                  "4x6 Size",
-                  "B5 Size",
-                ].map((type) => (
-                  <div className="col-6 col-md-4" key={type}>
-                    <label
-                      className="x-small text-muted mb-1"
-                      style={{ fontSize: "0.7rem" }}
-                    >
-                      {type}
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      value={
-                        localSettings[`lami_${type.replace(/[\/\s]/g, "_")}`] ||
-                        ""
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          `lami_${type.replace(/[\/\s]/g, "_")}`,
-                          parseFloat(e.target.value),
-                        )
-                      }
-                    />
-                  </div>
-                ))}
+              <div
+                className="d-flex justify-content-between align-items-center"
+                style={{ cursor: "pointer" }}
+                onClick={() => toggleSection("lamination")}
+              >
+                <label className="fw-bold text-danger small mb-0">
+                  LAMINATION RATES
+                </label>
+                <i
+                  className={`bi bi-chevron-${expandedSections.lamination ? "up" : "down"} text-danger`}
+                  style={{ fontSize: "1.2rem" }}
+                ></i>
               </div>
+              {expandedSections.lamination && (
+                <div className="row g-2 mt-2">
+                  {[
+                    "ID Card / Aadhaar",
+                    "A4 Size",
+                    "A3 Size",
+                    "Legal Size",
+                    "4x6 Size",
+                    "B5 Size",
+                  ].map((type) => (
+                    <div className="col-6 col-md-4" key={type}>
+                      <label
+                        className="x-small text-muted mb-1"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {type}
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        min="0"
+                        step="1"
+                        value={
+                          localSettings[
+                            `lami_${type.replace(/[\/\s]/g, "_")}`
+                          ] || ""
+                        }
+                        onChange={(e) =>
+                          handleChange(
+                            `lami_${type.replace(/[\/\s]/g, "_")}`,
+                            parseFloat(e.target.value),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="modal-footer border-top-0 bg-light rounded-bottom-4">

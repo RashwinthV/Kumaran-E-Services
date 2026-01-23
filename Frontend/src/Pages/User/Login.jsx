@@ -76,7 +76,7 @@ const Login = () => {
             <div className="visual-overlay"></div>
             <div className="visual-content">
               <div className="staff-login-logo">
-                <img src="/kes_logo.jpeg" alt="Kumaran E-Services" />
+                <img src="kes_logo.jpeg" alt="Kumaran E-Services" />
               </div>
               <h2 className="company-name-large">Kumaran E-Services</h2>
 

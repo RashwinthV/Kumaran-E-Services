@@ -600,6 +600,8 @@ const ServiceBilling = () => {
         cleanDetailsObj[key] = val;
       }
     });
+    console.log(cleanDetailsObj);
+    
 
     const itemData = {
       name: selectedService, // Just Xerox, Photograph, etc.
@@ -620,11 +622,10 @@ const ServiceBilling = () => {
 
     if (editingItemId) {
       // Update existing item
-      setCart(
-        cart.map((item) =>
-          item.id === editingItemId ? { ...itemData, id: item.id } : item,
-        ),
-      );
+      const it=  cart.map((item) =>
+          item.id === editingItemId ? { ...itemData, id: item.id } : item  )
+      console.log(it);
+      setCart(it ),
       setEditingItemId(null);
       toast.success("Ticket updated");
     } else {

@@ -22,7 +22,7 @@ const Powered = ({ theme, className = "" }) => {
       <div className="powered-group">
         {/* Circular Logo */}
         <div className="powered-logo-wrapper">
-          <img src="/zyrix tech.png" alt="TharByte Technologies" />
+          <img src="zyrix tech.png" alt="TharByte Technologies" />
         </div>
 
         {/* Company Name */}

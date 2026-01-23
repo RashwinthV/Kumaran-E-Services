@@ -10,6 +10,9 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
       ? settings.templateMap?.[paperSize] || "standard"
       : settings.billTemplate || "standard";
 
+  // Determine A5 mode: strictly true if paper is A5 OR template key has _a5
+  const isA5 = paperSize === "A5" || billTemplate.includes("_a5");
+
   const currencySymbol = settings.currency
     ? settings.currency.match(/\(([^)]+)\)/)?.[1] || "₹"
     : "₹";
@@ -77,8 +80,6 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
       staffName,
       formattedAddress,
     };
-
-    const isA5 = billTemplate.includes("_a5") || paperSize === "A5";
 
     switch (billTemplate) {
       case "professional":

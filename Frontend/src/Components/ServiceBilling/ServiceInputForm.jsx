@@ -365,16 +365,17 @@ const ServiceInputForm = ({
             <div className="input-group">
               <span className="input-group-text bg-light">
                 {getCurrencySymbol(currency)}
-              </span>
+             
               <input
                 type="number"
-                className="form-control fw-bold"
+                className="form-control fw-bold bg-light border-0"
                 placeholder="0.00"
                 value={formData.baseAmount}
                 onChange={(e) =>
                   handleInputChange("baseAmount", e.target.value)
                 }
               />
+               </span>
             </div>
           </div>
           <div className={selectedModule === "LOCAL" ? "col-md-6" : "col-md-4"}>
@@ -384,16 +385,16 @@ const ServiceInputForm = ({
             <div className="input-group">
               <span className="input-group-text bg-light">
                 {getCurrencySymbol(currency)}
-              </span>
+       
               <input
                 type="number"
-                className="form-control fw-bold"
+                className="form-control fw-bold bg-light border-0"
                 placeholder="0.00"
                 value={formData.serviceCharge}
                 onChange={(e) =>
                   handleInputChange("serviceCharge", e.target.value)
                 }
-              />
+              />       </span>
             </div>
           </div>
           {selectedModule !== "LOCAL" && (

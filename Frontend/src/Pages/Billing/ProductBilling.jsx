@@ -890,27 +890,27 @@ const ProductBilling = () => {
                 className="card-body p-3 d-flex flex-column overflow-auto"
                 style={{ height: 0 }}
               >
-                <div className="d-flex align-items-center gap-2 mb-1">
+                <div className="d-flex align-items-center gap-2 mb-3">
                   <i className="bi bi-wallet2 text-primary"></i>
                   <h6 className="fw-bold mb-0">BILLING SUMMARY</h6>
                 </div>
 
                 <div className="bg-light p-3 rounded-3 mb-4 flex-shrink-0">
-                  <div className="d-flex justify-content-between mb-1">
+                  <div className="d-flex justify-content-between mb-3">
                     <span className="text-muted small">Subtotal</span>
                     <span className="fw-bold small">
                       {getCurrencySymbol(appSettings?.currency)}
                       {subtotal.toFixed(2)}
                     </span>
                   </div>
-                  <div className="d-flex justify-content-between mb-1">
+                  <div className="d-flex justify-content-between mb-3">
                     <span className="text-muted small">Tax (GST)</span>
                     <span className="fw-bold small">
                       {getCurrencySymbol(appSettings?.currency)}
                       {totalTax.toFixed(2)}
                     </span>
                   </div>
-                  <div className="d-flex justify-content-between">
+                  <div className="d-flex justify-content-between mb-3">
                     <span className="text-muted small">Total Discount</span>
                     <span className="fw-bold small text-danger">
                       - {getCurrencySymbol(appSettings?.currency)}
@@ -941,7 +941,7 @@ const ProductBilling = () => {
 
                 <div className="mb-3 flex-shrink-0">
                   <label
-                    className="fw-bold small text-uppercase text-muted"
+                    className="fw-bold small text-uppercase text-muted mb-3"
                     style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
                   >
                     Payment Account
@@ -981,7 +981,7 @@ const ProductBilling = () => {
 
                 {selectedAccountId && (
                   <div className="alert alert-secondary border-0 bg-light p-2 rounded-3 flex-shrink-0">
-                    <div className="d-flex justify-content-between mb-1">
+                    <div className="d-flex justify-content-between mb-3">
                       <small className="text-muted">Account Balance:</small>
                       <small className="fw-bold">
                         {getCurrencySymbol(appSettings?.currency)}
