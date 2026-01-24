@@ -89,6 +89,86 @@ exports.getBranchInvestors = async (req, res) => {
   }
 };
 
+exports.getAllBranchInvestors = async (req, res) => {
+  try {
+    const result = await Customer.find({
+      role: { $in: ["Investor", "Customer & investor"] },
+    }).sort({ name: 1 });
+
+    // Extract all unique saleIds for manual population
+    const saleIds = [];
+    result.forEach((customer) => {
+      customer.investmentDetails?.forEach((investment) => {
+        investment.interestHistory?.forEach((history) => {
+          if (history.saleId) {
+            saleIds.push(history.saleId);
+          }
+        });
+      });
+    });
+
+    // Fetch matching sales if any saleIds exist
+    let billMap = {};
+    if (saleIds.length > 0) {
+      const parentSales = await Sale.find({
+        "sales._id": { $in: saleIds },
+      });
+      parentSales.forEach((parent) => {
+        parent.sales.forEach((s) => {
+          if (saleIds.some((id) => id.toString() === s._id.toString())) {
+            billMap[s._id.toString()] = s.billNumber;
+          }
+        });
+      });
+    }
+
+    // Filter out soft-deleted investments and enrich with bill numbers
+    const investors = result
+      .map((customer) => {
+        const doc = customer.toObject({ getters: true });
+        if (doc.investmentDetails) {
+          doc.investmentDetails = doc.investmentDetails
+            .filter((inv) => !inv.isDeleted)
+            .map((investment) => {
+              if (investment.interestHistory) {
+                investment.interestHistory = investment.interestHistory.map(
+                  (history) => {
+                    if (history.saleId && billMap[history.saleId.toString()]) {
+                      return {
+                        ...history,
+                        // Inject billNumber into history record
+                        billNumber: billMap[history.saleId.toString()],
+                        // Optionally also populate saleId object structure if frontend expects it
+                        saleId: {
+                          _id: history.saleId,
+                          billNumber: billMap[history.saleId.toString()],
+                        },
+                      };
+                    }
+                    return history;
+                  },
+                );
+              }
+              return investment;
+            });
+        }
+        return doc;
+      })
+      .filter((customer) => customer.investmentDetails.length > 0);
+
+    res.status(200).json({
+      success: true,
+      count: investors.length,
+      data: investors,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // @desc    Get all customers for a branch
 // @route   GET /api/customers/my-branch
 // @access  Private (Staff/Admin)
@@ -125,6 +205,49 @@ exports.getMyBranchCustomers = async (req, res) => {
       success: true,
       count: customers.length,
       data: customers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Get all customers (Admin)
+// @route   GET /api/customers
+// @access  Private (Admin/Manager)
+exports.getAllCustomers = async (req, res) => {
+  try {
+    const customers = await Customer.aggregate([
+      {
+        $lookup: {
+          from: "credits", // Collection name is usually lowercase plural
+          localField: "_id",
+          foreignField: "customer",
+          as: "credits",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          phone: 1,
+          city: 1,
+          email: 1,
+          role: 1,
+          branchCode: 1,
+          investmentDetails: 1, // Include investment details for investors page
+          credits: 1,
+        },
+      },
+      {
+        $sort: { name: 1 },
+      },
+    ]);
+    res.status(200).json({
+      success: true,
+      count: customers.length,
+      customers: customers, // Key matches frontend expectation
     });
   } catch (error) {
     res.status(500).json({

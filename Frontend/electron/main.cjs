@@ -14,8 +14,8 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width:"100%",
-    height: "100%",
+    width: 1500,
+    height: 1500,
     title: "KES Billing Terminal",
     icon: path.join(__dirname, "../public/kes_logo.jpeg"),
     webPreferences: {

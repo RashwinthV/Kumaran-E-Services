@@ -46,7 +46,7 @@ function LoadingPage() {
               navigate("/branch-login");
             } else {
               // ASSIGNED - Continue to login flow
-                navigate("/login");
+                navigate("/auto_login");
             }
           }, 1000);
         } else {

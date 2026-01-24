@@ -9,8 +9,8 @@ app.commandLine.appendSwitch(
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1500,
+    height: 1500,
     title: "KES Admin",
     icon: path.join(__dirname, "../public/kes_logo.jpeg"),
     webPreferences: {
@@ -64,7 +64,7 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
     // Keep devtools open for debugging production issues if needed
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
   }
 }
 

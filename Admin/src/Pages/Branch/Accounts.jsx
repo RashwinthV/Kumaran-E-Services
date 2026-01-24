@@ -16,14 +16,14 @@ const AccountManagement = () => {
 
   // Extract unique branches
   const branches = Array.from(
-    new Map(accounts.map((acc) => [acc.branch._id, acc.branch])).values()
+    new Map(accounts.map((acc) => [acc.branch._id, acc.branch])).values(),
   );
 
   // Filter branches based on search
   const filteredBranches = branches.filter(
     (branch) =>
       branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      branch.code.toLowerCase().includes(searchTerm.toLowerCase())
+      branch.code.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Get unique UPI account names across all branches to create columns
@@ -31,8 +31,8 @@ const AccountManagement = () => {
     new Set(
       accounts
         .filter((acc) => acc.type === "Upi" && acc.upiAccountName)
-        .map((acc) => acc.upiAccountName)
-    )
+        .map((acc) => acc.upiAccountName),
+    ),
   ).sort();
 
   const calculateTotalByType = (branchAccounts, type) => {
@@ -43,7 +43,7 @@ const AccountManagement = () => {
 
   const getUpiBalanceByName = (branchAccounts, name) => {
     const acc = branchAccounts.find(
-      (a) => a.type === "Upi" && a.upiAccountName === name
+      (a) => a.type === "Upi" && a.upiAccountName === name,
     );
     return acc ? acc.currentBalance || 0 : 0;
   };
@@ -52,7 +52,7 @@ const AccountManagement = () => {
   const calculateBranchTotal = (branchAccounts) => {
     return branchAccounts.reduce(
       (sum, acc) => sum + (acc.currentBalance || 0),
-      0
+      0,
     );
   };
 
@@ -65,15 +65,20 @@ const AccountManagement = () => {
   };
 
   // Global Stats
-  const globalTotal = accounts.reduce(
-    (sum, acc) => sum + (acc.currentBalance || 0),
-    0
-  );
+  const globalTotal = accounts
+    .filter((acc) => acc.type !== "Credits")
+    .reduce((sum, acc) => sum + (acc.currentBalance || 0), 0);
+
   const globalUpi = accounts
     .filter((a) => a.type === "Upi")
     .reduce((sum, a) => sum + (a.currentBalance || 0), 0);
+
   const globalCash = accounts
     .filter((a) => a.type === "Cash")
+    .reduce((sum, a) => sum + (a.currentBalance || 0), 0);
+
+  const globalCredit = accounts
+    .filter((a) => a.type === "Credits")
     .reduce((sum, a) => sum + (a.currentBalance || 0), 0);
 
   // --- Handlers ---
@@ -116,6 +121,13 @@ const AccountManagement = () => {
               {formatCurrency(globalCash)}
             </span>
           </div>
+          <div className="vertical-divider"></div>
+          <div className="mini-stat">
+            <span className="label">Total Credit</span>
+            <span className="value" style={{ color: "#fd7e14" }}>
+              {formatCurrency(globalCredit)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -156,7 +168,7 @@ const AccountManagement = () => {
         <div className="list-body">
           {filteredBranches.map((branch) => {
             const branchAccounts = accounts.filter(
-              (acc) => acc.branch._id === branch._id
+              (acc) => acc.branch._id === branch._id,
             );
             const cashBal = calculateTotalByType(branchAccounts, "Cash");
             const creditBal = calculateTotalByType(branchAccounts, "Credits");

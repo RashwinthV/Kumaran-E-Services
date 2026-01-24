@@ -2,9 +2,12 @@ const mongoose = require("mongoose");
 const Branch = require("../models/Branch");
 const Sale = require("../models/Sale");
 const Customer = require("../models/Customer");
-// const Account = require("../models/Accounts");
+const Account = require("../models/Account");
 const Inventory = require("../models/Inventory");
-// const User = require("../models/user");
+const User = require("../models/User");
+const Product = require("../models/Product");
+const Credit = require("../models/Credit");
+const Expense = require("../models/Expense");
 
 // Helper to get date string YYYY-MM-DD
 const formatDate = (date) => date.toISOString().slice(0, 10);
@@ -36,7 +39,7 @@ exports.getDashboardStats = async (req, res) => {
     const startOfLastMonth = new Date(
       today.getFullYear(),
       today.getMonth() - 1,
-      1
+      1,
     );
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
@@ -47,9 +50,83 @@ exports.getDashboardStats = async (req, res) => {
     // Base queries
     const customerFilter = branchId ? { branch: branchId } : {};
     const saleFilter = branchId ? { branch: branchId } : {};
+    // const accountFilter = branchId ? { branch: branchId } : {}; // Removed as per request
 
-    // 1. Core Counts & Growth
+    // Core Counts
     const totalUsers = await Customer.countDocuments(customerFilter);
+    const totalProducts = await Product.countDocuments({}); // Global catalog
+    // const totalAccounts = await Account.countDocuments(accountFilter); // Removed as per request
+
+    // Credit Stats
+    // Filter for any credit that is NOT settled and has outstanding amount > 0
+    const creditFilter = branchId
+      ? {
+          branch: branchId,
+          status: { $nin: ["Settled", "settled", "SETTLED"] },
+          totalAmount: { $gt: 0 },
+        }
+      : {
+          status: { $nin: ["Settled", "settled", "SETTLED"] },
+          totalAmount: { $gt: 0 },
+        };
+
+    const distinctCreditCustomers = await Credit.distinct(
+      "customer",
+      creditFilter,
+    );
+    const totalCreditCustomers = distinctCreditCustomers.length;
+
+    const creditAgg = await Credit.aggregate([
+      { $match: creditFilter },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]);
+    const totalCreditAmount = creditAgg.length > 0 ? creditAgg[0].total : 0;
+
+    // Expense Stats
+    const expenseFilter = branchId ? { branch: branchId } : {};
+    const expenseAgg = await Expense.aggregate([
+      { $match: expenseFilter },
+      {
+        $group: {
+          _id: "$category",
+          total: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    let expenseStats = {
+      total: 0,
+      product: 0,
+      employee: 0,
+      operational: 0,
+    };
+
+    expenseAgg.forEach((item) => {
+      // Ensure we handle potential null/undefined categories gracefully, though Schema enforces it
+      const category = (item._id || "").toString().toLowerCase();
+
+      expenseStats.total += item.total;
+
+      if (category === "product") {
+        expenseStats.product += item.total;
+      } else if (category === "employee") {
+        expenseStats.employee += item.total;
+      } else if (category === "rent" || category === "other") {
+        expenseStats.operational += item.total;
+      }
+    });
+
+    // Employee Count (Users tables uses branchCode, not ObjectId)
+    let employeeFilter = { isActive: true };
+
+    if (branchId) {
+      const branchDoc = await Branch.findById(branchId);
+      if (branchDoc) {
+        employeeFilter.branchCode = branchDoc.code;
+      }
+    }
+    const totalEmployees = await User.countDocuments(employeeFilter);
+
     const newUsersThisMonth = await Customer.countDocuments({
       ...customerFilter,
       createdAt: { $gte: startOfThisMonth },
@@ -60,7 +137,7 @@ exports.getDashboardStats = async (req, res) => {
     });
     const userGrowth = calculatePercentageChange(
       newUsersThisMonth,
-      newUsersLastMonth
+      newUsersLastMonth,
     );
 
     // 2. Revenue & Bills (Aggregated)
@@ -140,16 +217,16 @@ exports.getDashboardStats = async (req, res) => {
 
     const revenueGrowth = calculatePercentageChange(
       revenueThisMonth,
-      revenueLastMonth
+      revenueLastMonth,
     );
     const billsGrowth = calculatePercentageChange(
       billsThisMonth,
-      billsLastMonth
+      billsLastMonth,
     );
 
     // 3. Today's Branch Stats & Payment Split
     const branches = await Branch.find({ status: "Active" }).select(
-      "name code status"
+      "name code status",
     );
     const todaysSalesFilter = branchId
       ? { date: dateKey, branch: branchId }
@@ -163,7 +240,7 @@ exports.getDashboardStats = async (req, res) => {
       const branchSale = todaysSales.find(
         (s) =>
           (s.branch && s.branch.code === branch.code) ||
-          (s.branch && String(s.branch._id) === String(branch._id))
+          (s.branch && String(s.branch._id) === String(branch._id)),
       );
       return {
         id: branch._id,
@@ -401,6 +478,10 @@ exports.getDashboardStats = async (req, res) => {
         revenueGrowth,
         totalBills,
         billsGrowth,
+        totalProducts,
+        totalCreditCustomers,
+        totalCreditAmount,
+        totalEmployees,
         todayTotalRevenue: branchStats.reduce((sum, b) => sum + b.revenue, 0),
         todayTotalBills: branchStats.reduce((sum, b) => sum + b.bills, 0),
         branchStats,
@@ -418,6 +499,7 @@ exports.getDashboardStats = async (req, res) => {
         })),
         recentTransactions: recentTransactions.slice(0, 5),
         topStaff,
+        expenseStats,
       },
     });
   } catch (error) {

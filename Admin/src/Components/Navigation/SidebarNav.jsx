@@ -42,6 +42,18 @@ const SidebarNav = () => {
       icon: "bi-clipboard-data",
       path: "/report",
     },
+    {
+      id: "customer",
+      label: "Customer",
+      faicon: "cent-sign",
+      path: "/customers",
+    },
+    {
+      id: "investors",
+      label: "Investors",
+      icon: "bi-briefcase",
+      path: "/investors",
+    }, 
   ];
 
   const handleLogout = async () => {
@@ -88,10 +100,8 @@ const SidebarNav = () => {
             }}
           >
             <i
-              className={`bi ${
-                sidebarOpen
-                  ? "bi-chevron-double-left"
-                  : "bi-chevron-double-right"
+              className={`fas ${
+                sidebarOpen ? "fa-angle-double-left" : "fa-angle-double-right"
               } fs-6`}
             ></i>
           </button>
@@ -113,7 +123,7 @@ const SidebarNav = () => {
               textTransform: "uppercase",
             }}
           >
-            {sidebarOpen ? "Admin Console" : "MENU"}
+            {sidebarOpen ? "Main Console" : "MENU"}
           </span>
         </div>
 
@@ -121,10 +131,13 @@ const SidebarNav = () => {
         <nav className="px-2">
           <ul className="nav flex-column gap-2">
             {navItems.map((item) => {
+              const currentFullPath = location.pathname + location.hash;
               const isActive =
+                currentFullPath === item.path ||
                 location.pathname === item.path ||
-                (item.path.startsWith("#") &&
-                  window.location.hash === item.path);
+                (item.subItems &&
+                  item.subItems.some((sub) => currentFullPath === sub.path));
+
               return (
                 <li key={item.id} className="nav-item">
                   <Link
@@ -153,15 +166,17 @@ const SidebarNav = () => {
                       }
                     }}
                   >
-                    {/* Fixed Icon Container - exactly 80px/sidebar width minus padding to center the icon */}
+                    {/* Fixed Icon Container */}
                     <div
-                      className="d-flex justify-content-center align-items-center"
+                      className="d-flex justify-content-center align-items-center nav-icon-wrapper"
                       style={{ width: "64px", minWidth: "64px", flexShrink: 0 }}
                     >
                       <i
-                        className={`bi ${item.icon} ${
-                          isActive ? "fs-4" : "fs-5"
-                        }`}
+                        className={`${
+                          item.icon
+                            ? `bi ${item.icon}`
+                            : `fa-solid fa-${item.faicon}`
+                        } ${isActive ? "fs-4" : "fs-5"}`}
                       ></i>
                     </div>
 
@@ -194,6 +209,51 @@ const SidebarNav = () => {
                       </div>
                     )}
                   </Link>
+
+                  {/* Sub-items */}
+                  {item.subItems && sidebarOpen && (
+                    <ul className="nav flex-column ps-4 mt-1 gap-1">
+                      {item.subItems.map((subItem) => {
+                        const isSubActive = currentFullPath === subItem.path;
+                        return (
+                          <li key={subItem.id} className="nav-item">
+                            <Link
+                              to={subItem.path}
+                              className={`nav-link d-flex align-items-center rounded-2 px-2 py-2 ${
+                                isSubActive
+                                  ? "bg-white bg-opacity-25"
+                                  : "text-white"
+                              }`}
+                              style={{
+                                fontSize: "0.85rem",
+                                textDecoration: "none",
+                                color: "rgba(255,255,255,0.9)",
+                                opacity: isSubActive ? 1 : 0.7,
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "rgba(255, 255, 255, 0.15)";
+                                e.currentTarget.style.opacity = "1";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSubActive) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "transparent";
+                                  e.currentTarget.style.opacity = "0.7";
+                                }
+                              }}
+                            >
+                              <i
+                                className={`bi ${subItem.icon} me-2`}
+                                style={{ fontSize: "0.9rem" }}
+                              ></i>
+                              {subItem.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })}
@@ -201,18 +261,11 @@ const SidebarNav = () => {
         </nav>
         <div className="mt-auto p-3 w-100">
           <button
-            className="btn w-100 d-flex align-items-center rounded-3 text-white"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.1)",
-              border: "none",
-              height: "50px",
-              justifyContent: sidebarOpen ? "flex-start" : "center",
-              paddingLeft: sidebarOpen ? "20px" : "0",
-            }}
+            className="logout-button w-100 justify-content-center"
             onClick={handleLogout}
           >
             <i className="bi bi-box-arrow-right fs-5"></i>
-            {sidebarOpen && <span className="ms-3">Logout</span>}
+            {sidebarOpen && <span className="ms-2">Logout</span>}
           </button>
         </div>
       </div>

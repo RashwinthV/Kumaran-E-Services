@@ -78,7 +78,7 @@ const BranchLogin = () => {
             <div className="visual-overlay"></div>
             <div className="visual-content">
               <div className="company-logo-large">
-                <img src="/zyrix tech.png" alt="Kumaran E-Services" />
+                <img src="kes_logo.jpeg" alt="Kumaran E-Services" />
               </div>
               <h2 className="company-name-large">Kumaran E-Services</h2>
 

@@ -37,6 +37,9 @@ import { useAuth } from "./Context/AuthContext";
 import ScrollToTop from "./Components/ScrollToTop";
 import Reports from "./Pages/Reports";
 import BranchReport from "./Pages/Branch/BranchReport";
+import Customer from "./Pages/Customer";
+import Investors from "./Pages/Investors";
+import InvestorDetailsPage from "./Pages/InvestorDetailsPage";
 
 // Layout wrapper to conditionally show Header and Sidebar
 const Layout = ({ children }) => {
@@ -105,6 +108,10 @@ function AppContent() {
             <Route path="/products" element={<Products />} />
             <Route path="/branch/:id/products" element={<BranchProducts />} />
             <Route path="/report" element={<Reports />} />
+            <Route path="/customers" element={<Customer />} />
+
+            <Route path="/investors" element={<Investors />} />
+            <Route path="/investor/:id" element={<InvestorDetailsPage />} />
 
             {/* Accounts Route */}
             <Route

@@ -21,6 +21,7 @@ import {
   CACHE_KEYS,
   TTL,
 } from "../utils/cacheUtils";
+import { useCustomer } from "../Context/CustomerContext";
 
 const Dashboard = () => {
   const { user, accessToken } = useAuth();
@@ -29,6 +30,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [isChartReady, setIsChartReady] = useState(false);
+  const { investors, fetchInvestors } =useCustomer();
 
   useEffect(() => {
     // Small delay to ensure grid layout is finished before rendering Recharts
@@ -39,11 +41,84 @@ const Dashboard = () => {
   useEffect(() => {
     getBranches();
     fetchDashboardStats(selectedBranch);
+    fetchInvestors();
   }, [getBranches, selectedBranch]);
+
+  const processedInvestors = investors.flatMap((inv) => {
+    const investments =
+      inv.investmentDetails ||
+      (inv.investorDetails ? [inv.investorDetails] : []);
+
+    return investments.map((investment) => {
+      const details = investment || {};
+      const currentPrincipal =
+        details.currentPrincipal === 0 &&
+        (!details.payoutHistory || details.payoutHistory.length === 0)
+          ? details.principalAmount
+          : (details.currentPrincipal ?? details.principalAmount ?? 0);
+
+      return {
+        ...inv,
+        id: details._id || inv._id, // Use Investment ID if available
+        customerId: inv._id,
+        investmentId: details.id || details._id,
+        ...details, // Flatten investment details
+        currentPrincipal,
+        totalInterestPaid: details.totalInterestPaid || 0, // Prevent undefined error
+      };
+    });
+  });
+  const calculateUnpaidInterest = (investor) => {
+    // If we have DB field, use it.
+    // If strictly DB driven: return investor.unpaidInterest || 0;
+
+    // If user wants to see real-time accrual including current partial month:
+    /*
+      const lastAccrual = investor.lastAccrualDate ? new Date(investor.lastAccrualDate) : new Date(investor.startDate);
+      const now = new Date();
+      // Calculate days elapsed since lastAccrual for partial... 
+      // For now, let's respect the "Maturity" model requested. 
+      // Typically "Unpaid" implies "Due". Unmatured interest is not yet due.
+    */
+
+    // RETURNING PERSISTED UNPAID INTEREST
+    // But fall back to old calc if new system hasn't run yet?
+    if (investor.unpaidInterest !== undefined) {
+      return investor.unpaidInterest;
+    }
+
+    // Fallback for legacy/unmigrated data
+    const accumulated = calculateAccumulatedInterest(investor);
+    const unpaid = accumulated - investor.totalInterestPaid;
+    return Math.max(0, unpaid);
+  };
+  const calculateAccumulatedInterest = (investor) => {
+    const startDate = new Date(investor.startDate);
+    const currentDate = new Date();
+    const monthsElapsed = Math.floor(
+      (currentDate - startDate) / (1000 * 60 * 60 * 24 * 30.44),
+    );
+
+    const principal = investor.principalAmount;
+    const monthlyRate = investor.interestRate / 100; // Treated as monthly rate now
+
+    let totalAccumulated = 0;
+
+    if (investor.interestType === "simple") {
+      // Simple interest: P × R × T
+      totalAccumulated = principal * monthlyRate * monthsElapsed;
+    } else {
+      // Compound interest: P × (1 + R)^T - P
+      totalAccumulated =
+        principal * Math.pow(1 + monthlyRate, monthsElapsed) - principal;
+    }
+
+    return totalAccumulated;
+  };
 
   const fetchDashboardStats = async (
     branchId = "all",
-    forceRefresh = false
+    forceRefresh = false,
   ) => {
     try {
       if (!accessToken) return;
@@ -211,6 +286,283 @@ const Dashboard = () => {
                   <span className="stat-change neutral">
                     {stats?.todayTotalBills} bills today
                   </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Unified Secondary Stats Grid (4x2) */}
+            <div className="row row-cols-1 row-cols-md-4 g-3 mb-4">
+              {/* 1. Total Investors */}
+              <div className="col">
+                <div className="card border-0 shadow-sm bg-primary bg-opacity-10 h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">Total Investors</p>
+                        <h3 className="fw-bold text-primary mb-0">
+                          {processedInvestors.length}
+                        </h3>
+                      </div>
+                      <i className="bi bi-people fs-2 text-primary opacity-25"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+              {/* 2. Total Branches */}
+              <div className="col">
+                <div
+                  className="card border-0 shadow-sm bg-purple bg-opacity-10 h-100"
+                  style={{ backgroundColor: "rgba(111, 66, 193, 0.1)" }}
+                >
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">Total Branches</p>
+                        <h3
+                          className="fw-bold text-purple mb-0"
+                          style={{ color: "#6f42c1" }}
+                        >
+                          {branches?.length || 0}
+                        </h3>
+                      </div>
+                      <i
+                        className="bi bi-shop-window fs-2 opacity-25"
+                        style={{ color: "#6f42c1" }}
+                      ></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Total Employees */}
+              <div className="col">
+                <div className="card border-0 shadow-sm bg-danger bg-opacity-10 h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">Total Employees</p>
+                        <h3 className="fw-bold text-danger mb-0">
+                          {stats?.totalEmployees || 0}
+                        </h3>
+                      </div>
+                      <i className="bi bi-person-badge fs-2 text-danger opacity-25"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Total Products */}
+              <div className="col">
+                <div
+                  className="card border-0 shadow-sm bg-indigo bg-opacity-10 h-100"
+                  style={{ backgroundColor: "rgba(102, 16, 242, 0.1)" }}
+                >
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">Total Products</p>
+                        <h3
+                          className="fw-bold text-indigo mb-0"
+                          style={{ color: "#6610f2" }}
+                        >
+                          {stats?.totalProducts || 0}
+                        </h3>
+                      </div>
+                      <i
+                        className="bi bi-box-seam fs-2 opacity-25"
+                        style={{ color: "#6610f2" }}
+                      ></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+                  {/* 5. Total Investment */}
+              <div className="col">
+                <div className="card border-0 shadow-sm bg-success bg-opacity-10 h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">
+                          Total Investment
+                        </p>
+                        <h3 className="fw-bold text-success mb-0">
+                          ₹
+                          {processedInvestors
+                            .reduce(
+                              (sum, inv) => sum + (inv.currentPrincipal || 0),
+                              0,
+                            )
+                            .toLocaleString()}
+                        </h3>
+                      </div>
+                      <i className="bi bi-cash-stack fs-2 text-success opacity-25"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. Pending Interest */}
+              <div className="col">
+                <div className="card border-0 shadow-sm bg-info bg-opacity-10 h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">
+                          Pending Interest
+                        </p>
+                        <h3 className="fw-bold text-info mb-0">
+                          ₹
+                          {processedInvestors
+                            .reduce(
+                              (sum, inv) => sum + calculateUnpaidInterest(inv),
+                              0,
+                            )
+                            .toFixed(2)}
+                        </h3>
+                      </div>
+                      <i className="bi bi-clock-history fs-2 text-info opacity-25"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 7. Credit Customers */}
+              <div className="col">
+                <div className="card border-0 shadow-sm bg-primary bg-opacity-10 h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">
+                          Credit Customers
+                        </p>
+                        <h3 className="fw-bold text-primary mb-0">
+                          {stats?.totalCreditCustomers || 0}
+                        </h3>
+                      </div>
+                      <i className="bi bi-people-fill fs-2 text-primary opacity-25"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 8. Total Credit Amt */}
+              <div className="col">
+                <div className="card border-0 shadow-sm bg-warning bg-opacity-10 h-100">
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <p className="text-muted small mb-1">
+                          Total Credit Amt
+                        </p>
+                        <h4 className="fw-bold text-warning mb-0">
+                          {formatCurrency(stats?.totalCreditAmount)}
+                        </h4>
+                      </div>
+                      <i className="bi bi-currency-rupee fs-2 text-warning opacity-25"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Expense Stats Row */}
+            <div className="row row-cols-1 row-cols-md-4 g-3 mb-4">
+              <div className="col">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body d-flex align-items-center">
+                    <div
+                      className="stat-icon-box rounded-4 p-3 me-3 bg-purple bg-opacity-10"
+                      style={{ backgroundColor: "rgba(111, 66, 193, 0.1)" }}
+                    >
+                      <i
+                        className="bi bi-currency-rupee fs-3"
+                        style={{ color: "#6f42c1" }}
+                      ></i>
+                    </div>
+                    <div>
+                      <p
+                        className="text-muted small fw-bold mb-1 text-uppercase"
+                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
+                      >
+                        Total Spent
+                      </p>
+                      <h4 className="fw-bold text-dark mb-0">
+                        {formatCurrency(stats?.expenseStats?.total)}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body d-flex align-items-center">
+                    <div
+                      className="stat-icon-box rounded-4 p-3 me-3 bg-indigo bg-opacity-10"
+                      style={{ backgroundColor: "rgba(102, 16, 242, 0.1)" }}
+                    >
+                      <i
+                        className="bi bi-box-seam fs-3"
+                        style={{ color: "#6610f2" }}
+                      ></i>
+                    </div>
+                    <div>
+                      <p
+                        className="text-muted small fw-bold mb-1 text-uppercase"
+                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
+                      >
+                        Product Cost
+                      </p>
+                      <h4 className="fw-bold text-dark mb-0">
+                        {formatCurrency(stats?.expenseStats?.product)}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body d-flex align-items-center">
+                    <div className="stat-icon-box rounded-4 p-3 me-3 bg-success bg-opacity-10">
+                      <i className="bi bi-people fs-3 text-success"></i>
+                    </div>
+                    <div>
+                      <p
+                        className="text-muted small fw-bold mb-1 text-uppercase"
+                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
+                      >
+                        Employee Pay
+                      </p>
+                      <h4 className="fw-bold text-dark mb-0">
+                        {formatCurrency(stats?.expenseStats?.employee)}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body d-flex align-items-center">
+                    <div className="stat-icon-box rounded-4 p-3 me-3 bg-danger bg-opacity-10">
+                      <i className="bi bi-building fs-3 text-danger"></i>
+                    </div>
+                    <div>
+                      <p
+                        className="text-muted small fw-bold mb-1 text-uppercase"
+                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
+                      >
+                        Operational
+                      </p>
+                      <h4 className="fw-bold text-dark mb-0">
+                        {formatCurrency(stats?.expenseStats?.operational)}
+                      </h4>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

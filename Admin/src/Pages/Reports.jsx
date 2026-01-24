@@ -31,6 +31,8 @@ const Reports = () => {
     totalCustomers: 0,
     totalRefunds: 0,
   });
+  const [expenses, setExpenses] = useState([]);
+  const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [refunds, setRefunds] = useState([]);
 
   const [filters, setFilters] = useState({
@@ -62,19 +64,31 @@ const Reports = () => {
         if (cached && cached.sales) {
           setData(cached.sales);
           setRefunds(cached.refunds || []);
-          applyFilters(cached.sales, filters, cached.refunds || []);
+          setExpenses(cached.expenses || []);
+          applyFilters(
+            cached.sales,
+            filters,
+            cached.refunds || [],
+            cached.expenses || [],
+          );
           setLoading(false);
           return;
         }
       }
 
-      // Fetch sales data for both Sales Report and Branch Performance
+      // Fetch sales data
       if (filters.type === "sales" || filters.type === "branch-performance") {
-        const response = await axios.get(`${baseURL}/sales`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (response.data.success) {
-          const rawData = response.data.data.map((item) => {
+        const [salesRes, expenseRes] = await Promise.all([
+          axios.get(`${baseURL}/sales`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
+          axios.get(`${baseURL}/expenses`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
+        ]);
+
+        if (salesRes.data.success) {
+          const rawData = salesRes.data.data.map((item) => {
             const createdDate = new Date(item.createdAt);
             const dateStr =
               item.dateStr || createdDate.toISOString().split("T")[0];
@@ -115,15 +129,22 @@ const Reports = () => {
               isService: item.isService,
             };
           });
+
+          const rawExpenses = expenseRes.data.success
+            ? expenseRes.data.data
+            : [];
+
           setData(rawData);
-          const refundData = response.data.refunds || [];
+          const refundData = salesRes.data.refunds || [];
           setRefunds(refundData);
+          setExpenses(rawExpenses);
+
           await setCache(
             cacheKey,
-            { sales: rawData, refunds: refundData },
+            { sales: rawData, refunds: refundData, expenses: rawExpenses },
             TTL.SHORT,
           );
-          applyFilters(rawData, filters, refundData);
+          applyFilters(rawData, filters, refundData, rawExpenses);
         }
       }
     } catch (error) {
@@ -134,20 +155,25 @@ const Reports = () => {
   };
 
   useEffect(() => {
-    if (data.length > 0) {
-      applyFilters(data, filters, refunds);
+    if (data.length > 0 || expenses.length > 0) {
+      applyFilters(data, filters, refunds, expenses);
     }
-  }, [filters, data, refunds]);
+  }, [filters, data, refunds, expenses]);
 
   const handleGenerate = () => {
     fetchData(true);
   };
 
-  const applyFilters = (sourceData, currentFilters, sourceRefunds = []) => {
+  const applyFilters = (
+    sourceData,
+    currentFilters,
+    sourceRefunds = [],
+    sourceExpenses = [],
+  ) => {
     let result = [...sourceData];
+    let expenseResult = [...sourceExpenses];
 
-    // Branch Filter (using rawBranchId)
-    // Only apply for Sales Report, NOT for Branch Performance (which compares all branches)
+    // Branch Filter
     if (
       currentFilters.type !== "branch-performance" &&
       currentFilters.branch !== "all"
@@ -156,10 +182,11 @@ const Reports = () => {
       result = result.filter(
         (item) => String(item.rawBranchId) === String(currentFilters.branch),
       );
+      expenseResult = expenseResult.filter(
+        (exp) => String(exp.branch) === String(currentFilters.branch),
+      );
     }
 
-    // Date Filter Logic
-    const todayStart = new Date();
     // Date Filter Logic
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -171,60 +198,52 @@ const Reports = () => {
       return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     };
 
-    if (currentFilters.dateRange === "today") {
-      result = result.filter(
-        (item) => checkDate(item.date).getTime() === today.getTime(),
-      );
-    } else if (currentFilters.dateRange === "yesterday") {
-      result = result.filter(
-        (item) => checkDate(item.date).getTime() === yesterday.getTime(),
-      );
-    } else if (currentFilters.dateRange === "this_week") {
-      const day = today.getDay();
-      const diff = (day === 0 ? -6 : 1) - day;
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() + diff);
-      weekStart.setHours(0, 0, 0, 0);
-      result = result.filter((item) => checkDate(item.date) >= weekStart);
-    } else if (currentFilters.dateRange === "last_week") {
-      const day = today.getDay();
-      const diffToLastMonday = (day === 0 ? -6 : 1) - day - 7;
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() + diffToLastMonday);
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
+    const filterByDate = (dateVal) => {
+      const itemDate = checkDate(dateVal);
 
-      result = result.filter((item) => {
-        const d = checkDate(item.date);
-        return d >= weekStart && d <= weekEnd;
-      });
-    } else if (currentFilters.dateRange === "this_month") {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      result = result.filter((item) => checkDate(item.date) >= monthStart);
-    } else if (currentFilters.dateRange === "last_month") {
-      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const end = new Date(now.getFullYear(), now.getMonth(), 0);
-      result = result.filter((item) => {
-        const d = checkDate(item.date);
-        return d >= start && d <= end;
-      });
-    } else if (currentFilters.dateRange === "custom") {
-      if (currentFilters.startDate && currentFilters.endDate) {
-        const start = new Date(currentFilters.startDate);
-        const end = new Date(currentFilters.endDate);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-
-        result = result.filter((item) => {
-          const d = checkDate(item.date);
-          return d >= start && d <= end;
-        });
-      } else {
-        result = [];
+      if (currentFilters.dateRange === "today") {
+        return itemDate.getTime() === today.getTime();
+      } else if (currentFilters.dateRange === "yesterday") {
+        return itemDate.getTime() === yesterday.getTime();
+      } else if (currentFilters.dateRange === "this_week") {
+        const day = today.getDay();
+        const diff = (day === 0 ? -6 : 1) - day;
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() + diff);
+        weekStart.setHours(0, 0, 0, 0);
+        return itemDate >= weekStart;
+      } else if (currentFilters.dateRange === "last_week") {
+        const day = today.getDay();
+        const diffToLastMonday = (day === 0 ? -6 : 1) - day - 7;
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() + diffToLastMonday);
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        return itemDate >= weekStart && itemDate <= weekEnd;
+      } else if (currentFilters.dateRange === "this_month") {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        return itemDate >= monthStart;
+      } else if (currentFilters.dateRange === "last_month") {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), 0);
+        return itemDate >= start && itemDate <= end;
+      } else if (currentFilters.dateRange === "custom") {
+        if (currentFilters.startDate && currentFilters.endDate) {
+          const start = new Date(currentFilters.startDate);
+          const end = new Date(currentFilters.endDate);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(23, 59, 59, 999);
+          return itemDate >= start && itemDate <= end;
+        }
+        return false;
       }
-    }
+      return true;
+    };
+
+    result = result.filter((item) => filterByDate(item.date));
+    expenseResult = expenseResult.filter((exp) => filterByDate(exp.date));
 
     // Bill Type Filter
     if (currentFilters.billType !== "all") {
@@ -258,6 +277,7 @@ const Reports = () => {
     }
 
     setFilteredData(result);
+    setFilteredExpenses(expenseResult);
 
     // Stats calc needs full sales list for totals, even if view is grouped
     // But for Branch perf view, stats should reflect total sales of all branches in view
@@ -456,6 +476,209 @@ const Reports = () => {
       addTableSection("=== GST INCLUSIVE SALES ===", inclusiveRows);
       addTableSection("=== GST EXCLUSIVE SALES ===", exclusiveRows);
       addTableSection("=== NON-GST / EXEMPT SALES ===", nonGstRows);
+
+      // === PROFIT & LOSS TABLE (Unified Style) ===
+
+      // 1. Calculations (Keep existing logic)
+      let revProductList = 0;
+      let revServiceList = 0;
+      let totCOGS = 0;
+
+      displayData.forEach((sale) => {
+        const saleTotal = sale.amount || 0;
+        if (sale.isService) {
+          revServiceList += saleTotal;
+        } else {
+          revProductList += saleTotal;
+        }
+        (sale.items || []).forEach((p) => {
+          totCOGS += (p.resolvedCP || 0) * (p.qty || 0);
+        });
+      });
+
+      const totalRevenue = revProductList + revServiceList;
+      const grossProfit = totalRevenue - totCOGS;
+      const grossMargin =
+        totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+
+      let expEmployee = 0;
+      let expRent = 0;
+      let expOther = 0;
+      let expProductOverhead = 0;
+
+      filteredExpenses.forEach((exp) => {
+        const cat = (exp.category || "").toLowerCase();
+        if (cat === "employee") expEmployee += exp.amount;
+        else if (cat === "rent") expRent += exp.amount;
+        else if (cat === "product") expProductOverhead += exp.amount;
+        else expOther += exp.amount;
+      });
+
+      const totalOperatingExpenses =
+        expEmployee + expRent + expProductOverhead + expOther;
+      const netProfit = grossProfit - totalOperatingExpenses;
+      const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+      // 2. Build Table Data
+      const profitTableRows = [
+        // Revenue
+        [
+          "Sales Revenue (Products)",
+          "Income",
+          revProductList,
+          (totalRevenue > 0
+            ? (revProductList / totalRevenue) * 100
+            : 0
+          ).toFixed(1) + "%",
+        ],
+        [
+          "Service Revenue",
+          "Income",
+          revServiceList,
+          (totalRevenue > 0
+            ? (revServiceList / totalRevenue) * 100
+            : 0
+          ).toFixed(1) + "%",
+        ],
+        ["TOTAL REVENUE", "Total Income", totalRevenue, "100.0%"],
+        // COGS
+        [
+          "Cost of Goods Sold",
+          "COGS",
+          totCOGS,
+          (totalRevenue > 0 ? (totCOGS / totalRevenue) * 100 : 0).toFixed(1) +
+            "%",
+        ],
+        // Gross Profit
+        ["GROSS PROFIT", "Profit", grossProfit, grossMargin.toFixed(1) + "%"],
+        // Expenses
+        [
+          "Employee Salaries",
+          "Expense",
+          expEmployee,
+          (totalRevenue > 0 ? (expEmployee / totalRevenue) * 100 : 0).toFixed(
+            1,
+          ) + "%",
+        ],
+        [
+          "Rent / Infrastructure",
+          "Expense",
+          expRent,
+          (totalRevenue > 0 ? (expRent / totalRevenue) * 100 : 0).toFixed(1) +
+            "%",
+        ],
+        [
+          "Product Overhead",
+          "Expense",
+          expProductOverhead,
+          (totalRevenue > 0
+            ? (expProductOverhead / totalRevenue) * 100
+            : 0
+          ).toFixed(1) + "%",
+        ],
+        [
+          "Other Expenses",
+          "Expense",
+          expOther,
+          (totalRevenue > 0 ? (expOther / totalRevenue) * 100 : 0).toFixed(1) +
+            "%",
+        ],
+        [
+          "TOTAL OPERATING EXPENSES",
+          "Total Expense",
+          totalOperatingExpenses,
+          (totalRevenue > 0
+            ? (totalOperatingExpenses / totalRevenue) * 100
+            : 0
+          ).toFixed(1) + "%",
+        ],
+        // Net Profit
+        [
+          "NET PROFIT / LOSS",
+          "Net Income",
+          netProfit,
+          netMargin.toFixed(1) + "%",
+        ],
+      ];
+
+      worksheet.addRow([]);
+
+      // Section Title
+      const plTitleRow = worksheet.addRow(["PROFIT & LOSS STATEMENT"]);
+      plTitleRow.font = { bold: true, size: 16, color: { argb: "FF1F4E78" } };
+      worksheet.mergeCells(`A${plTitleRow.number}:D${plTitleRow.number}`);
+      plTitleRow.alignment = { horizontal: "center" };
+      worksheet.addRow([]);
+
+      // Headers
+      const plHeaders = ["Description", "Category", "Amount", "% of Revenue"];
+      const plHeaderRow = worksheet.addRow(plHeaders);
+      plHeaderRow.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 14 };
+
+      plHeaderRow.eachCell((cell, colNumber) => {
+        if (colNumber <= 4) {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FF4F81BD" },
+          };
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        }
+      });
+
+      // Rows
+      profitTableRows.forEach((row) => {
+        const excelRow = worksheet.addRow(row);
+        excelRow.font = { size: 13 };
+
+        // Bold totals lines
+        if (
+          row[0].startsWith("TOTAL") ||
+          row[0].startsWith("GROSS") ||
+          row[0].startsWith("NET")
+        ) {
+          excelRow.font = { bold: true, size: 13 };
+          // Optional: Light background for summary lines
+          excelRow.eachCell((c, col) => {
+            if (col <= 4)
+              c.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFE9E9E9" },
+              };
+          });
+        }
+
+        // Color Net Profit
+        if (row[0].startsWith("NET")) {
+          const color = row[2] >= 0 ? "FF00B050" : "FFFF0000";
+          excelRow.font = { bold: true, size: 14, color: { argb: color } };
+        }
+
+        // Currency format col 3
+        excelRow.getCell(3).numFmt = `"₹"#,##0.00`;
+
+        excelRow.eachCell((cell, col) => {
+          if (col <= 4) {
+            cell.border = {
+              top: { style: "thin" },
+              left: { style: "thin" },
+              bottom: { style: "thin" },
+              right: { style: "thin" },
+            };
+            if (col === 3 || col === 4)
+              cell.alignment = { horizontal: "right" };
+          }
+        });
+      });
+
+      worksheet.addRow([]);
 
       // === REFUND SECTION ===
       const filteredRefunds = (refunds || []).filter((r) => {

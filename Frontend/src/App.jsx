@@ -11,7 +11,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 
-// Pages
 import Login from "./Pages/User/Login";
 import BranchLogin from "./Pages/Branch/BranchLogin";
 import ProductBilling from "./Pages/Billing/ProductBilling";
@@ -50,7 +49,7 @@ import GlobalHeader from "./Components/Navigation/GlobalHeader";
 // Layout wrapper to conditionally show Header and Sidebar
 const Layout = ({ children }) => {
   const location = useLocation();
-  const noHeaderRoutes = ["/", "/login", "/register", "/branch-login"];
+  const noHeaderRoutes = ["/", "/login", "/register", "/branch-login","/auto_login"];
 
   const hideHeader = noHeaderRoutes.includes(location.pathname);
 
@@ -90,6 +89,7 @@ import SaleHistory from "./Pages/Branch/SaleHistory";
 import Investors from "./Pages/Branch/Investors";
 import Customer from "./Pages/Branch/Customer";
 import Expenses from "./Pages/Branch/Expenses";
+import AutoLogin from "./Pages/User/AutoLogin";
 
 function GlobalKeyboardListener() {
   useGlobalShortcuts();
@@ -107,6 +107,8 @@ function AppContent() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LoadingPage />} />
+          <Route path="/auto_login" element={<AutoLogin />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/branch-login" element={<BranchLogin />} />
 
