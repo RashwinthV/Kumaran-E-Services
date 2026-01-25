@@ -44,10 +44,10 @@ export const AuthProvider = ({ children }) => {
       // Add flag to prevent this request from triggering the interceptor
       const response = await axios.post(
         `${API_URL}/auth/refresh`,
-        {},
+        { portal: "admin" },
         {
           skipAuthRefresh: true, // Custom flag to skip interceptor
-        }
+        },
       );
 
       if (response.data.success) {
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     const responseInterceptor = axios.interceptors.response.use(
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
 
     return () => {
@@ -195,7 +195,7 @@ export const AuthProvider = ({ children }) => {
           {},
           {
             headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          },
         );
       }
       // Cookie is cleared by server
@@ -206,14 +206,14 @@ export const AuthProvider = ({ children }) => {
       clearAppCache(); // Clear application cache on logout
     }
   };
- 
+
   // Update password function
   const updatePassword = async (currentPassword, newPassword) => {
     try {
       const response = await axios.put(
         `${API_URL}/auth/updatepassword`,
         { currentPassword, newPassword },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       if (response.data.success) {

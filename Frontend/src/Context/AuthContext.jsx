@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(
         API_ENDPOINTS.AUTH.REFRESH,
-        {},
+        { portal: "frontend" },
         {
           skipAuthRefresh: true, // Custom flag to skip interceptor
         },

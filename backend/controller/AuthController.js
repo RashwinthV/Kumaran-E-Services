@@ -23,7 +23,6 @@ const generateRefreshToken = (id, tokenVersion) => {
 exports.login = async (req, res) => {
   try {
     const { identifier, password, portal, branchCode } = req.body;
-    
 
     if (!identifier || !password) {
       return res.status(400).json({
@@ -105,10 +104,12 @@ exports.login = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Set refresh token as HTTP-only cookie
-    res.cookie("refreshToken", refreshToken, {
+    const cookieName =
+      portal === "admin" ? "adminRefreshToken" : "refreshToken";
+    res.cookie(cookieName, refreshToken, {
       httpOnly: true, // Cannot be accessed via JavaScript
-      secure: process.env.NODE_ENV === "production", // Only HTTPS in production
-      sameSite: "strict", // CSRF protection
+      secure: true, // Always true for SameSite: 'none'
+      sameSite: "none", // Allow cross-site cookie
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
     });
@@ -140,8 +141,12 @@ exports.login = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
   try {
+    const { portal } = req.body;
+    const cookieName =
+      portal === "admin" ? "adminRefreshToken" : "refreshToken";
+
     // Get refresh token from HTTP-only cookie
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies[cookieName];
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -245,10 +250,16 @@ exports.logout = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Clear refresh token cookie
+    res.clearCookie("adminRefreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
       path: "/",
     });
 
@@ -322,10 +333,14 @@ exports.updatePassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Set new refresh token as HTTP-only cookie
-    res.cookie("refreshToken", refreshToken, {
+    // Since we don't have portal in updatePassword body yet, we check which cookie was used
+    const cookieName = req.cookies.adminRefreshToken
+      ? "adminRefreshToken"
+      : "refreshToken";
+    res.cookie(cookieName, refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
     });
