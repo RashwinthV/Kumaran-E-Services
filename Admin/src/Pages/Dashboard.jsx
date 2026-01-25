@@ -241,7 +241,7 @@ const Dashboard = () => {
                   <i className="bi bi-cash-stack"></i>
                 </div>
                 <div className="stat-info">
-                  <h3>Total Revenue</h3>
+                  <h3>Total Sales</h3>
                   <p className="stat-value">
                     {formatCurrency(stats?.totalRevenue)}
                   </p>

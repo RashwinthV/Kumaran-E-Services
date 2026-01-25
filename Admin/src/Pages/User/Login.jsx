@@ -74,7 +74,7 @@ const Login = () => {
             <div className="logo-container">
               <div className="logo-icon">
                 <img
-                  src="/kes_logo.jpeg"
+                  src="kes_logo.jpeg"
                   alt="KES Logo"
                   style={{
                     width: "100%",

@@ -18,7 +18,7 @@ const Header = () => {
     <nav className="dashboard-nav">
       <div className="nav-brand">
         <div className="brand-icon">
-          <img src="/kes_logo.jpeg" alt="KES Logo" />
+          <img src="kes_logo.jpeg" alt="KES Logo" />
         </div>
         <Link
           to="/dashboard"
