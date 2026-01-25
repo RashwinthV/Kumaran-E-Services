@@ -773,17 +773,17 @@ const Expenses = () => {
                   <div className="input-group">
                     <span className="input-group-text border-0 ps-3 bg-light text-muted">
                       ₹
+                      <input
+                        type="number"
+                        className="form-control premium-input border-0 bg-light"
+                        value={formData.payPerDay}
+                        onChange={(e) =>
+                          handleInputChange("payPerDay", e.target.value)
+                        }
+                        placeholder="0.00"
+                        required
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control premium-input border-0 bg-light"
-                      value={formData.payPerDay}
-                      onChange={(e) =>
-                        handleInputChange("payPerDay", e.target.value)
-                      }
-                      placeholder="0.00"
-                      required
-                    />
                   </div>
                 </div>
                 <div className="col-md-4">
@@ -793,14 +793,14 @@ const Expenses = () => {
                   <div className="input-group">
                     <span className="input-group-text input-group-text-premium">
                       ₹
+                      <input
+                        type="number"
+                        className="form-control premium-input border-0 input-group-text-premium"
+                        value={formData.salary}
+                        readOnly
+                        placeholder="Computed automatically"
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control premium-input border-start-0 bg-light"
-                      value={formData.salary}
-                      readOnly
-                      placeholder="Computed automatically"
-                    />
                   </div>
                 </div>
                 <div className="col-md-4">
@@ -810,16 +810,16 @@ const Expenses = () => {
                   <div className="input-group">
                     <span className="input-group-text input-group-text-premium">
                       ₹
+                      <input
+                        type="number"
+                        className="form-control premium-input border-0 input-group-text-premium"
+                        value={formData.bonus}
+                        onChange={(e) =>
+                          handleInputChange("bonus", e.target.value)
+                        }
+                        placeholder="0.00"
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control premium-input border-start-0"
-                      value={formData.bonus}
-                      onChange={(e) =>
-                        handleInputChange("bonus", e.target.value)
-                      }
-                      placeholder="0.00"
-                    />
                   </div>
                 </div>
                 <div className="col-md-4">
@@ -827,16 +827,16 @@ const Expenses = () => {
                   <div className="input-group">
                     <span className="input-group-text input-group-text-premium">
                       ₹
+                      <input
+                        type="number"
+                        className="form-control premium-input border-0 input-group-text-premium"
+                        value={formData.deductions}
+                        onChange={(e) =>
+                          handleInputChange("deductions", e.target.value)
+                        }
+                        placeholder="0.00"
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control premium-input border-start-0"
-                      value={formData.deductions}
-                      onChange={(e) =>
-                        handleInputChange("deductions", e.target.value)
-                      }
-                      placeholder="0.00"
-                    />
                   </div>
                 </div>
                 <div className="col-12">
@@ -887,7 +887,7 @@ const Expenses = () => {
                   <div className="input-group">
                     <span className="input-group-text border-0 ps-3 bg-light text-muted">
                       ₹
-                    </span>
+                   
                     <input
                       type="number"
                       className="form-control premium-input border-0 bg-light"
@@ -897,7 +897,7 @@ const Expenses = () => {
                       }
                       placeholder="0.00"
                       required
-                    />
+                    /> </span>
                   </div>
                 </div>
                 <div className="col-12">
@@ -936,7 +936,6 @@ const Expenses = () => {
               <div className="input-group">
                 <span className="input-group-text border-0 ps-3 bg-light text-muted">
                   ₹
-                </span>
                 <input
                   type="number"
                   className="form-control premium-input border-0 bg-light"
@@ -944,7 +943,8 @@ const Expenses = () => {
                   readOnly
                   placeholder="0.00"
                   required
-                />
+                />                </span>
+
               </div>
             </div>
             <div className="col-md-6">

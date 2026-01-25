@@ -1,5 +1,6 @@
 import React from "react";
 import { getCurrencySymbol } from "../../utils/serviceBillingConstants";
+import PendingRepairsList from "./PendingRepairsList";
 
 const MobileServiceInputs = ({
   selectedService,
@@ -9,11 +10,44 @@ const MobileServiceInputs = ({
   componentSuggestions = [],
   // New props for Pending Repair sub-service
   complaints = [],
+  allComplaints=[],
   onSelectComplaint,
   onCancelComplaint,
   selectedComplaintId,
 }) => {
   const isRepair = selectedService === "Mobile Repair";
+  const handleSelectComplaint = (complaint) => {
+    setSelectedComplaintId(complaint.id); // uses mapped id (_id)
+    setSelectedModule(complaint.module);
+    setSelectedService(complaint.service);
+    setFormData(complaint.formData);
+    handleSelectCustomer({
+      _id: complaint.customerId,
+      name: complaint.customerName,
+      phone: complaint.customerPhone,
+    });
+  };
+
+  const handleCancelComplaint = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this complaint?"))
+      return;
+
+    try {
+      const res = await axios.delete(API_ENDPOINTS.COMPLAINTS.BY_ID(id), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.data.success) {
+        toast.info("Complaint Removed");
+        fetchComplaints();
+        setSelectedComplaintId(null);
+        handleClearForm();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to remove complaint");
+    }
+  };
+
 
   if (selectedService === "Pending Repair") {
     if (complaints.length === 0) {
@@ -73,6 +107,28 @@ const MobileServiceInputs = ({
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (selectedService === "Pending Repair List") {
+    
+    if (allComplaints.length === 0) {
+      return (
+        <div className="text-center py-5 text-muted">
+          <i className="bi bi-info-circle fs-2 d-block mb-2"></i>
+          No pending repairs found.
+        </div>
+      );
+    }
+    return (
+      <div className="flex-grow-1 overflow-auto">
+        <PendingRepairsList
+          complaints={allComplaints}
+          selectedComplaintId={selectedComplaintId}
+          onSelectComplaint={handleSelectComplaint}
+          onCancelComplaint={handleCancelComplaint}
+        />
       </div>
     );
   }
@@ -259,29 +315,32 @@ const MobileServiceInputs = ({
                   <div className="input-group input-group-sm">
                     <span className="input-group-text bg-light text-muted">
                       {getCurrencySymbol(currency)}
+                      <input
+                        type="number"
+                        className="form-control"
+                        placeholder="Price"
+                        value={item.price}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/[^0-9.]/g, "");
+                          const dots = val.match(/\./g);
+                          if (dots && dots.length > 1) return;
+
+                          const items = [...formData.repairItems];
+                          items[idx].price = val;
+                          handleInputChange("repairItems", items);
+
+                          // Sync to base amount
+                          const total = items.reduce(
+                            (sum, it) => sum + (parseFloat(it.price) || 0),
+                            0,
+                          );
+                          handleInputChange(
+                            "baseAmount",
+                            total > 0 ? total : "",
+                          );
+                        }}
+                      />{" "}
                     </span>
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Price"
-                      value={item.price}
-                      onChange={(e) => {
-                        let val = e.target.value.replace(/[^0-9.]/g, "");
-                        const dots = val.match(/\./g);
-                        if (dots && dots.length > 1) return;
-
-                        const items = [...formData.repairItems];
-                        items[idx].price = val;
-                        handleInputChange("repairItems", items);
-
-                        // Sync to base amount
-                        const total = items.reduce(
-                          (sum, it) => sum + (parseFloat(it.price) || 0),
-                          0,
-                        );
-                        handleInputChange("baseAmount", total > 0 ? total : "");
-                      }}
-                    />
                   </div>
                 </div>
                 <div className="col-1 text-center">

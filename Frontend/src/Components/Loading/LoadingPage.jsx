@@ -28,6 +28,10 @@ function LoadingPage() {
 
       clearTimeout(timeoutId);
 
+      setTimeout(() => {
+        fetch(API_ENDPOINTS.HEALTH).catch(() => {});
+      }, 10000);
+
       if (response.ok) {
         const data = await response.json();
 
@@ -46,7 +50,7 @@ function LoadingPage() {
               navigate("/branch-login");
             } else {
               // ASSIGNED - Continue to login flow
-                navigate("/auto_login");
+              navigate("/auto_login");
             }
           }, 1000);
         } else {
@@ -98,8 +102,8 @@ function LoadingPage() {
             <span></span>
           </div>
           <div className="loading-powered">
-        <Powered theme="dark" />
-      </div>
+            <Powered theme="dark" />
+          </div>
         </div>
       </div>
     );
@@ -132,8 +136,8 @@ function LoadingPage() {
         {status === "error" && (
           <button id="retry" className="retry-button " onClick={handleRetry}>
             <div className="text-center d-flex align-items-center justify-content-center mx-5">
-            <RefreshCw className="text-center mx-5 me-2" size={20} />
-            Retry Connection
+              <RefreshCw className="text-center mx-5 me-2" size={20} />
+              Retry Connection
             </div>
           </button>
         )}

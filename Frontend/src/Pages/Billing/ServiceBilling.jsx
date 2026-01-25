@@ -1044,6 +1044,7 @@ const ServiceBilling = () => {
                         c.customerPhone === selectedCustomerPhone)
                     );
                   })}
+                  allComplaints={complaints}
                   onSelectComplaint={handleSelectComplaint}
                   onCancelComplaint={handleCancelComplaint}
                   selectedComplaintId={selectedComplaintId}
@@ -1088,14 +1089,7 @@ const ServiceBilling = () => {
             </div>
 
             {/* Unpaid Complaints Section */}
-            {/* {selectedService !== "Pending Repair" && (
-              <PendingRepairsList
-                complaints={complaints}
-                selectedComplaintId={selectedComplaintId}
-                onSelectComplaint={handleSelectComplaint}
-                onCancelComplaint={handleCancelComplaint}
-              />
-            )} */}
+   
           </div>
 
           {/* Right Column: Transaction Summary OR Cart */}

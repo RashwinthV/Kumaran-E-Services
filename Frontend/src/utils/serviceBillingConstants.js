@@ -7,7 +7,7 @@ export const SERVICE_MODULES = {
   MOBILE_SERVICE: {
     label: "Mobile Service",
     icon: "bi-phone",
-    services: ["Recharge", "Mobile Repair", "Pending Repair"],
+    services: ["Recharge", "Mobile Repair", "Pending Repair","Pending Repair List"],
   },
     TRAVEL: {
     label: "Travel & Transport",

@@ -6,7 +6,7 @@ import {
   useLocation,
   Outlet,
 } from "react-router-dom";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
@@ -26,6 +26,7 @@ import ScrollToTop from "./Components/ScrollToTop";
 import { useAuth } from "./Context/AuthContext";
 import Settings from "./Pages/Branch/Settings";
 import ProductsCatalog from "./Pages/Branch/ProductsCatalog";
+import ServerOfflineModal from "./Components/Modals/ServerOfflineModal";
 
 // Protected Route Component
 const ProtectedRoute = () => {
@@ -47,9 +48,15 @@ import Footer from "./Components/Footer";
 import GlobalHeader from "./Components/Navigation/GlobalHeader";
 
 // Layout wrapper to conditionally show Header and Sidebar
-const Layout = ({ children }) => {
+const Layout = ({ children, online }) => {
   const location = useLocation();
-  const noHeaderRoutes = ["/", "/login", "/register", "/branch-login","/auto_login"];
+  const noHeaderRoutes = [
+    "/",
+    "/login",
+    "/register",
+    "/branch-login",
+    "/auto_login",
+  ];
 
   const hideHeader = noHeaderRoutes.includes(location.pathname);
 
@@ -63,6 +70,7 @@ const Layout = ({ children }) => {
   // Otherwise, return the full app layout with Sidebar, Header
   return (
     <div className="app-container">
+      <ServerOfflineModal isOpen={!online} />
       <div className="app-main-layout">
         <SidebarNav />
         <div
@@ -72,7 +80,7 @@ const Layout = ({ children }) => {
               : ""
           }`}
         >
-          <GlobalHeader />
+          <GlobalHeader Online={online} />
           <div className="content-viewport">{children}</div>
           {!isBillingPage && location.pathname !== "/service-billing" && (
             <Footer />
@@ -90,6 +98,7 @@ import Investors from "./Pages/Branch/Investors";
 import Customer from "./Pages/Branch/Customer";
 import Expenses from "./Pages/Branch/Expenses";
 import AutoLogin from "./Pages/User/AutoLogin";
+import { API_ENDPOINTS } from "./config/api";
 
 function GlobalKeyboardListener() {
   useGlobalShortcuts();
@@ -97,11 +106,44 @@ function GlobalKeyboardListener() {
 }
 
 function AppContent() {
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const INTERVAL = 12 * 60 * 1000; // 12 minutes
+    const controller = new AbortController();
+
+    const checkHealth = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.HEALTH, {
+          signal: controller.signal,
+        });
+
+        if (response.ok) {
+          setOnline(true);
+        } else {
+          setOnline(false);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setOnline(false);
+        }
+      }
+    };
+
+    checkHealth(); // Initial check
+    const intervalId = setInterval(checkHealth, INTERVAL);
+
+    return () => {
+      clearInterval(intervalId);
+      controller.abort();
+    };
+  }, []);
+
   return (
     <Router>
       <GlobalKeyboardListener />
       <ScrollToTop />
-      <Layout>
+      <Layout online={online}>
         <ToastContainer position="top-center" autoClose={3000} />
 
         <Routes>

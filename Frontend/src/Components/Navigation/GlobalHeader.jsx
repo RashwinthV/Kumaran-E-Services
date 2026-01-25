@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import { getDecrypted } from "../../utils/storage";
 
-const GlobalHeader = () => {
+const GlobalHeader = ({ Online }) => {
   const { user } = useAuth();
   const [dateTime, setDateTime] = useState(new Date());
   const [appSettings, setAppSettings] = useState(null);
+
   useEffect(() => {
     const saved = getDecrypted("app_settings");
     if (saved) {
@@ -94,6 +95,40 @@ const GlobalHeader = () => {
               </div>
             </div>
           </div>
+
+          <div className="vr opacity-10" style={{ height: "30px" }}></div>
+
+          {/* Connection Status */}
+          <div className="d-flex align-items-center gap-2">
+            <div
+              className={`rounded d-flex align-items-center justify-content-center ${
+                Online
+                  ? "bg-success bg-opacity-10 text-success pulse-online"
+                  : "bg-danger bg-opacity-10 text-danger pulse-offline"
+              }`}
+              style={{ width: "32px", height: "32px", borderRadius: "8px" }}
+            >
+              <i
+                className={`bi ${Online ? "bi-wifi" : "bi-wifi-off"} fs-6`}
+              ></i>
+            </div>
+            <div>
+              <h6
+                className="mb-0 fw-bold"
+                style={{ fontSize: "0.7rem", color: "#6c757d" }}
+              >
+                SERVER
+              </h6>
+              <div
+                className={`fw-bold small ${
+                  Online ? "text-success" : "text-danger"
+                }`}
+                style={{ fontSize: "0.75rem" }}
+              >
+                {Online ? "ONLINE" : "OFFLINE"}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Status Group: Shortcuts & Time */}
@@ -157,12 +192,12 @@ const GlobalHeader = () => {
                     year: "numeric",
                   })
                 : appSettings?.dateFormat === "YYYY-MM-DD"
-                ? dateTime.toLocaleDateString("en-CA") // ISO format
-                : dateTime.toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
+                  ? dateTime.toLocaleDateString("en-CA") // ISO format
+                  : dateTime.toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
             </small>
           </div>
         </div>

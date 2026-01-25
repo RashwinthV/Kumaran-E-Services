@@ -23,6 +23,7 @@ const generateRefreshToken = (id, tokenVersion) => {
 exports.login = async (req, res) => {
   try {
     const { identifier, password, portal, branchCode } = req.body;
+    
 
     if (!identifier || !password) {
       return res.status(400).json({

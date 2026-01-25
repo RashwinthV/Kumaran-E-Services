@@ -75,7 +75,7 @@ const branchSchema = new mongoose.Schema(
     },
     lastBillNumber: {
       type: Number,
-      default: 1000, // Starts from 1001
+      default:1, // Starts from 1001
     },
   },
   { timestamps: true }

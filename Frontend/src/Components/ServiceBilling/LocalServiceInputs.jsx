@@ -146,10 +146,10 @@ const LocalServiceInputs = ({
           <div className="input-group input-group-sm">
             <span className="input-group-text bg-light text-muted">
               {getCurrencySymbol(currency)}
-            </span>
+         
             <input
               type="number"
-              className="form-control"
+              className="form-control border-0 bg-light"
               value={formData.rate || ""}
               onChange={(e) => {
                 let val = e.target.value.replace(/[^0-9.]/g, "");
@@ -159,7 +159,7 @@ const LocalServiceInputs = ({
                 updateXeroxTotal(formData.pages, val);
               }}
               placeholder="0.00"
-            />
+            />   </span>
           </div>
         </div>
       </div>

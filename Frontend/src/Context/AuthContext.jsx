@@ -9,7 +9,16 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 import { API_BASE, API_ENDPOINTS } from "../config/api.jsx";
-import { clearAllCache } from "../utils/cacheUtils";
+import {
+  clearAllCache,
+  getCache,
+  setCache,
+  removeCache,
+} from "../utils/cacheUtils";
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = `${import.meta.env.VITE_ENCRYPTION_SECRET_KEY}`;
+const AUTH_TTL = 365 * 24 * 60 * 60 * 1000; // 1 year
 
 const AuthContext = createContext();
 
@@ -30,11 +39,40 @@ export const AuthProvider = ({ children }) => {
   // Configure axios to send cookies with requests
   axios.defaults.withCredentials = true;
 
+  // Helper for encrypted cache
+  const setEncryptedCache = useCallback(async (key, data) => {
+    try {
+      const stringifiedData = JSON.stringify(data);
+      const encryptedData = CryptoJS.AES.encrypt(
+        stringifiedData,
+        SECRET_KEY,
+      ).toString();
+      await setCache(key, encryptedData, AUTH_TTL);
+    } catch (e) {
+      console.error("Encryption cache error:", e);
+    }
+  }, []);
+
+  const getEncryptedCache = useCallback(async (key) => {
+    try {
+      const encryptedData = await getCache(key);
+      if (!encryptedData) return null;
+      const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY);
+      const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
+      return JSON.parse(decryptedData);
+    } catch (e) {
+      console.error("Decryption cache error:", e);
+      return null;
+    }
+  }, []);
+
   // Clear auth state
   const clearAuthState = useCallback(async () => {
     setAccessToken(null);
     setUser(null);
     setIsAuthenticated(false);
+    await removeCache("auth_user");
+    await removeCache("auth_token");
     await clearAllCache();
   }, []);
 
@@ -46,27 +84,44 @@ export const AuthProvider = ({ children }) => {
         {},
         {
           skipAuthRefresh: true, // Custom flag to skip interceptor
-        }
+        },
       );
 
       if (response.data.success) {
         setAccessToken(response.data.accessToken);
         setUser(response.data.user);
         setIsAuthenticated(true);
+        await setEncryptedCache("auth_token", response.data.accessToken);
+        await setEncryptedCache("auth_user", response.data.user);
         return response.data.accessToken;
       } else {
         throw new Error("Token refresh failed");
       }
     } catch (error) {
-      clearAuthState();
+      // Only clear auth state if it's a 401/403 or specific auth error
+      // If it's a network error (no response), keep the current local state
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        await clearAuthState();
+      }
       throw error;
     }
-  }, [clearAuthState]);
+  }, [clearAuthState, setEncryptedCache]);
 
   // Initialize auth on mount
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // First, try to load from cache
+        const cachedToken = await getEncryptedCache("auth_token");
+        const cachedUser = await getEncryptedCache("auth_user");
+
+        if (cachedToken && cachedUser) {
+          setAccessToken(cachedToken);
+          setUser(cachedUser);
+          setIsAuthenticated(true);
+        }
+
+        // Then, try to refresh
         await refreshAccessToken();
       } catch (error) {
         // Error handled in refreshAccessToken
@@ -76,7 +131,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, [refreshAccessToken]);
+  }, [refreshAccessToken, getEncryptedCache]);
 
   // Handle Authorization header
   useEffect(() => {
@@ -106,7 +161,7 @@ export const AuthProvider = ({ children }) => {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     const responseInterceptor = axios.interceptors.response.use(
@@ -132,7 +187,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
 
     return () => {
@@ -152,13 +207,15 @@ export const AuthProvider = ({ children }) => {
           branchCode,
           portal: "frontend",
         },
-        { skipAuthRefresh: true }
+        { skipAuthRefresh: true },
       );
 
       if (response.data.success) {
         setAccessToken(response.data.accessToken);
         setUser(response.data.user);
         setIsAuthenticated(true);
+        await setEncryptedCache("auth_token", response.data.accessToken);
+        await setEncryptedCache("auth_user", response.data.user);
         return { success: true };
       } else {
         return {
@@ -186,6 +243,8 @@ export const AuthProvider = ({ children }) => {
         setAccessToken(response.data.accessToken);
         setUser(response.data.user);
         setIsAuthenticated(true);
+        await setEncryptedCache("auth_token", response.data.accessToken);
+        await setEncryptedCache("auth_user", response.data.user);
         return { success: true };
       } else {
         return {
@@ -212,7 +271,7 @@ export const AuthProvider = ({ children }) => {
           {
             headers: { Authorization: `Bearer ${accessToken}` },
             skipAuthRefresh: true,
-          }
+          },
         );
       }
     } catch (error) {

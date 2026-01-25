@@ -1,0 +1,32 @@
+[
+  {
+    "_id": {
+      "$oid": "69318a49539f2bea0dcbb8a7"
+    },
+    "name": "Admin",
+    "email": "admin@gmail.com",
+    "phone": "1234567899",
+    "password": "$2b$10$UxaFbdX4NuNUYQ3OZ5MeZeUz06/lpGsQ.k4LIwzBVULX9kVwol/kO",
+    "role": "admin",
+    "isActive": true,
+    "credentials": {
+      "tokenVersion": 19,
+      "lastTokenRefresh": {
+        "$date": "2026-01-25T08:27:55.657Z"
+      },
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MzE4YTQ5NTM5ZjJiZWEwZGNiYjhhNyIsInR5cGUiOiJyZWZyZXNoIiwidmVyc2lvbiI6MTksImlhdCI6MTc2OTMyOTY3NSwiZXhwIjoxNzY5OTM0NDc1fQ.9V3s-mfBFSRCOrBPHFX4Xh1KzJNDjapF5ybYLfhwVpc"
+    },
+    "createdAt": {
+      "$date": "2025-12-04T13:19:05.726Z"
+    },
+    "updatedAt": {
+      "$date": "2026-01-25T08:27:55.658Z"
+    },
+    "__v": 0,
+    "lastLogin": {
+      "$date": "2026-01-25T08:27:55.654Z"
+    },
+    "EmployeeSalary": 0,
+    "PayPerDay": 0
+  }
+]

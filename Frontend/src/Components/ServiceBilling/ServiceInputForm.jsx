@@ -16,6 +16,7 @@ const ServiceInputForm = ({
   componentSuggestions = [],
   // New props for Pending Repair sub-service
   complaints = [],
+  allComplaints=[],
   onSelectComplaint,
   onCancelComplaint,
   selectedComplaintId,
@@ -53,6 +54,7 @@ const ServiceInputForm = ({
           currency={currency}
           componentSuggestions={componentSuggestions}
           complaints={complaints}
+          allComplaints={allComplaints}
           onSelectComplaint={onSelectComplaint}
           onCancelComplaint={onCancelComplaint}
           selectedComplaintId={selectedComplaintId}

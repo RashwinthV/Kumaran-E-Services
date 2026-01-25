@@ -7,7 +7,6 @@ const PendingRepairsList = ({
   onCancelComplaint,
 }) => {
   if (complaints.length === 0) return null;
-
   return (
     <div
       className="card shadow-sm border-0 mt-2 bg-white"

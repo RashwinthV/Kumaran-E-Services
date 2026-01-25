@@ -16,10 +16,12 @@
     "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.1.0",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "crypto-js": "^4.2.0",
+    "electron-is-dev": "^3.0.1",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "html2pdf.js": "^0.14.0",
@@ -29,8 +31,7 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.10.0",
     "react-toastify": "^11.0.5",
-    "xlsx": "^0.18.5",
-    "electron-is-dev": "^3.0.1"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -58,7 +59,7 @@
     "directories": {
       "output": "release"
     },
-     "win": {
+    "win": {
       "target": "msi",
       "icon": "public/kes_logo.jpeg"
     },
