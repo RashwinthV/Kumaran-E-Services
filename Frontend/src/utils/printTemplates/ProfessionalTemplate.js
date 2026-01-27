@@ -26,6 +26,8 @@ export const ProfessionalTemplate = ({
       <div class="pro-details-grid">
         <div class="pro-detail-col">
           <h4 class="pro-label">OUR DETAILS</h4>
+          <p style="text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">${branchDetails.branchName}</p>
+          <p style="margin-bottom: 6px;">${branchDetails.address}</p>
           <p>Contact: ${branchDetails.contact}</p>
           ${
             branchDetails.gstNumber
@@ -95,6 +97,14 @@ export const ProfessionalTemplate = ({
         <div class="pro-payment-info">
           <h4 class="pro-label">PAYMENT METHOD</h4>
           <p>${sale.paymentMode || "Cash"} - ${sale.status || "Paid"}</p>
+        </div>
+        <div class="pro-terms" style="margin-top: 15px; grid-column: span 1;">
+          <h4 class="pro-label" style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">TERMS & CONDITIONS</h4>
+          <p style="font-size: 0.7rem; color: #444; line-height: 1.4; margin: 0;">
+            1. Goods once sold will not be taken back or exchanged.<br>
+            2. Warranty if any is provided by the manufacturer directly.<br>
+            3. Subject to local jurisdiction.
+          </p>
         </div>
         <div class="pro-totals">
           <div class="pro-total-row"><span>SUB TOTAL</span><span>${currencySymbol}${subtotal.toFixed(

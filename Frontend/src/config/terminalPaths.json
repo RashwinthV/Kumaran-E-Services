@@ -1,0 +1,23 @@
+[
+  { "label": "Product Billing", "path": "/billing" },
+  { "label": "Service: Local", "path": "/service-billing#LOCAL" },
+  { "label": "Service: Mobile", "path": "/service-billing#MOBILE_SERVICE" },
+  { "label": "Service: Travel", "path": "/service-billing#TRAVEL" },
+  { "label": "Service: Utility", "path": "/service-billing#UTILITY" },
+  { "label": "Service: Government", "path": "/service-billing#GOVT" },
+  { "label": "Products Catalog", "path": "/product-catalog" },
+  { "label": "Customers", "path": "/customers" },
+  { "label": "Investors", "path": "/investors" },
+  { "label": "Sale History", "path": "/sale-history" },
+  { "label": "Expenses: Product", "path": "/expenses#product" },
+  { "label": "Expenses: Employee", "path": "/expenses#employee" },
+  { "label": "Expenses: Rent", "path": "/expenses#rent" },
+  { "label": "Expenses: Other", "path": "/expenses#other" },
+  { "label": "Settings: General", "path": "/settings#general" },
+  { "label": "Settings: Accounts", "path": "/settings#accounts" },
+  { "label": "Settings: Hardware", "path": "/settings#hardware" },
+  { "label": "Settings: Shortcuts", "path": "/settings#shortcuts" },
+  { "label": "Settings: Sync", "path": "/settings#sync" },
+  { "label": "Settings: About", "path": "/settings#about" },
+  { "label": "Login Page", "path": "/login" }
+]

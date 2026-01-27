@@ -1,6 +1,6 @@
 const Branch = require("../models/Branch");
 const bcrypt = require("bcryptjs");
- 
+
 /**
  * @desc    Verify branch code and access code
  * @route   POST /api/branches/verify
@@ -52,6 +52,9 @@ exports.verifyBranch = async (req, res) => {
         _id: branch._id,
         name: branch.name,
         code: branch.code,
+        address: branch.address,
+        contact: branch.contact,
+        gstNumber: branch.gstNumber,
       },
     });
   } catch (error) {

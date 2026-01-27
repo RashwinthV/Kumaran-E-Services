@@ -33,14 +33,26 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
 
   const staffName = sale.staffName || sale.staff?.name || "Staff";
 
-  // Address cleanup
-  const formattedAddress = branchInfo?.address
-    ? typeof branchInfo.address === "string"
-      ? branchInfo.address
-      : [branchInfo.address.street, branchInfo.address.city]
-          .filter((p) => p && p.trim())
-          .join(", ")
-    : "Local Branch St, City";
+  // Robust address and contact formatting for React component
+  const getBranchAddress = () => {
+    if (!branchInfo?.address) return "Local Branch St, City";
+    const addr = branchInfo.address;
+    if (typeof addr === "string") return addr;
+    return [addr.street, addr.city, addr.state, addr.pincode]
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const getBranchContact = () => {
+    if (branchInfo?.contact?.phone) return branchInfo.contact.phone;
+    if (branchInfo?.phone) return branchInfo.phone;
+    if (typeof branchInfo?.contact === "string" && branchInfo.contact.trim())
+      return branchInfo.contact;
+    return "N/A";
+  };
+
+  const formattedAddress = getBranchAddress();
+  const formattedContact = getBranchContact();
 
   const paperDimensions = {
     A4: { portrait: ["210mm", "297mm"], landscape: ["297mm", "210mm"] },
@@ -79,6 +91,7 @@ const PrintTemplate = ({ sale, settings, branchInfo }) => {
       subtotal,
       staffName,
       formattedAddress,
+      formattedContact,
     };
 
     switch (billTemplate) {
@@ -135,6 +148,7 @@ const StandardInvoice = ({
   subtotal,
   staffName,
   formattedAddress,
+  formattedContact,
   isA5 = false,
 }) => (
   <div className={`invoice-box standard-style ${isA5 ? "a5-variant" : ""}`}>
@@ -152,7 +166,7 @@ const StandardInvoice = ({
           {branchInfo?.name || "Main Branch"}
         </h4>
         <p>{formattedAddress}</p>
-        <p>Ph: {branchInfo?.contact?.phone || branchInfo?.contact}</p>
+        <p>Ph: {formattedContact}</p>
         {branchInfo?.gstNumber && (
           <p>
             <strong>GSTIN: {branchInfo.gstNumber}</strong>
@@ -218,45 +232,82 @@ const StandardInvoice = ({
           <strong>Terms:</strong> Standard business terms apply.
         </p>
       </div>
-      <div className="totals-box">
-        <div className="total-row">
-          <span>Subtotal</span>
-          <span>
-            {currencySymbol}
-            {subtotal.toFixed(2)}
-          </span>
+      <div
+        className="invoice-footer"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "30px",
+          borderTop: "1px solid #eee",
+          paddingTop: "15px",
+        }}
+      >
+        <div className="notes" style={{ width: "60%" }}>
+          <p
+            style={{
+              margin: "0 0 5px 0",
+              fontSize: "0.85rem",
+              fontWeight: "700",
+              color: "#444",
+            }}
+          >
+            Terms & Conditions:
+          </p>
+          <p
+            style={{
+              fontSize: "0.75rem",
+              color: "#666",
+              lineHeight: "1.4",
+              margin: 0,
+            }}
+          >
+            1. Goods once sold will not be taken back.
+            <br />
+            2. Warranty if any is provided by the manufacturer.
+            <br />
+            3. Subject to local jurisdiction.
+          </p>
         </div>
-        {discount > 0 && (
-          <div className="total-row discount-row text-success">
-            <span>Discount (-)</span>
-            <span>
-              {currencySymbol}
-              {discount.toFixed(2)}
-            </span>
-          </div>
-        )}
-        <div className="total-row">
-          <span>GST</span>
-          <span>
-            {currencySymbol}
-            {tax.toFixed(2)}
-          </span>
-        </div>
-        {Math.abs(roundingValue) > 0.01 && (
+        <div className="totals-box">
           <div className="total-row">
-            <span>Rounding</span>
+            <span>Subtotal</span>
             <span>
               {currencySymbol}
-              {roundingValue.toFixed(2)}
+              {subtotal.toFixed(2)}
             </span>
           </div>
-        )}
-        <div className="total-row grand-total">
-          <span>GRAND TOTAL</span>
-          <span>
-            {currencySymbol}
-            {amount.toFixed(2)}
-          </span>
+          {discount > 0 && (
+            <div className="total-row discount-row text-success">
+              <span>Discount (-)</span>
+              <span>
+                {currencySymbol}
+                {discount.toFixed(2)}
+              </span>
+            </div>
+          )}
+          <div className="total-row">
+            <span>GST</span>
+            <span>
+              {currencySymbol}
+              {tax.toFixed(2)}
+            </span>
+          </div>
+          {Math.abs(roundingValue) > 0.01 && (
+            <div className="total-row">
+              <span>Rounding</span>
+              <span>
+                {currencySymbol}
+                {roundingValue.toFixed(2)}
+              </span>
+            </div>
+          )}
+          <div className="total-row grand-total">
+            <span>GRAND TOTAL</span>
+            <span>
+              {currencySymbol}
+              {amount.toFixed(2)}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -274,6 +325,7 @@ const ProfessionalInvoice = ({
   subtotal,
   staffName,
   formattedAddress,
+  formattedContact,
   isA5 = false,
 }) => (
   <div className={`invoice-box professional-style ${isA5 ? "a5-variant" : ""}`}>
@@ -291,9 +343,17 @@ const ProfessionalInvoice = ({
     <div className="pro-details-grid">
       <div className="pro-detail-col">
         <h4 className="pro-label">OUR DETAILS</h4>
-        <p className="fs-5 small">Branch : {branchInfo?.name}</p>
-        <p>{formattedAddress}</p>
-        <p>Contact: {branchInfo?.contact?.phone || branchInfo?.contact}</p>
+        <p
+          style={{
+            textTransform: "uppercase",
+            fontWeight: "700",
+            marginBottom: "2px",
+          }}
+        >
+          {branchInfo?.name}
+        </p>
+        <p style={{ marginBottom: "6px" }}>{formattedAddress}</p>
+        <p>Contact: {formattedContact}</p>
         {branchInfo?.gstNumber && <p>GSTIN: {branchInfo.gstNumber}</p>}
       </div>
       <div className="pro-detail-col">
@@ -353,7 +413,29 @@ const ProfessionalInvoice = ({
       <div className="pro-payment-info">
         <h4 className="pro-label">PAYMENT METHOD</h4>
         <p>
-          {sale.paymentMode || "Unknown"} - {sale.status || "Paid"}
+          {sale.paymentMode || "Cash"} - {sale.status || "Paid"}
+        </p>
+      </div>
+      <div className="pro-terms-preview" style={{ marginTop: "15px" }}>
+        <h4
+          className="pro-label"
+          style={{ fontSize: "0.75rem", color: "#666", marginBottom: "5px" }}
+        >
+          TERMS & CONDITIONS
+        </h4>
+        <p
+          style={{
+            fontSize: "0.7rem",
+            color: "#444",
+            lineHeight: "1.4",
+            margin: 0,
+          }}
+        >
+          1. Goods once sold will not be taken back.
+          <br />
+          2. Warranty if any is provided by the manufacturer.
+          <br />
+          3. Subject to local jurisdiction.
         </p>
       </div>
       <div className="pro-totals">
@@ -412,6 +494,7 @@ const ModernPreviewInvoice = ({
   subtotal,
   staffName,
   formattedAddress,
+  formattedContact,
   isA5 = false,
 }) => (
   <div className={`invoice-box modern-style ${isA5 ? "a5-variant" : ""}`}>
@@ -451,6 +534,7 @@ const ModernPreviewInvoice = ({
             <strong>{branchInfo?.name}</strong>
           </p>
           <p className="sub">{formattedAddress}</p>
+          <p className="sub">Ph: {formattedContact}</p>
         </div>
         <div className="modern-contact-card">
           <h5>FOR</h5>
@@ -485,63 +569,103 @@ const ModernPreviewInvoice = ({
         </table>
       </div>
 
-      <div className="modern-summary">
-        <div className="modern-summary-item">
-          <span>Subtotal</span>
-          <span>
-            {currencySymbol}
-            {subtotal.toFixed(2)}
-          </span>
+      <div
+        className="modern-footer-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr 0.8fr",
+          gap: "20px",
+          marginTop: "20px",
+          borderTop: "1px solid #eee",
+          paddingTop: "15px",
+        }}
+      >
+        <div className="modern-terms">
+          <h5
+            style={{
+              fontSize: "0.85rem",
+              margin: "0 0 8px 0",
+              color: "#333",
+              fontWeight: "700",
+            }}
+          >
+            Terms & Conditions
+          </h5>
+          <p
+            style={{
+              fontSize: "0.75rem",
+              color: "#666",
+              lineHeight: "1.4",
+              margin: 0,
+            }}
+          >
+            1. Goods once sold will be not taken back.
+            <br />
+            2. Warranty if any is provided by the manufacturer.
+            <br />
+            3. Subject to local jurisdiction.
+          </p>
         </div>
-        {discount > 0 && (
-          <div className="modern-summary-item text-success">
-            <span>Discount Applied</span>
-            <span>
-              -{currencySymbol}
-              {discount.toFixed(2)}
-            </span>
-          </div>
-        )}
-        <div className="modern-summary-item">
-          <span>GST Amount</span>
-          <span>
-            {currencySymbol}
-            {tax.toFixed(2)}
-          </span>
-        </div>
-        {Math.abs(roundingValue) > 0.01 && (
+        <div className="modern-summary">
           <div className="modern-summary-item">
-            <span>Rounding</span>
+            <span>Subtotal</span>
             <span>
               {currencySymbol}
-              {roundingValue.toFixed(2)}
+              {subtotal.toFixed(2)}
             </span>
           </div>
-        )}
-        <div className="modern-summary-item modern-total">
-          <span>TOTAL PAYABLE</span>
-          <span>
-            {currencySymbol}
-            {amount.toFixed(2)}
-          </span>
+          {discount > 0 && (
+            <div className="modern-summary-item text-success">
+              <span>Discount Applied</span>
+              <span>
+                -{currencySymbol}
+                {discount.toFixed(2)}
+              </span>
+            </div>
+          )}
+          <div className="modern-summary-item">
+            <span>GST Amount</span>
+            <span>
+              {currencySymbol}
+              {tax.toFixed(2)}
+            </span>
+          </div>
+          {Math.abs(roundingValue) > 0.01 && (
+            <div className="modern-summary-item">
+              <span>Rounding</span>
+              <span>
+                {currencySymbol}
+                {roundingValue.toFixed(2)}
+              </span>
+            </div>
+          )}
+          <div className="modern-summary-item modern-total">
+            <span>TOTAL PAYABLE</span>
+            <span>
+              {currencySymbol}
+              {amount.toFixed(2)}
+            </span>
+          </div>
         </div>
-        <div
-          className="modern-summary-item"
-          style={{
-            borderTop: "1px dashed #ddd",
-            marginTop: "10px",
-            paddingTop: "5px",
-          }}
-        >
-          <span>Billed By:</span>
-          <span>{staffName}</span>
-        </div>
+      </div>
+      <div
+        style={{
+          borderTop: "1px dashed #ddd",
+          marginTop: "10px",
+          paddingTop: "5px",
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: "0.85rem",
+        }}
+      >
+        <span>Billed By:</span>
+        <span>{staffName}</span>
       </div>
     </div>
   </div>
 );
 
-export const ThermalReceipt = ({
+const ThermalReceipt = ({
   sale,
   branchInfo,
   currencySymbol,
@@ -552,6 +676,7 @@ export const ThermalReceipt = ({
   subtotal,
   staffName,
   formattedAddress,
+  formattedContact,
   compact = false,
   detailed = false,
   eco = false,
@@ -567,9 +692,7 @@ export const ThermalReceipt = ({
         <p className="branch-sub">{branchInfo?.name || "Main Branch"}</p>
       )}
       {!compact && <p className="branch-detail">{formattedAddress}</p>}
-      <p className="branch-detail">
-        Ph: {branchInfo?.contact?.phone || branchInfo?.contact}
-      </p>
+      <p className="branch-detail">Ph: {formattedContact}</p>
     </div>
 
     <div className="receipt-divider"></div>

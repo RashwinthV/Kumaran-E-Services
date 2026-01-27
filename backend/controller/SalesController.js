@@ -76,6 +76,9 @@ exports.createSale = async (req, res) => {
           : item.lineTotal - item.taxAmount,
     }));
 
+    // Check if GST is applicable (any tax amount > 0)
+    const hasGST = totalTax > 0;
+
     const individualSale = {
       billNumber,
       customer: customerId,
@@ -89,6 +92,11 @@ exports.createSale = async (req, res) => {
       paidAmount: saleStatus === "Completed" ? grandTotal : 0,
       createdAt: new Date(),
     };
+
+    // Assign gstBillNo only if GST is applicable
+    if (hasGST) {
+      individualSale.gstBillNo = billNumber;
+    }
 
     // 3. Update/Create Daily Sale Record
     const updateData = {

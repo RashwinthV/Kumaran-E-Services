@@ -12,6 +12,9 @@ const serviceComplaintSchema = new Schema(
       type: String,
       required: true,
     },
+    serviceId: {
+      type: Number,
+    },
     customerName: {
       type: String,
       required: true,

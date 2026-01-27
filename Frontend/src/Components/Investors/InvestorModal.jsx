@@ -313,34 +313,52 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   <label className="form-label fw-bold small">
                     Investor Name <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.name}
+                      onChange={(e) => handleChange("name", e.target.value)}
+                      required
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
                     Phone Number <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    className="form-control"
-                    value={formData.phone}
-                    onChange={(e) => handleChange("phone", e.target.value)}
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="tel"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.phone}
+                      onChange={(e) => handleChange("phone", e.target.value)}
+                      required
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="email"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.email}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
@@ -401,21 +419,31 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   <label className="form-label fw-bold small">
                     Principal Amount (₹) <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="number"
-                    className={`form-control ${editMode ? "bg-light" : ""}`}
-                    value={formData.principalAmount}
-                    onChange={(e) =>
-                      handleChange(
-                        "principalAmount",
-                        parseFloat(e.target.value),
-                      )
-                    }
-                    required
-                    min="0"
-                    step="0.01"
-                    disabled={editMode}
-                  />
+                  <div
+                    className={`d-flex align-items-center ${editMode ? "bg-secondary bg-opacity-10" : "bg-light"} rounded-2 px-2`}
+                    style={{
+                      height: "45px",
+                      border: "1px solid #dee2e6",
+                    }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0 fw-bold"
+                      value={formData.principalAmount}
+                      onChange={(e) =>
+                        handleChange(
+                          "principalAmount",
+                          parseFloat(e.target.value),
+                        )
+                      }
+                      required
+                      min="0"
+                      step="0.01"
+                      disabled={editMode}
+                      style={{ fontSize: "1.1rem" }}
+                    />
+                  </div>
                 </div>
                 {!editMode && (
                   <div className="col-md-12">
@@ -427,9 +455,7 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                         <button
                           key={acc._id}
                           type="button"
-                             disabled={
-                           acc.currentStatus === "Closed"
-                        }
+                          disabled={acc.currentStatus === "Closed"}
                           onClick={() =>
                             handleChange("paymentAccountId", acc._id)
                           }
@@ -442,19 +468,19 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                           {acc.type === "Upi" ? (
                             <span>
                               <i className="bi bi-qr-code me-1"></i>UPI
-                                {acc.currentStatus === "Closed" && " (Closed)"}
+                              {acc.currentStatus === "Closed" && " (Closed)"}
                             </span>
                           ) : acc.type === "Credits" ||
                             acc.type === "Credit" ? (
                             <span>
                               <i className="bi bi-person-badge me-1"></i>CREDIT
-                                {acc.currentStatus === "Closed" && " (Closed)"}
+                              {acc.currentStatus === "Closed" && " (Closed)"}
                             </span>
                           ) : (
                             <span>
                               <i className="bi bi-cash me-1"></i>
                               {acc.type}
-                                {acc.currentStatus === "Closed" && " (Closed)"}
+                              {acc.currentStatus === "Closed" && " (Closed)"}
                             </span>
                           )}
                         </button>
@@ -471,19 +497,25 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                     Interest Rate (Paise per ₹1/month){" "}
                     <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="number"
-                    className={`form-control ${editMode ? "bg-light" : ""}`}
-                    value={formData.interestRate}
-                    onChange={(e) =>
-                      handleChange("interestRate", parseFloat(e.target.value))
-                    }
-                    required
-                    min="0"
-                    step="0.01"
-                    placeholder="e.g. 2 for 2 paise per rupee"
-                    disabled={editMode}
-                  />
+                  <div
+                    className={`d-flex align-items-center ${editMode ? "bg-secondary bg-opacity-10" : "bg-light"} rounded-2 px-2`}
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.interestRate}
+                      onChange={(e) =>
+                        handleChange("interestRate", parseFloat(e.target.value))
+                      }
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="e.g. 2"
+                      disabled={editMode}
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                   <small className="text-muted">
                     Ex: 2 paise per ₹1 = 2% per month
                   </small>
@@ -513,14 +545,22 @@ const InvestorModal = ({ isOpen, onClose, onSave, investor, editMode }) => {
                   <label className="form-label fw-bold small">
                     Start Date <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="date"
-                    className={`form-control ${editMode ? "bg-light" : ""}`}
-                    value={formData.startDate}
-                    onChange={(e) => handleChange("startDate", e.target.value)}
-                    required
-                    disabled={editMode}
-                  />
+                  <div
+                    className={`d-flex align-items-center ${editMode ? "bg-secondary bg-opacity-10" : "bg-light"} rounded-2 px-2`}
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.startDate}
+                      onChange={(e) =>
+                        handleChange("startDate", e.target.value)
+                      }
+                      required
+                      disabled={editMode}
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">Status</label>

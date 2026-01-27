@@ -168,42 +168,64 @@ const InterestPaymentModal = ({
                   <label className="form-label fw-bold small">
                     Month <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.month}
-                    onChange={(e) => handleChange("month", e.target.value)}
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.month}
+                      onChange={(e) => handleChange("month", e.target.value)}
+                      required
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
                     Payment Date <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={formData.paidDate}
-                    onChange={(e) => handleChange("paidDate", e.target.value)}
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.paidDate}
+                      onChange={(e) => handleChange("paidDate", e.target.value)}
+                      required
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
                     Interest Amount (₹) <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="number"
-                    className={`form-control ${error ? "is-invalid" : ""}`}
-                    value={formData.amount}
-                    onChange={(e) =>
-                      handleChange("amount", parseFloat(e.target.value))
-                    }
-                    required
-                    min="0"
-                    max={unpaidInterest}
-                    step="0.01"
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{
+                      height: "45px",
+                      border: `1px solid ${error ? "#dc3545" : "#dee2e6"}`,
+                    }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0 fw-bold"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        handleChange("amount", parseFloat(e.target.value))
+                      }
+                      required
+                      min="0"
+                      max={unpaidInterest}
+                      step="0.01"
+                      style={{ fontSize: "1.1rem" }}
+                    />
+                  </div>
                   {error ? (
                     <div className="invalid-feedback">{error}</div>
                   ) : (

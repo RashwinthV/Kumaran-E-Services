@@ -58,13 +58,13 @@ export const ProductProvider = ({ children }) => {
       } catch (error) {
         console.error("Error fetching products:", error);
         toast.error(
-          error.response?.data?.message || "Failed to fetch products"
+          error.response?.data?.message || "Failed to fetch products",
         );
       } finally {
         setProductsLoading(false);
       }
     },
-    [accessToken, baseURL]
+    [accessToken, baseURL],
   );
 
   // Fetch all categories
@@ -94,7 +94,7 @@ export const ProductProvider = ({ children }) => {
         console.error("Error fetching categories:", error);
       }
     },
-    [accessToken, baseURL]
+    [accessToken, baseURL],
   );
 
   // Fetch all subcategories
@@ -118,14 +118,14 @@ export const ProductProvider = ({ children }) => {
           await setCache(
             CACHE_KEYS.SUBCATEGORIES,
             response.data.data,
-            TTL.LONG
+            TTL.LONG,
           );
         }
       } catch (error) {
         console.error("Error fetching subcategories", error);
       }
     },
-    [accessToken, baseURL]
+    [accessToken, baseURL],
   );
 
   // Fetch subcategories by category ID
@@ -139,7 +139,7 @@ export const ProductProvider = ({ children }) => {
         `${baseURL}/subcategories/category/${categoryId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -179,7 +179,7 @@ export const ProductProvider = ({ children }) => {
         productData,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -221,7 +221,7 @@ export const ProductProvider = ({ children }) => {
         { name },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -244,7 +244,7 @@ export const ProductProvider = ({ children }) => {
         { name },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -290,7 +290,7 @@ export const ProductProvider = ({ children }) => {
       const response = await axios.post(
         `${baseURL}/subcategories`,
         { name, category: categoryId },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       if (response.data.success) {
@@ -311,7 +311,7 @@ export const ProductProvider = ({ children }) => {
       const response = await axios.put(
         `${baseURL}/subcategories/${id}`,
         { name, category: categoryId },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { headers: { Authorization: `Bearer ${accessToken}` } },
       );
 
       if (response.data.success) {
@@ -322,7 +322,7 @@ export const ProductProvider = ({ children }) => {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to update subcategory"
+        error.response?.data?.message || "Failed to update subcategory",
       );
       throw error;
     }
@@ -343,7 +343,7 @@ export const ProductProvider = ({ children }) => {
       }
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to delete subcategory"
+        error.response?.data?.message || "Failed to delete subcategory",
       );
       throw error;
     }

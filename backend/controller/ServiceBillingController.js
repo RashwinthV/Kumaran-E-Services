@@ -68,6 +68,9 @@ exports.createServiceSale = async (req, res) => {
 
     const billNumber = `${req.user.branchCode}-${dateStr}-${branch.lastBillNumber}`;
 
+    // Check if GST/Service Tax is applicable
+    const hasGST = totalTax > 0;
+
     const individualSale = {
       billNumber,
       customer: customerId,
@@ -82,6 +85,11 @@ exports.createServiceSale = async (req, res) => {
       fieldService: fieldService || "",
       createdAt: new Date(),
     };
+
+    // Assign gstBillNo only if GST/Service Tax is applicable
+    if (hasGST) {
+      individualSale.gstBillNo = billNumber;
+    }
 
     // Update Daily Record
     const updateData = {

@@ -1,4 +1,5 @@
 import { getDecrypted } from "./storage";
+import { getCache, CACHE_KEYS } from "./cacheUtils";
 import { StandardTemplate } from "./printTemplates/StandardTemplate";
 import { ProfessionalTemplate } from "./printTemplates/ProfessionalTemplate";
 import { ModernTemplate } from "./printTemplates/ModernTemplate";
@@ -14,15 +15,58 @@ export const handlePrint = async (sale, options = {}) => {
     billTemplate: "standard",
   };
 
-  const storedBranch = getDecrypted("branch");
+  // Try multiple sources for branch info to ensure reliable printing
+  // Only accept options.branchInfo if it's a non-empty object with a name
+  let storedBranch =
+    options.branchInfo && options.branchInfo.name ? options.branchInfo : null;
+
+  // If not in options, try the dynamic branch info cache
+  if (!storedBranch) {
+    storedBranch = await getCache(CACHE_KEYS.BRANCH_INFO);
+  }
+
+  // Final fallback to terminal registration data
+  if (!storedBranch || !storedBranch.name) {
+    storedBranch = getDecrypted("branch");
+  }
   const brandName = "Kumaran E-Services";
-  const branchName = storedBranch?.name || "Main Branch";
+  const branchName =
+    (storedBranch?.name || "Main Branch")
+      .replace("Kumaran E-Services", "")
+      .trim() || "Main Branch";
+
+  // Format address string robustly
+  let branchAddress = "";
+  if (storedBranch?.address) {
+    const addr = storedBranch.address;
+    if (typeof addr === "string") {
+      branchAddress = addr;
+    } else {
+      branchAddress = [addr.street, addr.city, addr.state, addr.pincode]
+        .filter(Boolean)
+        .join(", ");
+    }
+  }
+
+  // Robust contact extraction
+  let contactPhone = "N/A";
+  if (storedBranch?.contact?.phone) {
+    contactPhone = storedBranch.contact.phone;
+  } else if (storedBranch?.phone) {
+    contactPhone = storedBranch.phone;
+  } else if (
+    typeof storedBranch?.contact === "string" &&
+    storedBranch.contact.trim()
+  ) {
+    contactPhone = storedBranch.contact;
+  }
+
   const branchDetails = {
     name: brandName,
     branchName: branchName,
-
-    contact:
-      storedBranch?.contact?.phone || storedBranch?.contact || "0000000000",
+    address: branchAddress || "Local Branch St, City",
+    contact: contactPhone,
+    email: storedBranch?.contact?.email || storedBranch?.email || "",
     gstNumber: storedBranch?.gstNumber || "",
   };
 

@@ -80,6 +80,7 @@ exports.createProduct = async (req, res) => {
       model,
       isActive,
     } = req.body;
+console.log("body",req.body);
 
     // Validate required fields
     if (!name || !sku || !category || !subCategory || !unit || !mrp) {
@@ -113,6 +114,8 @@ exports.createProduct = async (req, res) => {
       model,
       isActive,
     });
+
+    console.log("product added: ", JSON.stringify(product));
 
     res.status(201).json({
       success: true,
@@ -221,18 +224,17 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
-
-
-
 //<---------------------------------------------------------------->STAFF PRODUCT CONTROLLER <---------------------------------------------------->//
 
-exports.GetProdctBYBranch=async(req,res)=>{
+exports.GetProdctBYBranch = async (req, res) => {
   try {
-    const {BranchId}=req.params
-    
-  const InventoProducts=await Inventory.find({branch:BranchId}).populate("product")
-//  console.log(InventoProducts);
- 
+    const { BranchId } = req.params;
+
+    const InventoProducts = await Inventory.find({ branch: BranchId }).populate(
+      "product",
+    );
+    //  console.log(InventoProducts);
+
     res.status(200).json({
       success: true,
       count: InventoProducts.length,
@@ -245,4 +247,4 @@ exports.GetProdctBYBranch=async(req,res)=>{
       message: "Server error while fetching products",
     });
   }
-}
+};

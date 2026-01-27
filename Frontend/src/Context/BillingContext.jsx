@@ -27,6 +27,7 @@ export const BillingProvider = ({ children }) => {
   const [customers, setCustomers] = useState([]);
   const [sales, setSales] = useState([]);
   const [refunds, setRefunds] = useState([]);
+  const [branchInfo, setBranchInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchProducts = useCallback(
@@ -65,6 +66,10 @@ export const BillingProvider = ({ children }) => {
               category: item.product.category?.name,
               lowStockThreshold: item.lowStockThreshold || 5,
               unit: item.product.unit || "pcs",
+              compatibleModels: item.product.compatibleModels || [],
+              brand: item.product.brand || "",
+              model: item.product.model || "",
+              tags: item.product.tags || [],
             }));
           setProducts(mappedProducts);
           await setCache(CACHE_KEYS.PRODUCTS_FLAT, mappedProducts, TTL.SHORT);
@@ -75,7 +80,7 @@ export const BillingProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken]
+    [accessToken],
   );
 
   const fetchCustomers = useCallback(
@@ -105,7 +110,7 @@ export const BillingProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken]
+    [accessToken],
   );
 
   const fetchSales = useCallback(
@@ -133,7 +138,7 @@ export const BillingProvider = ({ children }) => {
           await setCache(
             "KES_REFUNDS_CACHE",
             res.data.refunds || [],
-            TTL.SHORT
+            TTL.SHORT,
           );
         }
       } catch (error) {
@@ -142,7 +147,35 @@ export const BillingProvider = ({ children }) => {
         setLoading(false);
       }
     },
-    [accessToken]
+    [accessToken],
+  );
+
+  const fetchBranchInfo = useCallback(
+    async (force = false) => {
+      if (!accessToken) return;
+
+      try {
+        if (!force) {
+          const cached = await getCache(CACHE_KEYS.BRANCH_INFO);
+          if (cached) {
+            setBranchInfo(cached);
+            return;
+          }
+        }
+
+        const res = await axios.get(API_ENDPOINTS.MY_BRANCH_PRINT_INFO, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (res.data.success) {
+          setBranchInfo(res.data.data);
+          await setCache(CACHE_KEYS.BRANCH_INFO, res.data.data, TTL.LONG);
+        }
+      } catch (error) {
+        console.error("Error fetching branch info:", error);
+      }
+    },
+    [accessToken],
   );
 
   // Periodic refresh
@@ -151,18 +184,21 @@ export const BillingProvider = ({ children }) => {
       fetchProducts();
       fetchCustomers();
       fetchSales();
+      fetchBranchInfo();
     }
-  }, [accessToken, fetchProducts, fetchCustomers, fetchSales]);
+  }, [accessToken, fetchProducts, fetchCustomers, fetchSales, fetchBranchInfo]);
 
   const value = {
     products,
     customers,
     sales,
     refunds,
+    branchInfo,
     loading,
     refreshProducts: () => fetchProducts(true),
     refreshCustomers: () => fetchCustomers(true),
     refreshSales: () => fetchSales(true),
+    refreshBranchInfo: () => fetchBranchInfo(true),
     refundSale: async (refundData) => {
       if (!accessToken) return { success: false, message: "No access token" };
       try {

@@ -16,6 +16,7 @@ import Dashboard from "./Pages/Dashboard";
 import Branch from "./Pages/Branch/Branch";
 import BranchDetail from "./Pages/Branch/BranchDetail";
 import Products from "./Pages/Products";
+import Profile from "./Pages/User/Profile";
 
 // Components
 import SidebarNav from "./Components/Navigation/SidebarNav";
@@ -27,7 +28,6 @@ import Footer from "./Components/Footer";
 import Employee from "./Pages/Branch/Employee";
 import ProtectedRoute from "./Modals/ProtectedRoute";
 import BranchProducts from "./Pages/Branch/BranchProducts";
-import AddEmployeeModal from "./Components/Employee/AddEmployee";
 import AccountManagement from "./Pages/Branch/Accounts";
 import BranchAccountDetail from "./Pages/Branch/BranchAccountDetail";
 import { useAuth } from "./Context/AuthContext";
@@ -109,6 +109,7 @@ function AppContent() {
             <Route path="/branch/:id/products" element={<BranchProducts />} />
             <Route path="/report" element={<Reports />} />
             <Route path="/customers" element={<Customer />} />
+            <Route path="/profile" element={<Profile />} />
 
             <Route path="/investors" element={<Investors />} />
             <Route path="/investor/:id" element={<InvestorDetailsPage />} />

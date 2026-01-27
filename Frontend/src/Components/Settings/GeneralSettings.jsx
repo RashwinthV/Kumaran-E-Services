@@ -81,20 +81,24 @@ const GeneralSettings = ({ branchInfo, settings, handleChange }) => {
               <h4>Rounding Multiple</h4>
               <p>Value to round to (e.g., 5 or 10)</p>
             </div>
-            <input
-              type="number"
-              className="settings-input"
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2 ms-auto"
               style={{
                 width: "120px",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
+                height: "38px",
+                border: "1px solid #dee2e8",
               }}
-              value={settings.roundingValue || 10}
-              onChange={(e) =>
-                handleChange("roundingValue", parseInt(e.target.value) || 1)
-              }
-            />
+            >
+              <input
+                type="number"
+                className="form-control border-0 bg-transparent shadow-none p-0 text-center fw-bold"
+                value={settings.roundingValue || 10}
+                onChange={(e) =>
+                  handleChange("roundingValue", parseInt(e.target.value) || 1)
+                }
+                style={{ fontSize: "1rem" }}
+              />
+            </div>
           </div>
         )}
       </div>

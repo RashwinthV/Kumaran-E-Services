@@ -16,7 +16,7 @@ const ServiceInputForm = ({
   componentSuggestions = [],
   // New props for Pending Repair sub-service
   complaints = [],
-  allComplaints=[],
+  allComplaints = [],
   onSelectComplaint,
   onCancelComplaint,
   selectedComplaintId,
@@ -79,78 +79,124 @@ const ServiceInputForm = ({
           )}
           <div className="col-md-2">
             <label className="small text-muted fw-bold">PNR / Ref</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.referenceId}
-              onChange={(e) => handleInputChange("referenceId", e.target.value)}
-              placeholder="PNR..."
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.referenceId}
+                onChange={(e) =>
+                  handleInputChange("referenceId", e.target.value)
+                }
+                placeholder="PNR..."
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-3">
             <label className="small text-muted fw-bold">Travel Date</label>
-            <input
-              type="date"
-              className="form-control form-control-sm"
-              value={formData.travelDate}
-              onChange={(e) => handleInputChange("travelDate", e.target.value)}
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="date"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.travelDate}
+                onChange={(e) =>
+                  handleInputChange("travelDate", e.target.value)
+                }
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-2">
             <label className="small text-muted fw-bold">From</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.fromLoc}
-              onChange={(e) => handleInputChange("fromLoc", e.target.value)}
-              placeholder="Origin"
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.fromLoc}
+                onChange={(e) => handleInputChange("fromLoc", e.target.value)}
+                placeholder="Origin"
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-2">
             <label className="small text-muted fw-bold">To</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.toLoc}
-              onChange={(e) => handleInputChange("toLoc", e.target.value)}
-              placeholder="Dest"
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.toLoc}
+                onChange={(e) => handleInputChange("toLoc", e.target.value)}
+                placeholder="Dest"
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-3">
             <label className="small text-muted fw-bold">Trans. Name</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.transportName}
-              onChange={(e) =>
-                handleInputChange("transportName", e.target.value)
-              }
-              placeholder="Train/Bus Name"
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.transportName}
+                onChange={(e) =>
+                  handleInputChange("transportName", e.target.value)
+                }
+                placeholder="Train/Bus Name"
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-4">
             <label className="small text-muted fw-bold">Passenger Name</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.customerNameField}
-              onChange={(e) =>
-                handleInputChange("customerNameField", e.target.value)
-              }
-              placeholder="Name"
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.customerNameField}
+                onChange={(e) =>
+                  handleInputChange("customerNameField", e.target.value)
+                }
+                placeholder="Name"
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-2">
             <label className="small text-muted fw-bold">Age</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.passengerAge}
-              onChange={(e) =>
-                handleInputChange("passengerAge", e.target.value)
-              }
-              placeholder="Age"
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.passengerAge}
+                onChange={(e) =>
+                  handleInputChange("passengerAge", e.target.value)
+                }
+                placeholder="Age"
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
           <div className="col-md-2">
             <label className="small text-muted fw-bold">Gender</label>
@@ -192,12 +238,18 @@ const ServiceInputForm = ({
           <label className="small text-muted fw-bold">
             {svcConfig.description}
           </label>
-          <input
-            type="text"
-            className="form-control"
-            value={formData.description}
-            onChange={(e) => handleInputChange("description", e.target.value)}
-          />
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "40px" }}
+          >
+            <input
+              type="text"
+              className="form-control border-0 bg-transparent p-0 shadow-none"
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
+              style={{ fontSize: "0.9rem" }}
+            />
+          </div>
         </div>
       );
     }
@@ -285,12 +337,20 @@ const ServiceInputForm = ({
         {labelConsumer !== false && (
           <div className={`col-md-${showName ? "3" : "4"}`}>
             <label className="small text-muted fw-bold">{labelConsumer}</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.consumerId}
-              onChange={(e) => handleInputChange("consumerId", e.target.value)}
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.consumerId}
+                onChange={(e) =>
+                  handleInputChange("consumerId", e.target.value)
+                }
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
         )}
 
@@ -298,14 +358,20 @@ const ServiceInputForm = ({
         {labelProvider !== false && (
           <div className={`col-md-${showName ? "3" : "4"}`}>
             <label className="small text-muted fw-bold">{labelProvider}</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.providerName}
-              onChange={(e) =>
-                handleInputChange("providerName", e.target.value)
-              }
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.providerName}
+                onChange={(e) =>
+                  handleInputChange("providerName", e.target.value)
+                }
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
         )}
 
@@ -313,14 +379,20 @@ const ServiceInputForm = ({
         {showName && (
           <div className="col-md-3">
             <label className="small text-muted fw-bold">{labelName}</label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.customerNameField}
-              onChange={(e) =>
-                handleInputChange("customerNameField", e.target.value)
-              }
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.customerNameField}
+                onChange={(e) =>
+                  handleInputChange("customerNameField", e.target.value)
+                }
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
         )}
 
@@ -334,15 +406,22 @@ const ServiceInputForm = ({
             <label className="small text-muted fw-bold">
               {labelPlan || "Reference / Detail"}
             </label>
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              value={formData.planDetails || formData.referenceId} // Support either mapping
-              onChange={(e) => {
-                if (labelPlan) handleInputChange("planDetails", e.target.value);
-                else handleInputChange("referenceId", e.target.value);
-              }}
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                value={formData.planDetails || formData.referenceId} // Support either mapping
+                onChange={(e) => {
+                  if (labelPlan)
+                    handleInputChange("planDetails", e.target.value);
+                  else handleInputChange("referenceId", e.target.value);
+                }}
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -364,39 +443,56 @@ const ServiceInputForm = ({
             <label className="small fw-bold text-muted text-uppercase mb-1">
               Base Amount
             </label>
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                {getCurrencySymbol(currency)}
-             
+            <div
+              className="bg-light rounded-3 d-flex align-items-center px-1"
+              style={{ height: "50px" }}
+            >
+              <div
+                className="d-flex align-items-center justify-content-center bg-white rounded-2 px-2 ms-1"
+                style={{ height: "38px", minWidth: "40px" }}
+              >
+                <span className="fw-bold text-primary">
+                  {getCurrencySymbol(currency)}
+                </span>
+              </div>
               <input
                 type="number"
-                className="form-control fw-bold bg-light border-0"
+                className="form-control border-0 bg-transparent shadow-none fs-4 fw-bold text-end"
                 placeholder="0.00"
                 value={formData.baseAmount}
                 onChange={(e) =>
                   handleInputChange("baseAmount", e.target.value)
                 }
+                style={{ color: "#1e293b" }}
               />
-               </span>
             </div>
           </div>
           <div className={selectedModule === "LOCAL" ? "col-md-6" : "col-md-4"}>
             <label className="small fw-bold text-muted text-uppercase mb-1">
               Service Charge
             </label>
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                {getCurrencySymbol(currency)}
-       
+            <div
+              className="bg-light rounded-3 d-flex align-items-center px-1"
+              style={{ height: "50px" }}
+            >
+              <div
+                className="d-flex align-items-center justify-content-center bg-white rounded-2 px-2 ms-1"
+                style={{ height: "38px", minWidth: "40px" }}
+              >
+                <span className="fw-bold text-primary">
+                  {getCurrencySymbol(currency)}
+                </span>
+              </div>
               <input
                 type="number"
-                className="form-control fw-bold bg-light border-0"
+                className="form-control border-0 bg-transparent shadow-none fs-4 fw-bold text-end"
                 placeholder="0.00"
                 value={formData.serviceCharge}
                 onChange={(e) =>
                   handleInputChange("serviceCharge", e.target.value)
                 }
-              />       </span>
+                style={{ color: "#1e293b" }}
+              />
             </div>
           </div>
           {selectedModule !== "LOCAL" && (
@@ -404,12 +500,18 @@ const ServiceInputForm = ({
               <label className="small fw-bold text-muted text-uppercase mb-1">
                 Quantity
               </label>
-              <input
-                type="number"
-                className="form-control text-center"
-                value={formData.qty}
-                onChange={(e) => handleInputChange("qty", e.target.value)}
-              />
+              <div
+                className="d-flex align-items-center bg-light rounded-3 px-2"
+                style={{ height: "50px" }}
+              >
+                <input
+                  type="number"
+                  className="form-control border-0 bg-transparent shadow-none fs-4 fw-bold text-center"
+                  value={formData.qty}
+                  onChange={(e) => handleInputChange("qty", e.target.value)}
+                  style={{ color: "#1e293b" }}
+                />
+              </div>
             </div>
           )}
         </div>

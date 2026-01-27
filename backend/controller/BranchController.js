@@ -729,3 +729,41 @@ exports.getBranchBycode = async (req, res) => {
     });
   }
 };
+// @desc    Get current staff's branch details for printing
+// @route   GET /api/staff/my-branch-print-info
+// @access  Private
+exports.getBranchPrintInfo = async (req, res) => {
+  try {
+    // Branch code is attached to the user by the protect middleware
+    const branchCode = req.user.branchCode;
+
+    if (!branchCode) {
+      return res.status(400).json({
+        success: false,
+        message: "No branch code associated with user",
+      });
+    }
+
+    const branch = await Branch.findOne({ code: branchCode }).select(
+      "name code address contact gstNumber",
+    );
+
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: "Branch information not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: branch,
+    });
+  } catch (error) {
+    console.error("Get branch print info error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching branch information",
+    });
+  }
+};

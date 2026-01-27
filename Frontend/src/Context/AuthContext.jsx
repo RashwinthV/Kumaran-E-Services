@@ -281,6 +281,40 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update profile function (email and password)
+  const updateProfile = async (profileData) => {
+    try {
+      const response = await axios.put(
+        API_ENDPOINTS.AUTH.UPDATE_PROFILE,
+        profileData,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+
+      if (response.data.success) {
+        if (response.data.accessToken) {
+          setAccessToken(response.data.accessToken);
+          await setEncryptedCache("auth_token", response.data.accessToken);
+        }
+        if (response.data.user) {
+          setUser(response.data.user);
+          await setEncryptedCache("auth_user", response.data.user);
+        }
+        return {
+          success: true,
+          message: response.data.message || "Profile updated successfully",
+        };
+      }
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to update profile",
+      };
+    }
+  };
+
   const value = {
     user,
     accessToken,
@@ -289,6 +323,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateProfile,
     refreshAccessToken,
   };
 

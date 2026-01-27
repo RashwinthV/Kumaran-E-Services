@@ -5,6 +5,7 @@ export const CACHE_KEYS = {
   CUSTOMERS: "customers",
   PRODUCTS_FLAT: "products",
   SALES: "sales",
+  BRANCH_INFO: "branch_info",
 };
 
 export const TTL = {

@@ -28,7 +28,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
 
         if (res.data.success) {
           const validAccounts = res.data.data.filter(
-            (acc) => acc.type !== "Credits"
+            (acc) => acc.type !== "Credits",
           );
           setAccounts(validAccounts);
 
@@ -54,7 +54,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
   useEffect(() => {
     const total = Object.values(billAmounts).reduce(
       (sum, amt) => sum + (parseFloat(amt) || 0),
-      0
+      0,
     );
     setSettleAmount(total.toFixed(2));
   }, [billAmounts]);
@@ -235,7 +235,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   onClick={() =>
                                     handleToggleBill(
                                       credit._id,
-                                      credit.totalAmount
+                                      credit.totalAmount,
                                     )
                                   }
                                 >
@@ -243,7 +243,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                     className="form-check-input shadow-none"
                                     type="checkbox"
                                     checked={selectedBillIds.includes(
-                                      credit._id
+                                      credit._id,
                                     )}
                                     readOnly
                                   />
@@ -288,27 +288,34 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   </span>
                                 </div>
                                 {credit.totalAmount > 0 && (
-                                  <div className="input-group input-group-sm w-50">
-                                    <span className="input-group-text bg-white border-end-0">
+                                  <div
+                                    className="d-flex align-items-center bg-white rounded-2 px-2 ms-auto"
+                                    style={{
+                                      width: "120px",
+                                      height: "32px",
+                                      border: "1px solid #dee2e6",
+                                    }}
+                                  >
+                                    <span className="text-muted small fw-bold me-1">
                                       ₹
-                                
+                                    </span>
                                     <input
                                       type="number"
-                                      className="form-control border-0 outline-0 text-end fw-bold"
+                                      className="form-control border-0 bg-transparent shadow-none p-0 text-end fw-bold"
                                       placeholder="0.00"
                                       value={billAmounts[credit._id] || ""}
                                       onChange={(e) =>
                                         handleAmountChange(
                                           credit._id,
                                           e.target.value,
-                                          credit.totalAmount
+                                          credit.totalAmount,
                                         )
                                       }
                                       onFocus={(e) => e.target.select()}
                                       step="0.01"
                                       min="0"
+                                      style={{ fontSize: "0.85rem" }}
                                     />
-                                        </span>
                                   </div>
                                 )}
                               </div>
@@ -395,8 +402,8 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   acc.type === "Cash"
                                     ? "bi-cash-stack"
                                     : acc.type === "Upi"
-                                    ? "bi-qr-code"
-                                    : "bi-credit-card"
+                                      ? "bi-qr-code"
+                                      : "bi-credit-card"
                                 }`}
                               ></i>
                               <span className="small">
@@ -415,14 +422,19 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                       <label className="form-label small fw-bold text-uppercase text-muted">
                         Notes
                       </label>
-                      <textarea
-                        className="form-control form-control-sm"
-                        rows="2"
-                        placeholder="Optional notes..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        style={{ resize: "none" }}
-                      ></textarea>
+                      <div
+                        className="bg-white rounded-2 px-2 py-1"
+                        style={{ border: "1px solid #e2e8f0" }}
+                      >
+                        <textarea
+                          className="form-control border-0 bg-transparent shadow-none p-1"
+                          rows="2"
+                          placeholder="Optional notes..."
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          style={{ resize: "none", fontSize: "0.85rem" }}
+                        ></textarea>
+                      </div>
                     </div>
 
                     {/* Action */}

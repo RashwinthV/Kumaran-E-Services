@@ -30,7 +30,11 @@ const Header = () => {
       </div>
 
       <div className="nav-user">
-        <div className="user-info">
+        <Link
+          to="/profile"
+          className="user-info"
+          style={{ textDecoration: "none" }}
+        >
           <div className="user-avatar">
             {user?.name?.charAt(0)?.toUpperCase() || "U"}
           </div>
@@ -41,7 +45,7 @@ const Header = () => {
               {user?.email || "user@example.com"}
             </span>
           </div>
-        </div>
+        </Link>
 
         <button className="logout-button" onClick={handleLogout}>
           <svg viewBox="0 0 24 24" fill="none">

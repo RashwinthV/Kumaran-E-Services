@@ -33,7 +33,9 @@ export const ModernTemplate = ({
         <div class="modern-contacts">
           <div class="modern-contact-card">
             <h5>FROM</h5>
-            <p><strong>${branchDetails.name}</strong></p>
+            <p><strong>${branchDetails.branchName}</strong></p>
+            <p class="sub">${branchDetails.address}</p>
+            <p class="sub">Ph: ${branchDetails.contact}</p>
             <div class="modern-staff-tag">
               <span>Billed By: ${staffName}</span>
             </div>

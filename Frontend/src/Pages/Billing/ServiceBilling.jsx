@@ -5,7 +5,7 @@ import { useAuth } from "../../Context/AuthContext";
 import { useBilling } from "../../Context/BillingContext";
 import axios from "axios";
 import { API_ENDPOINTS } from "../../config/api";
-import { getDecrypted } from "../../utils/storage";
+import { getDecrypted, saveEncrypted } from "../../utils/storage";
 import { handlePrint } from "../../utils/printUtils";
 import "../../Styles/dashboard.css";
 
@@ -28,7 +28,7 @@ import ShortcutGuide from "../../Components/Navigation/ShortcutGuide";
 
 const ServiceBilling = () => {
   const { accessToken } = useAuth();
-  const { refreshSales } = useBilling();
+  const { refreshSales, branchInfo } = useBilling();
   const location = useLocation();
   const navigate = useNavigate();
   const [appSettings] = useState(() => getDecrypted("app_settings"));
@@ -99,6 +99,7 @@ const ServiceBilling = () => {
     repairsNeeded: "",
     componentsChanged: "",
     repairItems: [{ name: "", price: "" }],
+    serviceId: "", // Auto-generated ID
   });
 
   // Complaints / Unpaid Repairs State
@@ -266,9 +267,29 @@ const ServiceBilling = () => {
       }
     } catch (error) {
       console.error("Error loading complaints", error);
-      // toast.error("Failed to load pending repairs");
     }
   };
+
+  const generateNextServiceId = () => {
+    // Check complaints for max ID
+    const pendingMax = complaints.reduce((max, c) => {
+      const id = parseInt(c.formData?.serviceId) || 0;
+      return id > max ? id : max;
+    }, 0);
+
+    // Check service settings for last ID (persistence across resets)
+    const lastId = serviceSettings.lastServiceId || 0;
+
+    const nextId = Math.max(pendingMax, lastId) + 1;
+    setFormData((prev) => ({ ...prev, serviceId: nextId }));
+  };
+
+  // Auto-generate ID when switching to Mobile Repair
+  useEffect(() => {
+    if (selectedService === "Mobile Repair" && !formData.serviceId) {
+      generateNextServiceId();
+    }
+  }, [selectedService, complaints]);
 
   const handleModuleChange = (moduleKey, shouldNavigate = true) => {
     if (moduleKey === selectedModule) return;
@@ -372,7 +393,7 @@ const ServiceBilling = () => {
       }
 
       // 2. Integer Fields
-      if (["qty", "pages", "passengerAge"].includes(field)) {
+      if (["qty", "pages", "passengerAge", "serviceId"].includes(field)) {
         validatedValue = strVal.replace(/[^0-9]/g, "");
       }
 
@@ -515,7 +536,7 @@ const ServiceBilling = () => {
               : providerName;
           if (providerLabel) desc += ` | ${providerLabel}`;
           if (planDetails) desc += ` | Plan: ${planDetails}`;
-        } else if (service === "Mobile Repair") {
+          if (formData.serviceId) desc += ` [ID: ${formData.serviceId}]`;
           if (customerNameField) desc += ` | Cust: ${customerNameField}`;
           if (providerName) desc += ` | Device: ${providerName}`;
           if (consumerId) desc += ` | IMEI: ${consumerId}`;
@@ -601,7 +622,6 @@ const ServiceBilling = () => {
       }
     });
     console.log(cleanDetailsObj);
-    
 
     const itemData = {
       name: selectedService, // Just Xerox, Photograph, etc.
@@ -622,11 +642,11 @@ const ServiceBilling = () => {
 
     if (editingItemId) {
       // Update existing item
-      const it=  cart.map((item) =>
-          item.id === editingItemId ? { ...itemData, id: item.id } : item  )
+      const it = cart.map((item) =>
+        item.id === editingItemId ? { ...itemData, id: item.id } : item,
+      );
       console.log(it);
-      setCart(it ),
-      setEditingItemId(null);
+      (setCart(it), setEditingItemId(null));
       toast.success("Ticket updated");
     } else {
       // Add new item
@@ -703,6 +723,20 @@ const ServiceBilling = () => {
 
       if (res.data.success) {
         toast.success("Complaint Saved to Database!");
+
+        // Update persistent counter if this was a new repair
+        if (formData.serviceId) {
+          const updatedSettings = {
+            ...serviceSettings,
+            lastServiceId: Math.max(
+              serviceSettings.lastServiceId || 0,
+              parseInt(formData.serviceId),
+            ),
+          };
+          setServiceSettings(updatedSettings);
+          saveEncrypted("service_settings", updatedSettings);
+        }
+
         fetchComplaints(); // Refresh list from server
         handleClearForm();
 
@@ -717,7 +751,7 @@ const ServiceBilling = () => {
 
   const handleSelectComplaint = (complaint) => {
     setSelectedComplaintId(complaint.id); // uses mapped id (_id)
-    setSelectedModule(complaint.module);
+    handleModuleChange(complaint.module, true); // Use centralized router helper
     setSelectedService(complaint.service);
     setFormData(complaint.formData);
     handleSelectCustomer({
@@ -767,10 +801,8 @@ const ServiceBilling = () => {
       description: "",
       repairsNeeded: "",
       componentsChanged: "",
-      repairItems: [{ name: "", price: "" }],
-      pages: "",
-      rate: "",
       localItems: [{ type: "", qty: 1, price: "" }],
+      serviceId: "", // Reset so it regenerates correctly
     });
     setSelectedComplaintId(null);
     setEditingItemId(null);
@@ -892,7 +924,7 @@ const ServiceBilling = () => {
                 "Cash",
               products: itemsToProcess,
             },
-            { silent: true },
+            { silent: true, branchInfo },
           );
         }
 
@@ -1025,6 +1057,17 @@ const ServiceBilling = () => {
                 selectedModule={selectedModule}
                 selectedService={selectedService}
                 onServiceChange={setSelectedService}
+                serviceCounts={{
+                  "Pending Repair": complaints.filter((c) => {
+                    if (!selectedCustomerId) return false;
+                    return (
+                      c.customerId === selectedCustomerId ||
+                      (c.customerPhone &&
+                        c.customerPhone === selectedCustomerPhone)
+                    );
+                  }).length,
+                  "Pending Repair List": complaints.length,
+                }}
               />
 
               <div className="flex-grow-1 d-flex flex-column overflow-auto">
@@ -1089,7 +1132,6 @@ const ServiceBilling = () => {
             </div>
 
             {/* Unpaid Complaints Section */}
-   
           </div>
 
           {/* Right Column: Transaction Summary OR Cart */}

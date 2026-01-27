@@ -206,13 +206,23 @@ const ProductPurchaseModal = ({
                       {/* Search and Filter */}
                       <div className="row g-2 mb-2">
                         <div className="col-md-7">
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Search..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                          />
+                          <div
+                            className="bg-light rounded-2 px-2 d-flex align-items-center"
+                            style={{
+                              height: "35px",
+                              border: "1px solid #dee2e6",
+                            }}
+                          >
+                            <i className="bi bi-search text-muted small me-2"></i>
+                            <input
+                              type="text"
+                              className="form-control border-0 bg-transparent shadow-none p-0"
+                              placeholder="Search products..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              style={{ fontSize: "0.85rem" }}
+                            />
+                          </div>
                         </div>
                         <div className="col-md-5">
                           <select
@@ -337,16 +347,25 @@ const ProductPurchaseModal = ({
                                 </button>
                               </div>
                               <div className="d-flex justify-content-between align-items-center">
-                                <input
-                                  type="number"
-                                  className="form-control form-control-sm"
-                                  style={{ width: "60px" }}
-                                  value={item.qty}
-                                  onChange={(e) =>
-                                    updateQty(item._id, e.target.value)
-                                  }
-                                  min="1"
-                                />
+                                <div
+                                  className="d-flex align-items-center bg-light rounded-2"
+                                  style={{
+                                    width: "60px",
+                                    height: "28px",
+                                    border: "1px solid #dee2e6",
+                                  }}
+                                >
+                                  <input
+                                    type="number"
+                                    className="form-control border-0 bg-transparent shadow-none p-0 text-center fw-bold"
+                                    value={item.qty}
+                                    onChange={(e) =>
+                                      updateQty(item._id, e.target.value)
+                                    }
+                                    min="1"
+                                    style={{ fontSize: "0.85rem" }}
+                                  />
+                                </div>
                                 <div className="fw-bold text-success">
                                   ₹{(item.price * item.qty).toFixed(2)}
                                 </div>

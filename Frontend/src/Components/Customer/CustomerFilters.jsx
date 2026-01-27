@@ -14,30 +14,18 @@ const CustomerFilters = ({ filters, onFilterChange, onReset }) => {
         <div className="row g-4 align-items-center">
           {/* Search Box */}
           <div className="col-12 col-md-5">
-            <div className="position-relative">
-              <i
-                className="bi bi-search position-absolute"
-                style={{
-                  left: "1rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#94a3b8",
-                  fontSize: "1.1rem",
-                }}
-              ></i>
+            <div
+              className="bg-light rounded-2 px-3 d-flex align-items-center"
+              style={{ height: "48px", border: "1px solid #e2e8f0" }}
+            >
+              <i className="bi bi-search text-muted fs-5 me-2"></i>
               <input
                 type="text"
-                className="form-control"
+                className="form-control border-0 bg-transparent shadow-none p-0"
                 placeholder="Search customers..."
                 value={filters.search}
                 onChange={(e) => onFilterChange("search", e.target.value)}
-                style={{
-                  paddingLeft: "3rem",
-                  borderRadius: "12px",
-                  background: "#f1f5f9",
-                  border: "1px solid #e2e8f0",
-                  height: "48px",
-                }}
+                style={{ fontSize: "1rem" }}
               />
             </div>
           </div>

@@ -18,7 +18,7 @@ const ServicePaymentSummary = ({
   detailsDescription,
 }) => {
   return (
-    <div className="card shadow-sm h-100 d-flex flex-column border-0">
+    <div className="card shadow-sm h-100 d-flex flex-column border-0 overflow-auto max-h-[calc(100vh-100px)]">
       <div className="card-header bg-success text-white py-2">
         <h5 className="mb-0 fw-bold fs-6">
           <i className="bi bi-cash-coin me-2"></i>Process Transaction

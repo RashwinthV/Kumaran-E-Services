@@ -40,11 +40,19 @@ const ProductSearch = ({
           return; // Exit early
         }
       } else {
+        const term = query.toLowerCase();
         filtered = products.filter(
           (p) =>
-            p.name.toLowerCase().includes(query.toLowerCase()) ||
-            p.sku.toLowerCase() === query.toLowerCase() || // Exact SKU Match
-            p.sku.toLowerCase().includes(query.toLowerCase()),
+            p.name.toLowerCase().includes(term) ||
+            p.sku.toLowerCase().includes(term) ||
+            (p.brand && p.brand.toLowerCase().includes(term)) ||
+            (p.model && p.model.toLowerCase().includes(term)) ||
+            (p.tags &&
+              p.tags.some((tag) => tag.toLowerCase().includes(term))) ||
+            (p.compatibleModels &&
+              p.compatibleModels.some((model) =>
+                model.toLowerCase().includes(term),
+              )),
         );
       }
 
@@ -135,18 +143,24 @@ const ProductSearch = ({
   if (minimal) {
     return (
       <div className="position-relative w-100">
-        <input
-          ref={searchInputRef}
-          type="text"
-          className="form-control border-0 bg-transparent shadow-none fw-normal py-1"
-          placeholder={placeholder || "SKU..."}
-          value={searchQuery}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => searchQuery && setShowSuggestions(true)}
-          autoComplete="off"
-          style={{ height: "35px", fontSize: "0.85rem" }}
-        />
+        <div
+          className="bg-light rounded-2 px-2 d-flex align-items-center"
+          style={{ height: "35px" }}
+        >
+          <i className="bi bi-upc-scan text-muted small me-2"></i>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="form-control border-0 bg-transparent shadow-none fw-normal p-0"
+            placeholder={placeholder || "SKU..."}
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => searchQuery && setShowSuggestions(true)}
+            autoComplete="off"
+            style={{ width: "100%", fontSize: "0.85rem" }}
+          />
+        </div>
         {/* Suggestions Dropdown for Minimal Mode */}
         {showSuggestions && suggestions.length > 0 && (
           <div
@@ -173,15 +187,50 @@ const ProductSearch = ({
                   <div className="d-flex justify-content-between align-items-center small">
                     <div className="flex-grow-1">
                       <div className="fw-bold">{product.name}</div>
-                      <small
-                        className={
-                          index === selectedIndex
-                            ? "text-white opacity-75"
-                            : "text-muted"
-                        }
-                      >
-                        SKU: {product.sku}
-                      </small>
+                      <div className="d-flex flex-wrap gap-2 align-items-center mt-1">
+                        <small
+                          className={`badge ${
+                            index === selectedIndex
+                              ? "bg-white text-primary"
+                              : "bg-primary-subtle text-primary"
+                          } px-1`}
+                          style={{ fontSize: "0.65rem" }}
+                        >
+                          {product.sku}
+                        </small>
+                        {(product.brand || product.model) && (
+                          <small
+                            className={
+                              index === selectedIndex
+                                ? "text-white opacity-75"
+                                : "text-muted"
+                            }
+                            style={{ fontSize: "0.65rem" }}
+                          >
+                            {product.brand} {product.model}
+                          </small>
+                        )}
+                        {searchQuery &&
+                          product.compatibleModels
+                            ?.filter((m) =>
+                              m
+                                .toLowerCase()
+                                .includes(searchQuery.toLowerCase()),
+                            )
+                            .map((matchedModel, i) => (
+                              <small
+                                key={i}
+                                className={`badge ${
+                                  index === selectedIndex
+                                    ? "bg-light text-dark"
+                                    : "bg-info-subtle text-info"
+                                } px-1`}
+                                style={{ fontSize: "0.6rem" }}
+                              >
+                                {matchedModel}
+                              </small>
+                            ))}
+                      </div>
                     </div>
                     <div className="text-end">
                       <div className="fw-bold">₹{product.price}</div>
@@ -192,7 +241,7 @@ const ProductSearch = ({
                             : "text-muted"
                         }
                       >
-                        Stock: {product.availableQty}
+                        Stock: {product.availableQty} {product.unit}
                       </small>
                     </div>
                   </div>
@@ -212,37 +261,37 @@ const ProductSearch = ({
         <div className="input-group flex-grow-1 shadow-sm rounded-3 overflow-hidden">
           <span className="input-group-text bg-white border-0">
             <i className="bi bi-search text-primary me-2"></i>
-     
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="form-control border-0 ps-0 fw-medium"
-            placeholder={
-              placeholder ||
-              (barcodeScannerEnabled
-                ? "Scan Barcode or Search..."
-                : "Search Product Name or SKU...")
-            }
-            value={searchQuery}
-            onChange={handleSearchChange}
-            onKeyDown={handleKeyDown}
-            onFocus={() => searchQuery && setShowSuggestions(true)}
-            autoComplete="off"
-            style={{ height: "45px", outline: "none", boxShadow: "none" }}
-          />
-         
-          {barcodeScannerEnabled && (
-            <button
-              type="button"
-              className="btn btn-light border-0"
-              onClick={handleScannerFocus}
-              title="Focus for Scanner"
-              style={{ width: "50px",height:"50px" }}
-            >
-              <i className="bi bi-upc-scan text-primary"></i>
-            </button>
-          )}
-                </span>
+
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="form-control border-0 ps-0 fw-medium"
+              placeholder={
+                placeholder ||
+                (barcodeScannerEnabled
+                  ? "Scan Barcode or Search..."
+                  : "Search Product Name or SKU...")
+              }
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => searchQuery && setShowSuggestions(true)}
+              autoComplete="off"
+              style={{ height: "45px", outline: "none", boxShadow: "none" }}
+            />
+
+            {barcodeScannerEnabled && (
+              <button
+                type="button"
+                className="btn btn-light border-0"
+                onClick={handleScannerFocus}
+                title="Focus for Scanner"
+                style={{ width: "50px", height: "50px" }}
+              >
+                <i className="bi bi-upc-scan text-primary"></i>
+              </button>
+            )}
+          </span>
         </div>
 
         {showButton && (
@@ -286,15 +335,48 @@ const ProductSearch = ({
                     >
                       {product.name}
                     </div>
-                    <small
-                      className={
-                        index === selectedIndex
-                          ? "text-white opacity-75"
-                          : "text-muted"
-                      }
-                    >
-                      SKU: {product.sku}
-                    </small>
+                    <div className="d-flex flex-wrap gap-2 align-items-center mt-1">
+                      <small
+                        className={`badge ${
+                          index === selectedIndex
+                            ? "bg-white text-primary"
+                            : "bg-primary-subtle text-primary"
+                        } px-1`}
+                        style={{ fontSize: "0.65rem" }}
+                      >
+                        {product.sku}
+                      </small>
+                      {(product.brand || product.model) && (
+                        <small
+                          className={
+                            index === selectedIndex
+                              ? "text-white opacity-75"
+                              : "text-muted"
+                          }
+                          style={{ fontSize: "0.7rem" }}
+                        >
+                          {product.brand} {product.model}
+                        </small>
+                      )}
+                      {searchQuery &&
+                        product.compatibleModels
+                          ?.filter((m) =>
+                            m.toLowerCase().includes(searchQuery.toLowerCase()),
+                          )
+                          .map((matchedModel, i) => (
+                            <small
+                              key={i}
+                              className={`badge ${
+                                index === selectedIndex
+                                  ? "bg-light text-dark"
+                                  : "bg-info-subtle text-info"
+                              } px-1`}
+                              style={{ fontSize: "0.6rem" }}
+                            >
+                              {matchedModel}
+                            </small>
+                          ))}
+                    </div>
                   </div>
                   <div className="text-end">
                     <div
@@ -313,7 +395,7 @@ const ProductSearch = ({
                     >
                       {product.availableQty <= 0
                         ? "OUT OF STOCK"
-                        : `Stock: ${product.availableQty}`}
+                        : `Stock: ${product.availableQty} ${product.unit}`}
                     </small>
                   </div>
                 </div>

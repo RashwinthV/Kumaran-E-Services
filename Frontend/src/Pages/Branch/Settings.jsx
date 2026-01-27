@@ -74,28 +74,6 @@ function Settings() {
     };
   });
 
-  const [branchInfo, setBranchInfo] = useState({
-    name: "Kumaran E-Services",
-    code: user?.branchCode || "N/A",
-    address: "Local Branch St, City",
-    contact: "0000000000",
-  });
-
-  useEffect(() => {
-    const storedBranch = getDecrypted("branch");
-    if (storedBranch) {
-      setBranchInfo({
-        name: storedBranch.name,
-        code: storedBranch.code || storedBranch.branchCode, // Fallback for safety
-        address: `${storedBranch.address?.street || ""}, ${
-          storedBranch.address?.city || ""
-        }`,
-        contact: storedBranch.contact?.phone || "N/A",
-        gstNumber: storedBranch.gstNumber || "",
-      });
-    }
-  }, [user]);
-
   const handleToggle = (key) => {
     setSettings((prev) => {
       const updated = { ...prev, [key]: !prev[key] };
@@ -117,7 +95,8 @@ function Settings() {
     toast.success("Settings saved securely!");
   };
 
-  const { refreshProducts, refreshCustomers } = useBilling();
+  const { refreshProducts, refreshCustomers, branchInfo, refreshBranchInfo } =
+    useBilling();
 
   const handleSync = async () => {
     const toastId = toast.loading("Synchronizing data...");
@@ -125,6 +104,7 @@ function Settings() {
       await Promise.all([
         refreshProducts ? refreshProducts() : Promise.resolve(),
         refreshCustomers ? refreshCustomers() : Promise.resolve(),
+        refreshBranchInfo ? refreshBranchInfo() : Promise.resolve(),
       ]);
 
       localStorage.setItem("last_sync", new Date().toLocaleString());

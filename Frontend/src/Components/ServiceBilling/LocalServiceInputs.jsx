@@ -129,27 +129,45 @@ const LocalServiceInputs = ({
         </div>
         <div className="col-md-3">
           <label className="small text-muted fw-bold">No. of Pages</label>
-          <input
-            type="number"
-            className="form-control form-control-sm"
-            value={formData.pages || ""}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^0-9]/g, "");
-              handleInputChange("pages", val);
-              updateXeroxTotal(val, formData.rate);
-            }}
-            placeholder="0"
-          />
-        </div>
-        <div className="col-md-3">
-          <label className="small text-muted fw-bold">Price Per Page</label>
-          <div className="input-group input-group-sm">
-            <span className="input-group-text bg-light text-muted">
-              {getCurrencySymbol(currency)}
-         
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
             <input
               type="number"
-              className="form-control border-0 bg-light"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.pages || ""}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                handleInputChange("pages", val);
+                updateXeroxTotal(val, formData.rate);
+              }}
+              placeholder="0"
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
+        </div>
+        <div className="col-md-3">                      <label className="small text-muted fw-bold">Price Per Page</label>
+
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-1"
+            style={{ height: "35px" }}
+          >
+
+            <div
+              className="d-flex align-items-center justify-content-center bg-white rounded px-2 ms-1"
+              style={{ height: "25px", minWidth: "25px" }}
+            >
+              <span
+                className="fw-bold text-primary"
+                style={{ fontSize: "0.7rem" }}
+              >
+                {getCurrencySymbol(currency)}
+              </span>
+            </div>
+            <input
+              type="number"
+              className="form-control border-0 bg-transparent shadow-none text-end p-0 pe-2"
               value={formData.rate || ""}
               onChange={(e) => {
                 let val = e.target.value.replace(/[^0-9.]/g, "");
@@ -159,7 +177,8 @@ const LocalServiceInputs = ({
                 updateXeroxTotal(formData.pages, val);
               }}
               placeholder="0.00"
-            />   </span>
+              style={{ fontSize: "0.85rem" }}
+            />
           </div>
         </div>
       </div>
@@ -174,13 +193,19 @@ const LocalServiceInputs = ({
             <label className="small text-muted fw-bold">
               PHOTO ID / SLIP NO
             </label>
-            <input
-              type="text"
-              className="form-control form-control-sm border-primary"
-              value={formData.photoId || ""}
-              onChange={(e) => handleInputChange("photoId", e.target.value)}
-              placeholder="Enter Photo/Slip ID..."
-            />
+            <div
+              className="d-flex align-items-center bg-light border border-primary border-opacity-25 rounded-2 px-2 shadow-sm"
+              style={{ height: "40px" }}
+            >
+              <i className="bi bi-hash text-primary me-2"></i>
+              <input
+                type="text"
+                className="form-control border-0 bg-transparent p-0 shadow-none fw-bold text-primary"
+                value={formData.photoId || ""}
+                onChange={(e) => handleInputChange("photoId", e.target.value)}
+                placeholder="Enter Photo/Slip ID..."
+              />
+            </div>
           </div>
         )}
         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -270,32 +295,38 @@ const LocalServiceInputs = ({
                 >
                   Qty
                 </label>
-                <input
-                  type="number"
-                  className="form-control form-control-sm"
-                  value={item.qty}
-                  onChange={(e) => {
-                    const items = [...formData.localItems];
-                    items[idx].qty = e.target.value.replace(/[^0-9]/g, "");
-                    handleInputChange("localItems", items);
-                    updatePhotoTotal(items);
-                  }}
-                />
+                <div
+                  className="d-flex align-items-center bg-light rounded-2 px-2"
+                  style={{ height: "30px" }}
+                >
+                  <input
+                    type="number"
+                    className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none text-center"
+                    value={item.qty}
+                    onChange={(e) => {
+                      const items = [...formData.localItems];
+                      items[idx].qty = e.target.value.replace(/[^0-9]/g, "");
+                      handleInputChange("localItems", items);
+                      updatePhotoTotal(items);
+                    }}
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                </div>
               </div>
               <div className="col-md-4">
-                <label
-                  className="small text-muted"
-                  style={{ fontSize: "0.7rem" }}
+                <div
+                  className="d-flex align-items-center bg-light rounded-2 px-2"
+                  style={{ height: "30px" }}
                 >
-                  Price (Each)
-                </label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light text-muted px-1">
+                  <span
+                    className="text-primary fw-bold me-1"
+                    style={{ fontSize: "0.7rem" }}
+                  >
                     {getCurrencySymbol(currency)}
                   </span>
                   <input
                     type="number"
-                    className="form-control px-1"
+                    className="form-control border-0 bg-transparent p-0 shadow-none text-end"
                     placeholder="0.00"
                     value={item.price}
                     onChange={(e) => {
@@ -307,6 +338,7 @@ const LocalServiceInputs = ({
                       handleInputChange("localItems", items);
                       updatePhotoTotal(items);
                     }}
+                    style={{ fontSize: "0.85rem" }}
                   />
                 </div>
               </div>

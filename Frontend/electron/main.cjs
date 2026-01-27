@@ -4,11 +4,9 @@ const path = require("path");
 // Enable Chrome's native print preview
 app.commandLine.appendSwitch("enable-print-preview");
 
-// Disable Autofill features to suppress DevTools warnings
-app.commandLine.appendSwitch(
-  "disable-features",
-  "Autofill,AutofillServerCommunication,AutofillShowTypePredictions",
-);
+// Enable password autofill (Chrome's built-in password manager)
+// Note: AutofillServerCommunication is disabled to prevent external server calls
+app.commandLine.appendSwitch("disable-features", "AutofillServerCommunication");
 
 let mainWindow;
 

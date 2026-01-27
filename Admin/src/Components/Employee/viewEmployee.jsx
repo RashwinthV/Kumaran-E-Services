@@ -118,7 +118,8 @@ const ViewEmployee = ({ BranchCode, onEdit }) => {
                   </div>
                   <div>
                     <div className="employee-name">
-                      {employee.name.toUpperCase()}
+                    <span style={{marginBottom:"20px"}}>  {employee.name.toUpperCase()} </span><br />
+                      EMP ID : {employee?.employeeId}
                     </div>
                     <span className={`role-badge ${employee.role}`}>
                       {employee.role}

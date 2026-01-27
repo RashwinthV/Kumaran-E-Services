@@ -539,59 +539,79 @@ const Expenses = () => {
               <>
                 <div className="col-md-6">
                   <label className="premium-form-label">Product Name</label>
-                  <input
-                    type="text"
-                    className="form-control premium-input text-capitalize"
-                    value={formData.productName}
-                    onChange={(e) =>
-                      handleInputChange("productName", e.target.value)
-                    }
-                    placeholder="e.g. Printer Paper Bundle"
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0 text-capitalize"
+                      value={formData.productName}
+                      onChange={(e) =>
+                        handleInputChange("productName", e.target.value)
+                      }
+                      placeholder="e.g. Printer Paper Bundle"
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-3">
                   <label className="premium-form-label">Qty</label>
-                  <input
-                    type="number"
-                    className="form-control premium-input"
-                    value={formData.quantity}
-                    onChange={(e) =>
-                      handleInputChange("quantity", e.target.value)
-                    }
-                    placeholder="0"
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0 text-center"
+                      value={formData.quantity}
+                      onChange={(e) =>
+                        handleInputChange("quantity", e.target.value)
+                      }
+                      placeholder="0"
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-3">
                   <label className="premium-form-label">Unit Price</label>
-                  <div className="input-group">
-                    <span className="input-group-text border-0">
-                      ₹
-                      <input
-                        type="number"
-                        className="form-control premium-input border-0"
-                        value={formData.unitPrice}
-                        onChange={(e) =>
-                          handleInputChange("unitPrice", e.target.value)
-                        }
-                        placeholder="0.00"
-                        required
-                      />{" "}
-                    </span>
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.unitPrice}
+                      onChange={(e) =>
+                        handleInputChange("unitPrice", e.target.value)
+                      }
+                      placeholder="0.00"
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-md-6">
                   <label className="premium-form-label">Supplier / Store</label>
-                  <input
-                    type="text"
-                    className="form-control premium-input"
-                    value={formData.supplier}
-                    onChange={(e) =>
-                      handleInputChange("supplier", e.target.value)
-                    }
-                    placeholder="Where did you buy it?"
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.supplier}
+                      onChange={(e) =>
+                        handleInputChange("supplier", e.target.value)
+                      }
+                      placeholder="Where did you buy it?"
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="premium-form-label">Estimated Total</label>
@@ -615,48 +635,62 @@ const Expenses = () => {
                   <label className="premium-form-label">
                     Detailed Description
                   </label>
-                  <textarea
-                    className="form-control premium-input"
-                    rows="3"
-                    value={formData.productName}
-                    onChange={(e) =>
-                      handleInputChange("productName", e.target.value)
-                    }
-                    placeholder="List products: 50 Pens, 10 Reams Paper, 5 Staplers..."
-                    required
-                  />
+                  <div
+                    className="bg-light rounded-2 px-2 py-1"
+                    style={{ border: "1px solid #e2e8f0" }}
+                  >
+                    <textarea
+                      className="form-control border-0 bg-transparent shadow-none p-1"
+                      rows="3"
+                      value={formData.productName}
+                      onChange={(e) =>
+                        handleInputChange("productName", e.target.value)
+                      }
+                      placeholder="List products: 50 Pens, 10 Reams Paper, 5 Staplers..."
+                      required
+                      style={{ resize: "none", fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="premium-form-label">
                     Total Amount Paid
                   </label>
-                  <div className="input-group">
-                    <span className="input-group-text input-group-text-premium me-2">
-                      ₹
-                      <input
-                        type="number"
-                        className="form-control  input-group-text-premium  premium-input border-0"
-                        value={formData.unitPrice}
-                        onChange={(e) =>
-                          handleInputChange("unitPrice", e.target.value)
-                        }
-                        placeholder="0.00"
-                        required
-                      />{" "}
-                    </span>
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.unitPrice}
+                      onChange={(e) =>
+                        handleInputChange("unitPrice", e.target.value)
+                      }
+                      placeholder="0.00"
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-md-6">
                   <label className="premium-form-label">Supplier Name</label>
-                  <input
-                    type="text"
-                    className="form-control premium-input"
-                    value={formData.supplier}
-                    onChange={(e) =>
-                      handleInputChange("supplier", e.target.value)
-                    }
-                    placeholder="Vendor Name"
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.supplier}
+                      onChange={(e) =>
+                        handleInputChange("supplier", e.target.value)
+                      }
+                      placeholder="Vendor Name"
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -695,148 +729,185 @@ const Expenses = () => {
 
             <div className="col-md-6">
               <label className="premium-form-label">Beneficiary Employee</label>
-              <select
-                className="form-select premium-input"
-                value={formData.employeeName}
-                onChange={(e) => {
-                  const emp = branchEmployees.find(
-                    (b) => b.name === e.target.value,
-                  );
-                  setFormData((prev) => ({
-                    ...prev,
-                    employeeName: e.target.value,
-                    payPerDay: emp?.PayPerDay || "",
-                  }));
-                  fetchEmployeeSummary(e.target.value);
-                }}
-                required
+              <div
+                className="d-flex align-items-center bg-light rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
               >
-                <option value="">Select Employee...</option>
-                {branchEmployees.map((emp) => (
-                  <option key={emp._id} value={emp.name}>
-                    {emp.name} ({emp.role})
-                  </option>
-                ))}
-              </select>
+                <select
+                  className="form-select border-0 bg-transparent shadow-none p-0"
+                  value={formData.employeeName}
+                  onChange={(e) => {
+                    const emp = branchEmployees.find(
+                      (b) => b.name === e.target.value,
+                    );
+                    setFormData((prev) => ({
+                      ...prev,
+                      employeeName: e.target.value,
+                      payPerDay: emp?.PayPerDay || "",
+                    }));
+                    fetchEmployeeSummary(e.target.value);
+                  }}
+                  required
+                  style={{ fontSize: "0.95rem" }}
+                >
+                  <option value="">Select Employee...</option>
+                  {branchEmployees.map((emp) => (
+                    <option key={emp._id} value={emp.name}>
+                      {emp.name} ({emp.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="col-md-6">
               <label className="premium-form-label">Executing Branch</label>
-              <input
-                type="text"
-                className="form-control premium-input bg-light"
-                value={user?.branchCode || "---"}
-                readOnly
-              />
+              <div
+                className="d-flex align-items-center bg-secondary bg-opacity-10 rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent shadow-none p-0 text-muted"
+                  value={user?.branchCode || "---"}
+                  readOnly
+                  style={{ fontSize: "0.95rem" }}
+                />
+              </div>
             </div>
 
             {formData.employeePaymentType === "salary" ? (
               <>
                 <div className="col-md-3">
                   <label className="premium-form-label">From Date</label>
-                  <input
-                    type="date"
-                    className="form-control premium-input"
-                    value={formData.salaryFromDate}
-                    onChange={(e) =>
-                      handleInputChange("salaryFromDate", e.target.value)
-                    }
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.salaryFromDate}
+                      onChange={(e) =>
+                        handleInputChange("salaryFromDate", e.target.value)
+                      }
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-3">
                   <label className="premium-form-label">To Date</label>
-                  <input
-                    type="date"
-                    className="form-control premium-input"
-                    value={formData.salaryToDate}
-                    onChange={(e) =>
-                      handleInputChange("salaryToDate", e.target.value)
-                    }
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.salaryToDate}
+                      onChange={(e) =>
+                        handleInputChange("salaryToDate", e.target.value)
+                      }
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-3">
                   <label className="premium-form-label">Days Worked</label>
-                  <input
-                    type="number"
-                    className="form-control premium-input"
-                    value={formData.daysWorked}
-                    onChange={(e) =>
-                      handleInputChange("daysWorked", e.target.value)
-                    }
-                    placeholder="0"
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0 text-center"
+                      value={formData.daysWorked}
+                      onChange={(e) =>
+                        handleInputChange("daysWorked", e.target.value)
+                      }
+                      placeholder="0"
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-3">
                   <label className="premium-form-label">Pay Per Day</label>
-                  <div className="input-group">
-                    <span className="input-group-text border-0 ps-3 bg-light text-muted">
-                      ₹
-                      <input
-                        type="number"
-                        className="form-control premium-input border-0 bg-light"
-                        value={formData.payPerDay}
-                        onChange={(e) =>
-                          handleInputChange("payPerDay", e.target.value)
-                        }
-                        placeholder="0.00"
-                        required
-                      />{" "}
-                    </span>
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.payPerDay}
+                      onChange={(e) =>
+                        handleInputChange("payPerDay", e.target.value)
+                      }
+                      placeholder="0.00"
+                      required
+                      style={{ fontSize: "0.95rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-md-4">
                   <label className="premium-form-label">
                     Base Salary (Total)
                   </label>
-                  <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
-                      ₹
-                      <input
-                        type="number"
-                        className="form-control premium-input border-0 input-group-text-premium"
-                        value={formData.salary}
-                        readOnly
-                        placeholder="Computed automatically"
-                      />{" "}
-                    </span>
+                  <div
+                    className="d-flex align-items-center bg-secondary bg-opacity-10 rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0 fw-bold"
+                      value={formData.salary}
+                      readOnly
+                      style={{ fontSize: "1.1rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-md-4">
                   <label className="premium-form-label">
                     Bonus / Incentives
                   </label>
-                  <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
-                      ₹
-                      <input
-                        type="number"
-                        className="form-control premium-input border-0 input-group-text-premium"
-                        value={formData.bonus}
-                        onChange={(e) =>
-                          handleInputChange("bonus", e.target.value)
-                        }
-                        placeholder="0.00"
-                      />{" "}
-                    </span>
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.bonus}
+                      onChange={(e) =>
+                        handleInputChange("bonus", e.target.value)
+                      }
+                      placeholder="0.00"
+                      style={{ fontSize: "0.95rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-md-4">
                   <label className="premium-form-label">Deductions</label>
-                  <div className="input-group">
-                    <span className="input-group-text input-group-text-premium">
-                      ₹
-                      <input
-                        type="number"
-                        className="form-control premium-input border-0 input-group-text-premium"
-                        value={formData.deductions}
-                        onChange={(e) =>
-                          handleInputChange("deductions", e.target.value)
-                        }
-                        placeholder="0.00"
-                      />{" "}
-                    </span>
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.deductions}
+                      onChange={(e) =>
+                        handleInputChange("deductions", e.target.value)
+                      }
+                      placeholder="0.00"
+                      style={{ fontSize: "0.95rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-12">
@@ -884,31 +955,41 @@ const Expenses = () => {
               <>
                 <div className="col-md-6">
                   <label className="premium-form-label">Advance Amount</label>
-                  <div className="input-group">
-                    <span className="input-group-text border-0 ps-3 bg-light text-muted">
-                      ₹
-                   
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
                     <input
                       type="number"
-                      className="form-control premium-input border-0 bg-light"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
                       value={formData.advance}
                       onChange={(e) =>
                         handleInputChange("advance", e.target.value)
                       }
                       placeholder="0.00"
                       required
-                    /> </span>
+                      style={{ fontSize: "0.95rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-12">
                   <label className="premium-form-label">Reason / Term</label>
-                  <textarea
-                    className="form-control premium-input"
-                    rows="2"
-                    value={formData.notes}
-                    onChange={(e) => handleInputChange("notes", e.target.value)}
-                    placeholder="Why is this advance being issued?"
-                  />
+                  <div
+                    className="bg-light rounded-2 px-2 py-1"
+                    style={{ border: "1px solid #e2e8f0" }}
+                  >
+                    <textarea
+                      className="form-control border-0 bg-transparent shadow-none p-1"
+                      rows="2"
+                      value={formData.notes}
+                      onChange={(e) =>
+                        handleInputChange("notes", e.target.value)
+                      }
+                      placeholder="Why is this advance being issued?"
+                      style={{ resize: "none", fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -922,51 +1003,71 @@ const Expenses = () => {
               <label className="premium-form-label">
                 Property / Branch Name
               </label>
-              <input
-                type="text"
-                className="form-control premium-input bg-light"
-                value={formData.propertyName}
-                readOnly
-                placeholder="Shop Name or Address"
-                required
-              />
+              <div
+                className="d-flex align-items-center bg-secondary bg-opacity-10 rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent shadow-none p-0 text-muted"
+                  value={formData.propertyName}
+                  readOnly
+                  placeholder="Shop Name or Address"
+                  required
+                  style={{ fontSize: "0.95rem" }}
+                />
+              </div>
             </div>
             <div className="col-md-4">
               <label className="premium-form-label">Rent Amount</label>
-              <div className="input-group">
-                <span className="input-group-text border-0 ps-3 bg-light text-muted">
-                  ₹
+              <div
+                className="d-flex align-items-center bg-secondary bg-opacity-10 rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <span className="text-muted fw-bold me-2">₹</span>
                 <input
                   type="number"
-                  className="form-control premium-input border-0 bg-light"
+                  className="form-control border-0 bg-transparent shadow-none p-0 fw-bold"
                   value={formData.rentAmount}
                   readOnly
                   placeholder="0.00"
                   required
-                />                </span>
-
+                  style={{ fontSize: "1.1rem" }}
+                />
               </div>
             </div>
             <div className="col-md-6">
               <label className="premium-form-label">Payment Period</label>
-              <input
-                type="text"
-                className="form-control premium-input"
-                value={formData.period}
-                onChange={(e) => handleInputChange("period", e.target.value)}
-                placeholder="e.g. January 2026"
-                required
-              />
+              <div
+                className="d-flex align-items-center bg-light rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent shadow-none p-0"
+                  value={formData.period}
+                  onChange={(e) => handleInputChange("period", e.target.value)}
+                  placeholder="e.g. January 2026"
+                  required
+                  style={{ fontSize: "0.95rem" }}
+                />
+              </div>
             </div>
             <div className="col-md-6">
               <label className="premium-form-label">Landlord Name</label>
-              <input
-                type="text"
-                className="form-control premium-input bg-light"
-                value={formData.landlord}
-                readOnly
-                placeholder="Full Name"
-              />
+              <div
+                className="d-flex align-items-center bg-secondary bg-opacity-10 rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent shadow-none p-0 text-muted"
+                  value={formData.landlord}
+                  readOnly
+                  placeholder="Full Name"
+                  style={{ fontSize: "0.95rem" }}
+                />
+              </div>
             </div>
           </div>
         );
@@ -976,42 +1077,58 @@ const Expenses = () => {
           <div className="row g-4 animate-fade-in">
             <div className="col-md-8">
               <label className="premium-form-label">Expense Description</label>
-              <input
-                type="text"
-                className="form-control premium-input"
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                placeholder="What was this for?"
-                required
-              />
+              <div
+                className="d-flex align-items-center bg-light rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent shadow-none p-0"
+                  value={formData.description}
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  placeholder="What was this for?"
+                  required
+                  style={{ fontSize: "0.95rem" }}
+                />
+              </div>
             </div>
             <div className="col-md-4">
               <label className="premium-form-label">Amount</label>
-              <div className="input-group">
-                <span className="input-group-text border-0 ps-3 bg-light text-muted">
-                  ₹
-                </span>
+              <div
+                className="d-flex align-items-center bg-light rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <span className="text-muted fw-bold me-2">₹</span>
                 <input
                   type="number"
-                  className="form-control premium-input border-0 bg-light"
+                  className="form-control border-0 bg-transparent shadow-none p-0"
                   value={formData.amount}
                   onChange={(e) => handleInputChange("amount", e.target.value)}
                   placeholder="0.00"
                   required
+                  style={{ fontSize: "0.95rem" }}
                 />
               </div>
             </div>
             <div className="col-12">
               <label className="premium-form-label">Sub-Category</label>
-              <input
-                type="text"
-                className="form-control premium-input"
-                value={formData.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
-                placeholder="Utilities, Maintenance, Repairs, etc."
-              />
+              <div
+                className="d-flex align-items-center bg-light rounded-2 px-2"
+                style={{ height: "45px", border: "1px solid #e2e8f0" }}
+              >
+                <input
+                  type="text"
+                  className="form-control border-0 bg-transparent shadow-none p-0"
+                  value={formData.category}
+                  onChange={(e) =>
+                    handleInputChange("category", e.target.value)
+                  }
+                  placeholder="Utilities, Maintenance, Repairs, etc."
+                  style={{ fontSize: "0.95rem" }}
+                />
+              </div>
             </div>
           </div>
         );
@@ -1099,12 +1216,20 @@ const Expenses = () => {
               <div className="row g-4 mt-2 pt-4 border-top">
                 <div className="col-md-3">
                   <label className="premium-form-label">Transaction Date</label>
-                  <input
-                    type="date"
-                    className="form-control premium-input"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange("date", e.target.value)}
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.date}
+                      onChange={(e) =>
+                        handleInputChange("date", e.target.value)
+                      }
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-6">
                   <label className="premium-form-label">
@@ -1146,13 +1271,21 @@ const Expenses = () => {
                   <label className="premium-form-label">
                     Notes / Additional Details
                   </label>
-                  <input
-                    type="text"
-                    className="form-control premium-input"
-                    value={formData.notes}
-                    onChange={(e) => handleInputChange("notes", e.target.value)}
-                    placeholder="Reference, Bill No, or specific purpose..."
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "45px", border: "1px solid #e2e8f0" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.notes}
+                      onChange={(e) =>
+                        handleInputChange("notes", e.target.value)
+                      }
+                      placeholder="Reference, Bill No, or specific purpose..."
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </div>
                 </div>
               </div>
 

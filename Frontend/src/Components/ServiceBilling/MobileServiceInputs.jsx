@@ -10,44 +10,12 @@ const MobileServiceInputs = ({
   componentSuggestions = [],
   // New props for Pending Repair sub-service
   complaints = [],
-  allComplaints=[],
+  allComplaints = [],
   onSelectComplaint,
   onCancelComplaint,
   selectedComplaintId,
 }) => {
   const isRepair = selectedService === "Mobile Repair";
-  const handleSelectComplaint = (complaint) => {
-    setSelectedComplaintId(complaint.id); // uses mapped id (_id)
-    setSelectedModule(complaint.module);
-    setSelectedService(complaint.service);
-    setFormData(complaint.formData);
-    handleSelectCustomer({
-      _id: complaint.customerId,
-      name: complaint.customerName,
-      phone: complaint.customerPhone,
-    });
-  };
-
-  const handleCancelComplaint = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this complaint?"))
-      return;
-
-    try {
-      const res = await axios.delete(API_ENDPOINTS.COMPLAINTS.BY_ID(id), {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (res.data.success) {
-        toast.info("Complaint Removed");
-        fetchComplaints();
-        setSelectedComplaintId(null);
-        handleClearForm();
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to remove complaint");
-    }
-  };
-
 
   if (selectedService === "Pending Repair") {
     if (complaints.length === 0) {
@@ -61,7 +29,7 @@ const MobileServiceInputs = ({
     return (
       <div className="flex-grow-1 overflow-auto">
         <label className="small fw-bold text-muted text-uppercase mb-3 d-block">
-          Select a pending repair to process payment
+          Select a pending repair to process payment ({complaints.length})
         </label>
         <div className="list-group list-group-flush border rounded">
           {complaints.map((c) => (
@@ -78,19 +46,38 @@ const MobileServiceInputs = ({
               <div className="flex-grow-1 overflow-hidden">
                 <div className="d-flex justify-content-between align-items-center">
                   <span className="fw-bold text-dark">
+                    {c.formData?.serviceId && (
+                      <span className="badge bg-secondary me-2">
+                        #{c.formData.serviceId}
+                      </span>
+                    )}
                     {c.customerName} - {c.formData.providerName}
                   </span>
                   <span className="badge bg-warning text-dark fs-6">
                     ₹{c.totalAmount.toFixed(0)}
                   </span>
                 </div>
-                <div className="text-muted small mt-1">
-                  <i className="bi bi-phone me-1"></i>
+                <div className="text-muted small mt-1 text-truncate">
+                  <i className="bi bi-gear me-1"></i>
+                  {c.formData?.repairItems
+                    ?.filter((item) => item.name && item.name !== "Other")
+                    .map((item) => item.name)
+                    .join(", ")}
+                  {c.formData?.repairItems?.some(
+                    (item) => item.name === "Other",
+                  ) &&
+                    `, ${c.formData.repairItems
+                      .filter((item) => item.name === "Other")
+                      .map((item) => item.customName || "Other")
+                      .join(", ")}`}
+                </div>
+                <div className="text-muted small text-truncate">
+                  <i className="bi bi-info-circle me-1"></i>
                   {c.description}
                 </div>
                 <div className="text-muted" style={{ fontSize: "0.75rem" }}>
                   <i className="bi bi-calendar3 me-1"></i>
-                  {new Date(c.timestamp).toLocaleString()}
+                  {new Date(c.createdAt || c.timestamp).toLocaleString()}
                 </div>
               </div>
               <div className="ms-3">
@@ -112,7 +99,6 @@ const MobileServiceInputs = ({
   }
 
   if (selectedService === "Pending Repair List") {
-    
     if (allComplaints.length === 0) {
       return (
         <div className="text-center py-5 text-muted">
@@ -126,8 +112,8 @@ const MobileServiceInputs = ({
         <PendingRepairsList
           complaints={allComplaints}
           selectedComplaintId={selectedComplaintId}
-          onSelectComplaint={handleSelectComplaint}
-          onCancelComplaint={handleCancelComplaint}
+          onSelectComplaint={onSelectComplaint}
+          onCancelComplaint={onCancelComplaint}
         />
       </div>
     );
@@ -138,16 +124,22 @@ const MobileServiceInputs = ({
       <div className="row g-2 mb-2">
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Mobile Number</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            value={formData.consumerId}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^0-9]/g, "");
-              handleInputChange("consumerId", val);
-            }}
-            placeholder="10-digit number"
-          />
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.consumerId}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                handleInputChange("consumerId", val);
+              }}
+              placeholder="10-digit number"
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
         </div>
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Plan Type</label>
@@ -175,26 +167,38 @@ const MobileServiceInputs = ({
             <option value="Other">Other...</option>
           </select>
           {formData.providerName === "Other" && (
-            <input
-              type="text"
-              className="form-control form-control-sm mt-1"
-              placeholder="Specify operator..."
-              value={formData.customProvider || ""}
-              onChange={(e) =>
-                handleInputChange("customProvider", e.target.value)
-              }
-            />
+            <div
+              className="d-flex align-items-center bg-light rounded-2 px-2"
+              style={{ height: "35px" }}
+            >
+              <input
+                type="text"
+                className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+                placeholder="Specify operator..."
+                value={formData.customProvider || ""}
+                onChange={(e) =>
+                  handleInputChange("customProvider", e.target.value)
+                }
+                style={{ fontSize: "0.85rem" }}
+              />
+            </div>
           )}
         </div>
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Plan Details</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            value={formData.planDetails}
-            onChange={(e) => handleInputChange("planDetails", e.target.value)}
-            placeholder="Validity/Data..."
-          />
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.planDetails}
+              onChange={(e) => handleInputChange("planDetails", e.target.value)}
+              placeholder="Validity/Data..."
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
         </div>
       </div>
     );
@@ -203,45 +207,87 @@ const MobileServiceInputs = ({
   if (isRepair) {
     return (
       <div className="row g-2 mb-2">
-        <div className="col-md-3">
-          <label className="small text-muted fw-bold">Customer Name</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            value={formData.customerNameField}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^a-zA-Z\s.]/g, "");
-              handleInputChange("customerNameField", val);
-            }}
-          />
+        <div className="col-md-2">
+          <label className="small text-muted fw-bold">Service ID</label>
+          <div
+            className="d-flex align-items-center bg-secondary bg-opacity-10 rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none fw-bold text-secondary"
+              value={formData.serviceId || ""}
+              readOnly
+              placeholder="#"
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
         </div>
         <div className="col-md-3">
+          <label className="small text-muted fw-bold">Customer Name</label>
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.customerNameField}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^a-zA-Z\s.]/g, "");
+                handleInputChange("customerNameField", val);
+              }}
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
+        </div>
+        <div className="col-md-4">
           <label className="small text-muted fw-bold">Device Model</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            value={formData.providerName}
-            onChange={(e) => handleInputChange("providerName", e.target.value)}
-            placeholder="Brand & Model"
-          />
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.providerName}
+              onChange={(e) =>
+                handleInputChange("providerName", e.target.value)
+              }
+              placeholder="Brand & Model"
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
         </div>
         <div className="col-md-3">
           <label className="small text-muted fw-bold">IMEI / Serial No</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            value={formData.consumerId}
-            onChange={(e) => handleInputChange("consumerId", e.target.value)}
-          />
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.consumerId}
+              onChange={(e) => handleInputChange("consumerId", e.target.value)}
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
         </div>
-        <div className="col-md-3">
+        <div className="col-md-12">
           <label className="small text-muted fw-bold">Fault Description</label>
-          <input
-            type="text"
-            className="form-control form-control-sm"
-            value={formData.planDetails}
-            onChange={(e) => handleInputChange("planDetails", e.target.value)}
-          />
+          <div
+            className="d-flex align-items-center bg-light rounded-2 px-2"
+            style={{ height: "35px" }}
+          >
+            <input
+              type="text"
+              className="form-control form-control-sm border-0 bg-transparent p-0 shadow-none"
+              value={formData.planDetails}
+              onChange={(e) => handleInputChange("planDetails", e.target.value)}
+              style={{ fontSize: "0.85rem" }}
+            />
+          </div>
         </div>
 
         {/* Component-wise Repair Pricing */}
@@ -312,35 +358,39 @@ const MobileServiceInputs = ({
                   )}
                 </div>
                 <div className="col-4">
-                  <div className="input-group input-group-sm">
-                    <span className="input-group-text bg-light text-muted">
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "30px" }}
+                  >
+                    <span
+                      className="text-primary fw-bold me-1"
+                      style={{ fontSize: "0.7rem" }}
+                    >
                       {getCurrencySymbol(currency)}
-                      <input
-                        type="number"
-                        className="form-control"
-                        placeholder="Price"
-                        value={item.price}
-                        onChange={(e) => {
-                          let val = e.target.value.replace(/[^0-9.]/g, "");
-                          const dots = val.match(/\./g);
-                          if (dots && dots.length > 1) return;
-
-                          const items = [...formData.repairItems];
-                          items[idx].price = val;
-                          handleInputChange("repairItems", items);
-
-                          // Sync to base amount
-                          const total = items.reduce(
-                            (sum, it) => sum + (parseFloat(it.price) || 0),
-                            0,
-                          );
-                          handleInputChange(
-                            "baseAmount",
-                            total > 0 ? total : "",
-                          );
-                        }}
-                      />{" "}
                     </span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent p-0 shadow-none text-end"
+                      placeholder="0.00"
+                      value={item.price}
+                      onChange={(e) => {
+                        let val = e.target.value.replace(/[^0-9.]/g, "");
+                        const dots = val.match(/\./g);
+                        if (dots && dots.length > 1) return;
+
+                        const items = [...formData.repairItems];
+                        items[idx].price = val;
+                        handleInputChange("repairItems", items);
+
+                        // Sync to base amount
+                        const total = items.reduce(
+                          (sum, it) => sum + (parseFloat(it.price) || 0),
+                          0,
+                        );
+                        handleInputChange("baseAmount", total > 0 ? total : "");
+                      }}
+                      style={{ fontSize: "0.85rem" }}
+                    />
                   </div>
                 </div>
                 <div className="col-1 text-center">

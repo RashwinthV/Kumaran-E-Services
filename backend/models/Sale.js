@@ -17,6 +17,10 @@ const individualServiceSaleSchema = new Schema({
     unique: true,
     sparse: true,
   },
+  gstBillNo: {
+    type: String,
+    sparse: true, // Only set when GST is applicable
+  },
   customer: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
@@ -99,6 +103,10 @@ const individualSaleSchema = new Schema({
     required: true,
     unique: true, // Ensured global uniqueness
     sparse: true, // Added sparse to handle potential legacy/null issues
+  },
+  gstBillNo: {
+    type: String,
+    sparse: true, // Only set when GST is applicable
   },
   customer: {
     type: Schema.Types.ObjectId,

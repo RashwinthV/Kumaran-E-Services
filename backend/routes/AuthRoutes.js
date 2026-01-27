@@ -6,6 +6,7 @@ const {
   logout,
   getMe,
   updatePassword,
+  updateProfile,
   forgotPassword,
   verifyOTP,
   resetPassword,
@@ -29,5 +30,6 @@ router.post("/reset-password", resetPassword);
 router.post("/logout", protect, logout);
 router.get("/me", protect, getMe);
 router.put("/updatepassword", protect, updatePassword);
+router.put("/updateprofile", protect, updateProfile);
 
 module.exports = router;

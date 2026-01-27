@@ -239,17 +239,27 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     {isPayin ? "Payin" : "Payout"} Amount (₹){" "}
                     <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="number"
-                    className={`form-control ${error ? "is-invalid" : ""}`}
-                    value={formData.amount}
-                    onChange={(e) => handleChange("amount", e.target.value)}
-                    required
-                    min="0"
-                    max={isPayin ? undefined : currentPrincipal}
-                    step="0.01"
-                    placeholder={`Enter amount to ${isPayin ? "add" : "payout"}`}
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{
+                      height: "45px",
+                      border: `1px solid ${error ? "#dc3545" : "#dee2e6"}`,
+                    }}
+                  >
+                    <span className="text-muted fw-bold me-2">₹</span>
+                    <input
+                      type="number"
+                      className="form-control border-0 bg-transparent shadow-none p-0 fw-bold"
+                      value={formData.amount}
+                      onChange={(e) => handleChange("amount", e.target.value)}
+                      required
+                      min="0"
+                      max={isPayin ? undefined : currentPrincipal}
+                      step="0.01"
+                      placeholder="0.00"
+                      style={{ fontSize: "1.1rem" }}
+                    />
+                  </div>
                   {error ? (
                     <div className="invalid-feedback">{error}</div>
                   ) : (
@@ -302,13 +312,21 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     {isPayin ? "Payin" : "Payout"} Date{" "}
                     <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={formData.payoutDate}
-                    onChange={(e) => handleChange("payoutDate", e.target.value)}
-                    required
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="date"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.payoutDate}
+                      onChange={(e) =>
+                        handleChange("payoutDate", e.target.value)
+                      }
+                      required
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-bold small">
@@ -337,20 +355,22 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                       <span className="text-danger">*</span>
                     )}
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.reference}
-                    onChange={(e) => handleChange("reference", e.target.value)}
-                    placeholder={
-                      formData.mode === "cheque"
-                        ? "Enter cheque number"
-                        : formData.mode === "bank"
-                          ? "NEFT/IMPS/RTGS Ref"
-                          : "Optional reference"
-                    }
-                    required={formData.mode === "cheque"}
-                  />
+                  <div
+                    className="d-flex align-items-center bg-light rounded-2 px-2"
+                    style={{ height: "38px", border: "1px solid #dee2e6" }}
+                  >
+                    <input
+                      type="text"
+                      className="form-control border-0 bg-transparent shadow-none p-0"
+                      value={formData.reference}
+                      onChange={(e) =>
+                        handleChange("reference", e.target.value)
+                      }
+                      placeholder="Reference No."
+                      required={formData.mode === "cheque"}
+                      style={{ fontSize: "0.9rem" }}
+                    />
+                  </div>
                 </div>
 
                 {/* Bank Details Display */}

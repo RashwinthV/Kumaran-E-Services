@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import defaultShortcuts from "../../config/shortcuts.json";
+import terminalPaths from "../../config/terminalPaths.json";
 import { toast } from "react-toastify";
 
 const ShortcutsSettings = () => {
@@ -247,16 +248,27 @@ const ShortcutsSettings = () => {
 
                       {s.action === "navigate" ? (
                         <div className="flex-grow-1 position-relative">
-                          <input
-                            type="text"
-                            className="form-control form-control-sm font-monospace border-0 bg-light"
+                          <select
+                            className="form-select form-select-sm font-monospace border-0 bg-light"
                             value={s.target || ""}
                             onChange={(e) =>
                               updateShortcut(s.id, "target", e.target.value)
                             }
-                            placeholder="/route-path"
                             style={{ fontSize: "0.85rem" }}
-                          />
+                          >
+                            <option value="">Select Path...</option>
+                            {terminalPaths.map((p) => (
+                              <option key={p.path} value={p.path}>
+                                {p.label}
+                              </option>
+                            ))}
+                            {!terminalPaths.find((p) => p.path === s.target) &&
+                              s.target && (
+                                <option value={s.target}>
+                                  Manual: {s.target}
+                                </option>
+                              )}
+                          </select>
                         </div>
                       ) : (
                         <span

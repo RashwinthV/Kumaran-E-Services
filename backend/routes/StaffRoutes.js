@@ -32,7 +32,10 @@ const {
 } = require("../controller/InventoryController");
 const { GetEmployee } = require("../controller/EmployeeController");
 const { protect } = require("../middleware/auth");
-const { getBranchBycode } = require("../controller/BranchController");
+const {
+  getBranchBycode,
+  getBranchPrintInfo,
+} = require("../controller/BranchController");
 const { GetProdctBYBranch } = require("../controller/ProductController");
 const { getAllCategories } = require("../controller/CategoryController");
 
@@ -91,6 +94,7 @@ router.get("/products/:BranchId", protect, GetProdctBYBranch);
 
 //branch route
 router.get("/Branch/:branchcode", protect, getBranchBycode);
+router.get("/my-branch-print-info", protect, getBranchPrintInfo);
 router.get("/employees/:branchcode", protect, GetEmployee);
 router.get("/categories", protect, getAllCategories);
 

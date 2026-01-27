@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import { getDecrypted } from "../../utils/storage";
+import { Link } from "react-router-dom";
 
 const GlobalHeader = ({ Online }) => {
   const { user } = useAuth();
@@ -76,7 +77,7 @@ const GlobalHeader = ({ Online }) => {
           <div className="vr opacity-10" style={{ height: "30px" }}></div>
 
           {/* Staff Info */}
-          <div className="d-flex align-items-center gap-2">
+     
             <div
               className="bg-success bg-opacity-10 text-success rounded d-flex align-items-center justify-content-center"
               style={{ width: "32px", height: "32px" }}
@@ -94,7 +95,6 @@ const GlobalHeader = ({ Online }) => {
                 {user?.name?.toUpperCase()}
               </div>
             </div>
-          </div>
 
           <div className="vr opacity-10" style={{ height: "30px" }}></div>
 

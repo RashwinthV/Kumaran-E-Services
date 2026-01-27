@@ -32,6 +32,7 @@ exports.createComplaint = async (req, res) => {
     const complaint = await ServiceComplaint.create({
       branch: branch._id,
       branchCode,
+      serviceId: formData?.serviceId || null,
       customerName,
       customerPhone,
       customerId,

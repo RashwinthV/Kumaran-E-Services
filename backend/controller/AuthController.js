@@ -359,6 +359,103 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
+exports.updateProfile = async (req, res) => {
+  try {
+    const { email, password, currentPassword } = req.body;
+    const user = await User.findById(req.user.id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password for any changes
+    if (!currentPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide current password to make changes",
+      });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    if (email) {
+      user.email = email.toLowerCase();
+    }
+
+    if (password) {
+      user.password = password;
+      user.credentials.tokenVersion += 1;
+    }
+
+    // Skip validation for admin to avoid missing branchCode/age errors
+    if (user.role === "admin") {
+      await user.save({ validateBeforeSave: false });
+    } else {
+      await user.save();
+    }
+
+    let accessToken, refreshToken;
+    if (password) {
+      accessToken = generateAccessToken(user._id);
+      refreshToken = generateRefreshToken(
+        user._id,
+        user.credentials.tokenVersion,
+      );
+
+      user.credentials.refreshToken = refreshToken;
+      user.credentials.lastTokenRefresh = Date.now();
+      await user.save({ validateBeforeSave: false });
+
+      const cookieName = req.cookies.adminRefreshToken
+        ? "adminRefreshToken"
+        : "refreshToken";
+      res.cookie(cookieName, refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: "/",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      accessToken: password ? accessToken : undefined,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        employeeId: user.employeeId,
+        phone: user.phone,
+        role: user.role,
+        branchCode: user.branchCode,
+      },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;

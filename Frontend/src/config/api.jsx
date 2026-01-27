@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: `${API_BASE}/api/auth/forgot-password`,
     VERIFY_OTP: `${API_BASE}/api/auth/verify-otp`,
     RESET_PASSWORD: `${API_BASE}/api/auth/reset-password`,
+    UPDATE_PROFILE: `${API_BASE}/api/auth/updateprofile`,
   },
   SALES: {
     BASE: `${API_BASE}/api/staff`,
@@ -25,6 +26,7 @@ export const API_ENDPOINTS = {
   INVESTORS: `${API_BASE}/api/staff/customers/investors`,
   CUSTOMER_SEARCH: `${API_BASE}/api/staff/customers/search`,
   BRANCH: `${API_BASE}/api/staff/Branch`,
+  MY_BRANCH_PRINT_INFO: `${API_BASE}/api/staff/my-branch-print-info`,
   EMPLOYEES: (code) => `${API_BASE}/api/staff/employees/${code}`,
   EXPENSES: `${API_BASE}/api/staff/expenses`,
   EMPLOYEE_EXPENSE_SUMMARY: (name) =>

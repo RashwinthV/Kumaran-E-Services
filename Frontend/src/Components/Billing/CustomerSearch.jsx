@@ -15,7 +15,7 @@ const CustomerSearch = ({ customers, onSelectCustomer, onAddNewCustomer }) => {
       const filtered = customers.filter(
         (c) =>
           c.name.toLowerCase().includes(query.toLowerCase()) ||
-          c.phone.includes(query)
+          c.phone.includes(query),
       );
       setSuggestions(filtered);
       setShowSuggestions(true);
@@ -32,7 +32,7 @@ const CustomerSearch = ({ customers, onSelectCustomer, onAddNewCustomer }) => {
       case "ArrowDown":
         e.preventDefault();
         setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev
+          prev < suggestions.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
@@ -64,14 +64,15 @@ const CustomerSearch = ({ customers, onSelectCustomer, onAddNewCustomer }) => {
   };
 
   return (
-    <div className="position-relative mb-2">
-      <div className="input-group input-group-sm">
-        <span className="input-group-text bg-transparent border-end-0">
-          <i className="bi bi-search text-secondary me-2"></i>
-     
+    <div className="position-relative">
+      <div
+        className="d-flex align-items-center bg-light rounded-3 px-3 shadow-sm mb-2"
+        style={{ height: "45px" }}
+      >
+        <i className="bi bi-search text-primary me-2"></i>
         <input
           type="text"
-          className="form-control border-start-0 ps-0"
+          className="form-control border-0 bg-transparent shadow-none ps-0 fw-medium"
           placeholder="Search Customer by name or phone..."
           value={searchQuery}
           onChange={handleSearchChange}
@@ -80,7 +81,6 @@ const CustomerSearch = ({ customers, onSelectCustomer, onAddNewCustomer }) => {
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           autoComplete="off"
         />
-           </span>
       </div>
 
       {showSuggestions && suggestions.length > 0 && (

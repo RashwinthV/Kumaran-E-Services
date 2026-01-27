@@ -18,6 +18,8 @@ export const StandardTemplate = ({
           <h4 style="margin: 0 0 8px 0; color: #444; font-weight: 600;">${
             branchDetails.branchName
           }</h4>
+          <p>${branchDetails.address}</p>
+          <p>Ph: ${branchDetails.contact}</p>
           ${
             branchDetails.gstNumber
               ? `<p><strong>GSTIN: ${branchDetails.gstNumber}</strong></p>`
@@ -87,10 +89,14 @@ export const StandardTemplate = ({
         </tbody>
       </table>
       <div class="invoice-footer" style="display: flex; justify-content: space-between; margin-top: 30px;">
-         <div class="notes" style="width: 50%;">
-           <p><b>Terms & Conditions:</b></p>
-           <p style="font-size: 0.8rem;">1. Goods once sold will not be taken back.<br>2. Subject to local jurisdiction.</p>
-         </div>
+          <div class="notes" style="width: 50%;">
+            <p><b>Terms & Conditions:</b></p>
+            <p style="font-size: 0.8rem;">
+              1. Goods once sold will not be taken back or exchanged.<br>
+              2. Warranty if any is provided by the manufacturer directly.<br>
+              3. Subject to local jurisdiction.
+            </p>
+          </div>
          <div class="totals-box">
             <div class="total-row"><span>Subtotal</span><span>${currencySymbol}${subtotal.toFixed(
               2,

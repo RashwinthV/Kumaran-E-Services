@@ -30,6 +30,7 @@ const ProductBilling = () => {
     refreshCustomers,
     refreshProducts,
     refreshSales,
+    branchInfo,
   } = useBilling();
   const { user, accessToken, logout } = useAuth();
   const navigate = useNavigate();
@@ -90,6 +91,8 @@ const ProductBilling = () => {
       taxAmount = 0;
     }
 
+    const isBelowCP = item.costPrice > 0 && effectivePrice < item.costPrice;
+
     return {
       ...item,
       effectivePrice,
@@ -97,6 +100,7 @@ const ProductBilling = () => {
       taxAmount,
       taxableValue,
       discountAmount: discountAmountPerUnit * qty,
+      isBelowCP,
     };
   });
 
@@ -174,35 +178,45 @@ const ProductBilling = () => {
     );
   };
 
-  const updateDiscount = (id, val) => {
+  const updatePrice = (id, val) => {
+    const newPrice = parseFloat(val) || 0;
+    setCart((prev) =>
+      prev.map((item) =>
+        item._id === id ? { ...item, price: newPrice } : item,
+      ),
+    );
+  };
+
+  const updateDiscount = (id, val, shouldCap = false) => {
     const item = cart.find((i) => i._id === id);
     if (!item) return;
 
     let discount = Math.min(100, Math.max(0, parseFloat(val) || 0));
 
-    // Cap discount so effective price doesn't go below cost price
-    const costPrice = item.costPrice || 0;
-    const sellingPrice = item.price;
+    // Only cap on blur/finalization, not while typing
+    if (shouldCap) {
+      const costPrice = item.costPrice || 0;
+      const sellingPrice = item.price;
 
-    if (costPrice > 0) {
-      if (sellingPrice > costPrice) {
-        const maxDiscountPercent =
-          ((sellingPrice - costPrice) / sellingPrice) * 100;
-        if (discount > maxDiscountPercent) {
-          toast.warning(
-            `Discount capped at ${maxDiscountPercent.toFixed(
-              2,
-            )}% to maintain cost price (₹${costPrice.toFixed(2)})`,
-          );
-          discount = maxDiscountPercent;
-        }
-      } else {
-        // Selling price is already at or below CP
-        if (discount > 0) {
-          toast.warning(
-            "Cannot apply discount: selling price is already at/below cost price.",
-          );
-          discount = 0;
+      if (costPrice > 0) {
+        if (sellingPrice > costPrice) {
+          const maxDiscountPercent =
+            ((sellingPrice - costPrice) / sellingPrice) * 100;
+          if (discount > maxDiscountPercent) {
+            toast.warning(
+              `Discount capped at ${maxDiscountPercent.toFixed(
+                2,
+              )}% to maintain cost price (₹${costPrice.toFixed(2)})`,
+            );
+            discount = maxDiscountPercent;
+          }
+        } else {
+          if (discount > 0) {
+            toast.warning(
+              "Cannot apply discount: selling price is already at/below cost price.",
+            );
+            discount = 0;
+          }
         }
       }
     }
@@ -210,6 +224,31 @@ const ProductBilling = () => {
     setCart((prev) =>
       prev.map((item) => (item._id === id ? { ...item, discount } : item)),
     );
+  };
+
+  const updateLineTotal = (id, val, shouldCap = false) => {
+    const item = cart.find((i) => i._id === id);
+    if (!item) return;
+
+    const newLineTotal = parseFloat(val) || 0;
+    const qty = item.qty;
+    const price = item.price;
+    const gst = item.gst || 0;
+    const type = (item.gstType || "NotIncluded").toLowerCase();
+
+    let maxLineTotal;
+    if (type === "included") {
+      maxLineTotal = price * qty;
+    } else if (type === "notincluded") {
+      maxLineTotal = price * qty * (1 + gst / 100);
+    } else {
+      maxLineTotal = price * qty;
+    }
+
+    if (maxLineTotal > 0) {
+      const newDiscount = ((maxLineTotal - newLineTotal) / maxLineTotal) * 100;
+      updateDiscount(id, Math.max(0, newDiscount), shouldCap);
+    }
   };
 
   const removeItem = (id) => {
@@ -413,7 +452,7 @@ const ProductBilling = () => {
                 sku: item.sku,
               })),
             },
-            { silent: true },
+            { silent: true, branchInfo },
           );
         }
 
@@ -678,33 +717,35 @@ const ProductBilling = () => {
                       className="table-light sticky-top"
                       style={{ zIndex: 10 }}
                     >
-                      <tr className="small text-uppercase">
+                      <tr className="small text-uppercase align-middle">
                         <th
-                          style={{ width: "5%" }}
+                          style={{ width: "40px" }}
                           className="ps-3 text-center"
                         >
                           #
                         </th>
-                        <th style={{ width: "20%" }}>ITEMCODE</th>
-
-                        <th style={{ width: "30%" }}>Description</th>
-                        <th style={{ width: "8%" }} className="text-center">
+                        <th style={{ width: "140px" }}>ITEMCODE</th>
+                        <th style={{}}>DESCRIPTION</th>
+                        <th style={{ width: "110px" }} className="text-center">
                           GST%
                         </th>
-                        <th style={{ width: "10%" }} className="text-end">
-                          Price
+                        <th style={{ width: "120px" }} className="text-end">
+                          PRICE
                         </th>
-                        <th style={{ width: "12%" }} className="text-center">
-                          Qty
+                        <th style={{ width: "90px" }} className="text-center">
+                          QTY
                         </th>
-                        <th style={{ width: "15%" }} className="text-end">
-                          Discount %
-                        </th>
-                        <th style={{ width: "15%" }} className="text-end">
-                          Total
+                        <th style={{ width: "110px" }} className="text-end">
+                          DISCOUNT %
                         </th>
                         <th
-                          style={{ width: "5%" }}
+                          style={{ width: "135px" }}
+                          className="text-end pe-3"
+                        >
+                          TOTAL
+                        </th>
+                        <th
+                          style={{ width: "50px" }}
                           className="text-center"
                         ></th>
                       </tr>
@@ -761,66 +802,169 @@ const ProductBilling = () => {
                               </div>
                             </td>
                             <td className="text-center">
-                              <div className="d-flex flex-column align-items-center">
-                                <span className="badge bg-light text-dark border small fw-normal">
+                              <div
+                                className="d-flex flex-row gap-2 align-items-center justify-content-center bg-light rounded-2 mx-auto"
+                                style={{ width: "90px", height: "30px" }}
+                              >
+                                <span className="fw-bold small text-dark">
                                   {item.gst}%
                                 </span>
                                 <small
-                                  className="text-muted"
-                                  style={{ fontSize: "0.6rem" }}
+                                  className="text-muted fw-bold"
+                                  style={{ fontSize: "0.75rem" }}
                                 >
                                   {item.gstType === "Included"
-                                    ? "Incl."
-                                    : "Excl."}
+                                    ? "(Incl.)"
+                                    : "(Excl.)"}
                                 </small>
                               </div>
                             </td>
-                            <td className="text-end small">
-                              {getCurrencySymbol(appSettings?.currency)}
-                              {item.price}
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                className="form-control form-control-sm text-center small border-0 bg-light mx-auto"
-                                value={item.qty}
-                                onChange={(e) =>
-                                  setQty(item._id, e.target.value)
-                                }
-                                min="1"
-                                style={{ width: "60px", fontSize: "0.8rem" }}
-                              />
-                            </td>
-                            <td>
+                            <td className="text-end">
                               <div
-                                className="input-group input-group-sm mx-auto"
-                                style={{ width: "70px" }}
+                                className="d-flex align-items-center justify-content-end bg-light rounded-2 px-1 ms-auto"
+                                style={{ width: "90px", height: "30px" }}
                               >
                                 <span
-                                  className="input-group-text bg-light border-0 ps-0 pe-2 small text-muted"
-                                  style={{ fontSize: "0.7rem" }}
+                                  className="text-muted small fw-bold px-1"
+                                  style={{ fontSize: "0.75rem" }}
+                                >
+                                  {getCurrencySymbol(appSettings?.currency)}
+                                </span>
+                                <input
+                                  type="number"
+                                  className="form-control form-control-sm text-end border-0 bg-transparent p-0"
+                                  value={item.price}
+                                  onChange={(e) =>
+                                    updatePrice(item._id, e.target.value)
+                                  }
+                                  step="0.01"
+                                  style={{
+                                    width: "60px",
+                                    fontSize: "0.85rem",
+                                    boxShadow: "none",
+                                  }}
+                                />
+                              </div>
+                            </td>
+                            <td className="text-center">
+                              <div
+                                className="d-flex align-items-center justify-content-center bg-light rounded-2 mx-auto"
+                                style={{ width: "60px", height: "30px" }}
+                              >
+                                <input
+                                  type="number"
+                                  className="form-control form-control-sm text-center small border-0 bg-transparent p-0"
+                                  value={item.qty}
+                                  onChange={(e) =>
+                                    setQty(item._id, e.target.value)
+                                  }
+                                  min="1"
+                                  style={{
+                                    width: "100%",
+                                    fontSize: "0.85rem",
+                                    boxShadow: "none",
+                                  }}
+                                />
+                              </div>
+                            </td>
+                            <td className="text-end">
+                              <div className="d-flex flex-column align-items-end">
+                                <div
+                                  className={`d-flex align-items-center justify-content-end ${
+                                    item.isBelowCP
+                                      ? "bg-danger-subtle border-danger"
+                                      : "bg-light"
+                                  } rounded-2 px-1 ms-auto`}
+                                  style={{
+                                    width: "80px",
+                                    height: "30px",
+                                    border: "1px solid transparent",
+                                  }}
                                 >
                                   <input
                                     type="number"
-                                    className="form-control text-end small border-0 bg-light pe-1"
+                                    className="form-control form-control-sm text-end small border-0 bg-transparent p-0"
                                     value={item.discount}
                                     ref={(el) =>
                                       (discountRefs.current[item._id] = el)
                                     }
                                     onChange={(e) =>
-                                      updateDiscount(item._id, e.target.value)
+                                      updateDiscount(
+                                        item._id,
+                                        e.target.value,
+                                        false,
+                                      )
+                                    }
+                                    onBlur={(e) =>
+                                      updateDiscount(
+                                        item._id,
+                                        e.target.value,
+                                        true,
+                                      )
                                     }
                                     min="0"
                                     max="100"
-                                    style={{ fontSize: "0.8rem" }}
+                                    style={{
+                                      width: "55px",
+                                      fontSize: "0.85rem",
+                                      boxShadow: "none",
+                                    }}
                                   />
-                                  %
-                                </span>
+                                  <span
+                                    className="text-muted fw-bold ps-1"
+                                    style={{ fontSize: "0.75rem" }}
+                                  >
+                                    %
+                                  </span>
+                                </div>
+                                {item.isBelowCP && (
+                                  <div
+                                    className="text-danger fw-bold mt-1"
+                                    style={{ fontSize: "0.65rem" }}
+                                  >
+                                    Below CP (₹{item.costPrice.toFixed(2)})
+                                  </div>
+                                )}
                               </div>
                             </td>
-                            <td className="text-end fw-bold small">
-                              {getCurrencySymbol(appSettings?.currency)}
-                              {item.lineTotal.toFixed(2)}
+                            <td className="text-end pe-3">
+                              <div
+                                className="d-flex align-items-center justify-content-end bg-light rounded-2 px-1 ms-auto"
+                                style={{ width: "110px", height: "30px" }}
+                              >
+                                <span
+                                  className="text-muted small fw-bold px-1"
+                                  style={{ fontSize: "0.75rem" }}
+                                >
+                                  {getCurrencySymbol(appSettings?.currency)}
+                                </span>
+                                <input
+                                  type="number"
+                                  className="form-control form-control-sm text-end fw-bold border-0 bg-transparent p-0"
+                                  value={item.lineTotal.toFixed(2)}
+                                  onChange={(e) =>
+                                    updateLineTotal(
+                                      item._id,
+                                      e.target.value,
+                                      false,
+                                    )
+                                  }
+                                  onBlur={(e) =>
+                                    updateLineTotal(
+                                      item._id,
+                                      e.target.value,
+                                      true,
+                                    )
+                                  }
+                                  step="0.01"
+                                  style={{
+                                    width: "75px",
+                                    fontSize: "0.85rem",
+                                    color: "#1e293b",
+                                    boxShadow: "none",
+                                  }}
+                                />
+                              </div>
                             </td>
                             <td className="text-center">
                               <button
@@ -835,11 +979,11 @@ const ProductBilling = () => {
                       )}
 
                       {/* Add Product Row */}
-                      <tr className="bg-light bg-opacity-25">
-                        <td className="text-center small ps-3 text-muted">
+                      <tr className="bg-light bg-opacity-10">
+                        <td className="text-center small ps-3 text-muted align-middle">
                           {cart.length + 1}
                         </td>
-                        <td className="p-0 border-end">
+                        <td className="p-0 align-middle" colSpan="2">
                           <ProductSearch
                             products={allProducts}
                             onAddToCart={addToCart}
@@ -848,28 +992,40 @@ const ProductBilling = () => {
                             showButton={false}
                             isTable={true}
                             minimal={true}
-                            placeholder="Enter SKU or Scan barcode."
-                            dropdownWidth="400px"
-                            skuOnly={true}
+                            placeholder="Scan Barcode or Search Product Name..."
+                            dropdownWidth="500px"
+                            skuOnly={false}
                           />
                         </td>
-                        <td className="text-muted small align-middle ps-3">
-                          <span className="opacity-50 italic">
-                            Search item to add to cart...
-                          </span>
+                        <td className="text-center align-middle">
+                          <div
+                            className="bg-light bg-opacity-50 rounded-2 mx-auto"
+                            style={{ width: "80px", height: "30px" }}
+                          ></div>
                         </td>
-                        <td className="text-center text-muted opacity-25">
-                          --
+                        <td className="text-end align-middle">
+                          <div
+                            className="bg-light bg-opacity-50 rounded-2 ms-auto"
+                            style={{ width: "95px", height: "30px" }}
+                          ></div>
                         </td>
-                        <td className="text-end text-muted opacity-25 px-3">
-                          {getCurrencySymbol(appSettings?.currency)}0.00
+                        <td className="text-center align-middle">
+                          <div
+                            className="bg-light bg-opacity-50 rounded-2 mx-auto"
+                            style={{ width: "65px", height: "30px" }}
+                          ></div>
                         </td>
-                        <td className="text-center text-muted opacity-25">0</td>
-                        <td className="text-end text-muted opacity-25 px-3">
-                          0%
+                        <td className="text-end align-middle">
+                          <div
+                            className="bg-light bg-opacity-50 rounded-2 ms-auto"
+                            style={{ width: "85px", height: "30px" }}
+                          ></div>
                         </td>
-                        <td className="text-end text-muted opacity-25 px-3">
-                          {getCurrencySymbol(appSettings?.currency)}0.00
+                        <td className="text-end align-middle pe-3">
+                          <div
+                            className="bg-light bg-opacity-50 rounded-2 ms-auto"
+                            style={{ width: "115px", height: "30px" }}
+                          ></div>
                         </td>
                         <td className="text-center"></td>
                       </tr>
@@ -1003,7 +1159,8 @@ const ProductBilling = () => {
                           isProcessing ||
                           cart.length === 0 ||
                           !selectedAccountId ||
-                          !selectedCustomerId
+                          !selectedCustomerId ||
+                          cartWithTotals.some((i) => i.isBelowCP)
                         }
                       >
                         {isProcessing === "saving" ? (
@@ -1025,7 +1182,8 @@ const ProductBilling = () => {
                           isProcessing ||
                           cart.length === 0 ||
                           !selectedAccountId ||
-                          !selectedCustomerId
+                          !selectedCustomerId ||
+                          cartWithTotals.some((i) => i.isBelowCP)
                         }
                       >
                         {isProcessing === "printing" ? (

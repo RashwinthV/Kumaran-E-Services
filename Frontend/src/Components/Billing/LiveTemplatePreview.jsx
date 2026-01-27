@@ -36,27 +36,29 @@ const LiveTemplatePreview = ({ settings, sale, branchInfo, scale = 0.35 }) => {
       </div>
 
       <div
-        className="preview-outer shadow-inner flex-grow-1"
+        className="preview-outer shadow-inner"
         style={{
-          minHeight: "400px",
+          maxHeight: "500px",
+          minHeight: "200px",
           overflow: "auto",
-          background: "#f1f5f9",
+          background: "#e2e8f0",
           borderRadius: "12px",
           padding: "20px",
           display: "flex",
           justifyContent: "center",
+          alignItems: "start",
           border: "1px inset rgba(0,0,0,0.05)",
         }}
       >
         <div
           style={{
-            transform: `scale(${autoScale})`,
-            transformOrigin: "top center",
+            zoom: autoScale,
             width: "fit-content",
             height: "fit-content",
             background: "white",
             boxShadow:
-              "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            borderRadius: "4px",
           }}
         >
           <PrintTemplate
