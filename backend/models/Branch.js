@@ -75,10 +75,14 @@ const branchSchema = new mongoose.Schema(
     },
     lastBillNumber: {
       type: Number,
-      default:1, // Starts from 1001
+      default: 1, // Starts from 1001
+    },
+    lastGstBillNumber: {
+      type: Number,
+      default: 0, // Starts from 0, will increment to 1 on first GST bill
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports =

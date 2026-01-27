@@ -93,9 +93,12 @@ exports.createSale = async (req, res) => {
       createdAt: new Date(),
     };
 
-    // Assign gstBillNo only if GST is applicable
+    // Assign gstBillNo only if GST is applicable with separate counter
     if (hasGST) {
-      individualSale.gstBillNo = billNumber;
+      branch.lastGstBillNumber += 1;
+      await branch.save({ session });
+      const gstBillNumber = `${req.user.branchCode}-${dateStr}-${branch.lastGstBillNumber}`;
+      individualSale.gstBillNo = gstBillNumber;
     }
 
     // 3. Update/Create Daily Sale Record
