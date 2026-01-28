@@ -15,6 +15,7 @@ const Customer = () => {
     search: "",
     sortBy: "CreditHighest",
     type: "All",
+    branch: "All",
   });
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -34,6 +35,7 @@ const Customer = () => {
       search: "",
       sortBy: "CreditHighest",
       type: "All",
+      branch: "All",
     });
   };
 
@@ -80,6 +82,11 @@ const Customer = () => {
       result = result.filter(
         (customer) => !customer.credits || customer.credits.length === 0,
       );
+    }
+
+    // Branch Filter
+    if (filters.branch && filters.branch !== "All") {
+      result = result.filter((customer) => customer.branch === filters.branch);
     }
 
     // Search filter

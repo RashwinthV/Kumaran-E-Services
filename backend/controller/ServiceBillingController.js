@@ -71,10 +71,14 @@ exports.createServiceSale = async (req, res) => {
     // Check if GST/Service Tax is applicable
     const hasGST = totalTax > 0;
 
+    // Calculate profit/loss (Services typically have 0 CP unless parts are included, but parts logic is in Product Billing)
+    const netRevenue = grandTotal - totalTax;
+    const profitVal = netRevenue; // Default profit is net revenue for services
+
     const individualSale = {
       billNumber,
       customer: customerId,
-      items,
+      items: items,
       subtotal,
       totalTax,
       grandTotal,

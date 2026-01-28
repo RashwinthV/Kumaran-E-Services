@@ -199,7 +199,19 @@ export const CustomerProvider = ({ children }) => {
   };
 
   const fetchCustomerPaymentHistory = async (customerId) => {
-    // Stub
+    try {
+      const response = await axios.get(
+        `${baseURL}/customers/${customerId}/payment-history`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return null;
+    } catch (err) {
+      console.error("Error fetching payment history:", err);
+      return null;
+    }
   };
 
   return (

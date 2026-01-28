@@ -16,6 +16,7 @@ import Dashboard from "./Pages/Dashboard";
 import Branch from "./Pages/Branch/Branch";
 import BranchDetail from "./Pages/Branch/BranchDetail";
 import Products from "./Pages/Products";
+import ProductDetails from "./Pages/ProductDetails";
 import Profile from "./Pages/User/Profile";
 
 // Components
@@ -40,6 +41,8 @@ import BranchReport from "./Pages/Branch/BranchReport";
 import Customer from "./Pages/Customer";
 import Investors from "./Pages/Investors";
 import InvestorDetailsPage from "./Pages/InvestorDetailsPage";
+import AddInvestor from "./Pages/AddInvestor";
+import InvestorHistory from "./Pages/InvestorHistory";
 
 // Layout wrapper to conditionally show Header and Sidebar
 const Layout = ({ children }) => {
@@ -106,12 +109,15 @@ function AppContent() {
 
             {/* product Route */}
             <Route path="/products" element={<Products />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/branch/:id/products" element={<BranchProducts />} />
             <Route path="/report" element={<Reports />} />
             <Route path="/customers" element={<Customer />} />
             <Route path="/profile" element={<Profile />} />
 
             <Route path="/investors" element={<Investors />} />
+            <Route path="/investor/add" element={<AddInvestor />} />
+            <Route path="/investor/history" element={<InvestorHistory />} />
             <Route path="/investor/:id" element={<InvestorDetailsPage />} />
 
             {/* Accounts Route */}

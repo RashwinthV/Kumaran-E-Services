@@ -349,6 +349,49 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+  // Fetch product inventory across all branches
+  const getProductInventory = useCallback(
+    async (productId) => {
+      if (!accessToken) return [];
+      try {
+        const response = await axios.get(
+          `${baseURL}/inventory/product/${productId}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+        if (response.data.success) {
+          return response.data.data;
+        }
+        return [];
+      } catch (error) {
+        console.error("Error fetching product inventory:", error);
+        return [];
+      }
+    },
+    [accessToken, baseURL],
+  );
+
+  // Fetch single product by ID
+  const getProductById = useCallback(
+    async (productId) => {
+      if (!accessToken) return null;
+      try {
+        const response = await axios.get(`${baseURL}/products/${productId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (response.data.success) {
+          return response.data.data;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        return null;
+      }
+    },
+    [accessToken, baseURL],
+  );
+
   return (
     <ProductContext.Provider
       value={{
@@ -369,6 +412,8 @@ export const ProductProvider = ({ children }) => {
         addSubCategory,
         updateSubCategory,
         deleteSubCategory,
+        getProductInventory,
+        getProductById,
       }}
     >
       {children}

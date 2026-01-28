@@ -53,7 +53,27 @@ const SidebarNav = () => {
       label: "Investors",
       icon: "bi-briefcase",
       path: "/investors",
-    }, 
+      subItems: [
+        {
+          id: "investors-list",
+          label: "Investors List",
+          icon: "bi-list-ul",
+          path: "/investors",
+        },
+        {
+          id: "add-investor",
+          label: "Add New Investor",
+          icon: "bi-plus-circle",
+          path: "/investor/add",
+        },
+        {
+          id: "investor-history",
+          label: "Transaction History",
+          icon: "bi-clock-history",
+          path: "/investor/history",
+        },
+      ],
+    },
   ];
 
   const handleLogout = async () => {

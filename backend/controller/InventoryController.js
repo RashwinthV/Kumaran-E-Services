@@ -172,7 +172,7 @@ const updateInventory = async (req, res) => {
       req.body;
 
     const inventory = await Inventory.findById(req.params.id).populate(
-      "product"
+      "product",
     );
 
     if (!inventory) {
@@ -259,10 +259,31 @@ const deleteInventory = async (req, res) => {
   }
 };
 
+// @desc    Get inventory by product across all branches
+// @route   GET /api/admin/inventory/product/:productId
+// @access  Private/Admin, Manager
+const getInventoryByProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const inventory = await Inventory.find({ product: productId })
+      .populate("branch", "name code")
+      .sort({ quantity: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: inventory.length,
+      data: inventory,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   addInventory,
   getInventoryByBranch,
   updateInventory,
   deleteInventory,
   getInventoryByBranchStaff,
+  getInventoryByProduct,
 };

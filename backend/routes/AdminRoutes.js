@@ -196,6 +196,7 @@ const {
   getInventoryByBranch,
   updateInventory,
   deleteInventory,
+  getInventoryByProduct,
 } = require("../controller/InventoryController");
 
 const {
@@ -207,6 +208,7 @@ const {
   deleteInvestorInvestment,
   getAllCustomers,
   getAllBranchInvestors,
+  getCustomerPaymentHistory,
 } = require("../controller/CustomerController");
 
 // Protected routes - Inventory Management
@@ -216,6 +218,12 @@ router.get(
   protect,
   authorize("admin", "manager"),
   getInventoryByBranch,
+);
+router.get(
+  "/inventory/product/:productId",
+  protect,
+  authorize("admin", "manager"),
+  getInventoryByProduct,
 );
 router.put("/inventory/:id", protect, authorize("admin"), updateInventory);
 router.delete("/inventory/:id", protect, authorize("admin"), deleteInventory);
@@ -244,6 +252,13 @@ router.post(
   protect,
   authorize("admin", "manager"),
   settleCustomerCredit,
+);
+
+router.get(
+  "/customers/:customerId/payment-history",
+  protect,
+  authorize("admin", "manager"),
+  getCustomerPaymentHistory,
 );
 
 router.get(

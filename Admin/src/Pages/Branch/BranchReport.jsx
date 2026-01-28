@@ -111,7 +111,11 @@ const BranchReport = () => {
                 : ""),
             amount: item.grandTotal,
             status: item.status === "Completed" ? "Paid" : item.status,
-            items: item.items || [],
+            items: (item.items || []).map((p) => ({
+              ...p,
+              costPrice: p.costPrice || 0,
+              resolvedCP: p.costPrice || 0,
+            })),
             cgstTotal: item.totalTax
               ? Number((item.totalTax / 2).toFixed(2))
               : 0,
@@ -121,6 +125,9 @@ const BranchReport = () => {
             totalTax: item.totalTax || 0,
             fieldService: item.fieldService || "",
             isService: item.isService,
+            totalCP: item.totalCP || 0,
+            totalProfit: item.totalProfit || 0,
+            gstBillNo: item.gstBillNo,
           };
         });
 
@@ -323,14 +330,13 @@ const BranchReport = () => {
       { header: "Qty", key: "qty", width: 10 },
       { header: "Rate", key: "price", width: 20 },
       { header: "Taxable Value", key: "taxableValue", width: 40 },
-      { header: "CGST", key: "cgst", width: 12 },
-      { header: "SGST", key: "sgst", width: 12 },
-      { header: "Line Total", key: "lineTotal", width: 18 },
+      { header: "CGST", key: "cgst", width: 18 },
+      { header: "SGST", key: "sgst", width: 18 },
+      { header: "CP", key: "cp", width: 18 },
+      { header: "Line Total", key: "lineTotal", width: 22 },
       { header: "Mode", key: "paymentMode", width: 15 },
       { header: "Status", key: "status", width: 18 },
       { header: "Field Service", key: "fieldService", width: 20 },
-      { header: "CP", key: "cp", width: 12 },
-      { header: "Profit/Loss", key: "profit", width: 15 },
     ];
     worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
 
@@ -339,7 +345,7 @@ const BranchReport = () => {
 
       const sTitleRow = worksheet.addRow([title]);
       sTitleRow.font = { bold: true, size: 16, color: { argb: "FF1F4E78" } };
-      worksheet.mergeCells(`A${sTitleRow.number}:Q${sTitleRow.number}`);
+      worksheet.mergeCells(`A${sTitleRow.number}:P${sTitleRow.number}`);
       sTitleRow.alignment = { horizontal: "center" };
       worksheet.addRow([]); // Spacer
 
@@ -360,11 +366,21 @@ const BranchReport = () => {
         };
       });
 
+      let totalCP = 0;
+      let totalTax = 0;
+      let grandTotal = 0;
+
       rowData.forEach((row) => {
         const excelRow = worksheet.addRow(row);
         excelRow.font = { size: 13 };
-        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(16), Profit(17) [Adjusted Indices]
-        [8, 9, 10, 11, 12, 16, 17].forEach((colIndex) => {
+
+        // Indices: CGST=9, SGST=10, CP=11, LineTotal=12
+        totalTax += (row[9] || 0) + (row[10] || 0);
+        totalCP += row[11] || 0;
+        grandTotal += row[12] || 0;
+
+        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), CP(12), Total(13)
+        [8, 9, 10, 11, 12, 13].forEach((colIndex) => {
           const cell = excelRow.getCell(colIndex);
           cell.numFmt = `"₹"#,##0.00`;
         });
@@ -377,6 +393,34 @@ const BranchReport = () => {
           };
         });
       });
+
+      // Add Summary Totals Row (Properly Aligned)
+      const totalsRowData = new Array(16).fill("");
+      totalsRowData[7] = "SECTION TOTALS:";
+      totalsRowData[10] = totalTax;
+      totalsRowData[11] = totalCP;
+      totalsRowData[12] = grandTotal;
+
+      const summaryRow = worksheet.addRow(totalsRowData);
+      summaryRow.font = { bold: true, size: 14 };
+
+      [11, 12, 13].forEach((col) => {
+        const cell = summaryRow.getCell(col);
+        cell.numFmt = `"₹"#,##0.00`;
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFE9ECEF" },
+        };
+        cell.border = {
+          top: { style: "medium" },
+          left: { style: "thin" },
+          bottom: { style: "medium" },
+          right: { style: "thin" },
+        };
+      });
+      summaryRow.getCell(8).alignment = { horizontal: "right" };
+
       worksheet.addRow([]);
       worksheet.addRow([]);
     };
@@ -384,6 +428,7 @@ const BranchReport = () => {
     const inclusiveRows = [];
     const exclusiveRows = [];
     const nonGstRows = [];
+    const serviceRows = [];
 
     displayData.forEach((sale) => {
       (sale.items || []).forEach((p) => {
@@ -397,8 +442,7 @@ const BranchReport = () => {
           itemStatus = "Paid";
         }
 
-        const cpValue = p.resolvedCP * p.qty;
-        const profitValue = p.lineTotal - cpValue;
+        const cpValue = (p.costPrice || 0) * (p.qty || 0);
 
         const rowData = [
           sale.billNumber,
@@ -412,23 +456,28 @@ const BranchReport = () => {
           p.taxableValue || p.lineTotal - p.taxAmount,
           p.taxAmount / 2,
           p.taxAmount - p.taxAmount / 2,
+          cpValue,
           p.lineTotal,
           sale.paymentMethod,
           itemStatus,
           sale.fieldService || "",
-          cpValue,
-          profitValue,
         ];
-        const gstType = p.product?.gstType || p.gstType;
-        if (gstType === "Included") inclusiveRows.push(rowData);
-        else if (gstType === "NotIncluded") exclusiveRows.push(rowData);
-        else nonGstRows.push(rowData);
+
+        if (sale.isService) {
+          serviceRows.push(rowData);
+        } else {
+          const gstType = p.product?.gstType || p.gstType;
+          if (gstType === "Included") inclusiveRows.push(rowData);
+          else if (gstType === "NotIncluded") exclusiveRows.push(rowData);
+          else nonGstRows.push(rowData);
+        }
       });
     });
 
     addTableSection("=== GST INCLUSIVE SALES ===", inclusiveRows);
     addTableSection("=== GST EXCLUSIVE SALES ===", exclusiveRows);
     addTableSection("=== NON-GST / EXEMPT SALES ===", nonGstRows);
+    addTableSection("=== SERVICE SALES ===", serviceRows);
 
     // === REFUND SECTION ===
     const filteredRefunds = (refunds || []).filter((r) => {
@@ -522,6 +571,108 @@ const BranchReport = () => {
       }.xlsx`,
     );
   };
+  const handleGstExport = async () => {
+    if (displayData.length === 0) {
+      return alert("No data to export");
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("GST Taxable Report");
+
+    const titleRow = worksheet.addRow([
+      `GST TAXABLE REPORT - ${currentBranch?.name?.toUpperCase() || "BRANCH"}`,
+    ]);
+    titleRow.font = { bold: true, size: 18 };
+    worksheet.mergeCells(`A${titleRow.number}:J${titleRow.number}`);
+    titleRow.alignment = { horizontal: "center" };
+    worksheet.addRow([]);
+
+    const columns = [
+      { header: "GST Bill No", key: "gstBillNo", width: 25 },
+      { header: "Date", key: "date", width: 15 },
+      { header: "Customer", key: "customerName", width: 20 },
+      { header: "Product/Service", key: "name", width: 35 },
+      { header: "Qty", key: "qty", width: 10 },
+      { header: "Rate", key: "price", width: 15 },
+      { header: "Taxable Value", key: "taxableValue", width: 20 },
+      { header: "CGST", key: "cgst", width: 15 },
+      { header: "SGST", key: "sgst", width: 15 },
+      { header: "Total Amount", key: "amount", width: 20 },
+    ];
+    worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
+
+    const headerRow = worksheet.addRow(columns.map((c) => c.header));
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 12 };
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4F81BD" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    const taxableRows = [];
+    displayData.forEach((sale) => {
+      (sale.items || []).forEach((item) => {
+        const taxableVal =
+          item.taxableValue || item.lineTotal - (item.taxAmount || 0);
+        const tax = item.taxAmount || 0;
+
+        if (tax > 0) {
+          taxableRows.push([
+            sale.gstBillNo || "N/A",
+            sale.formattedDate || new Date(sale.createdAt).toLocaleDateString(),
+            sale.customerName || "Walk-in",
+            item.name || item.product?.name || "Product/Service",
+            item.qty || 0,
+            item.price || 0,
+            taxableVal,
+            tax / 2,
+            tax / 2,
+            item.lineTotal || 0,
+          ]);
+        }
+      });
+    });
+
+    if (taxableRows.length === 0) {
+      return alert(
+        "No taxable transactions found in the current filtered data.",
+      );
+    }
+
+    taxableRows.forEach((row) => {
+      const excelRow = worksheet.addRow(row);
+      excelRow.font = { size: 12 };
+      [6, 7, 8, 9, 10].forEach((idx) => {
+        const cell = excelRow.getCell(idx);
+        cell.numFmt = `"₹"#,##0.00`;
+      });
+      excelRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer]),
+      `GST_Export_${currentBranch?.name?.replace(/\s+/g, "_")}_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`,
+    );
+  };
 
   return (
     <div className="reports-container">
@@ -537,6 +688,7 @@ const BranchReport = () => {
         filters={filters}
         onFilterChange={handleFilterChange}
         onExport={handleExport}
+        onGstExport={handleGstExport}
         branches={branches}
         hideBranchSelector={true}
         availableTypes={[{ value: "sales", label: "Sales Report" }]}

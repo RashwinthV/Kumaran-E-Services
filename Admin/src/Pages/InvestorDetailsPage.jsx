@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCustomer } from "../Context/CustomerContext";
 import { toast } from "react-toastify";
-import InvestorModal from "../Components/Investors/InvestorModal";
 import ConfirmationModal from "../Components/Modals/ConfirmationModal";
 import { exportInvestorPDF } from "../utils/investorUtils";
 
@@ -69,46 +68,7 @@ const InvestorDetailsPage = () => {
   }, [investors, id, navigate, loading]);
 
   const handleEdit = () => {
-    setShowEditModal(true);
-  };
-
-  const handleSaveInvestor = async (investorData) => {
-    try {
-      // Logic from Investors.jsx handleSaveInvestor
-      // We need to ensure we use the correct IDs
-      const payload = {
-        name: investorData.name,
-        phone: investorData.phone,
-        email: investorData.email || "",
-        city: investorData.city || "",
-        role: "Investor",
-        initialPaymentAccountId: investorData.paymentAccountId,
-        investorDetails: {
-          ...investorData,
-          _id: investor.investmentId || investor._id,
-          id: investor.investmentId || investor._id,
-          currentPrincipal: investor.currentPrincipal, // Preserve
-          interestHistory: investor.interestHistory || [],
-          payoutHistory: investor.payoutHistory || [],
-          investments: investor.investments || [],
-          unpaidInterest: investor.unpaidInterest || 0,
-          lastAccrualDate: investor.lastAccrualDate,
-          totalInterestPaid: investor.totalInterestPaid || 0,
-        },
-      };
-
-      // Need ID for update
-      payload.id = investor.customerId || investor._id;
-
-      const result = await upsertCustomer(payload);
-      if (result) {
-        setShowEditModal(false);
-        toast.success("Investor updated successfully");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update investor");
-    }
+    navigate("/investor/add", { state: { investor } });
   };
 
   const handleDelete = () => {
@@ -402,16 +362,30 @@ const InvestorDetailsPage = () => {
                   <tr>
                     <th className="px-4">Date</th>
                     <th>Amount</th>
-                    <th>Maturity Status</th>
-                    <th>Maturity Date</th>
+                    <th>Status</th>
+                    <th>Prev Maturity</th>
+                    <th>Next Maturity</th>
                     <th>Type</th>
                   </tr>
                 </thead>
                 <tbody>
                   {investor.investments?.map((inv, idx) => {
                     const depositDate = new Date(inv.date);
-                    const maturityDate = new Date(depositDate);
-                    maturityDate.setMonth(maturityDate.getMonth() + 1);
+                    const lastAccrual = inv.lastAccrualDate
+                      ? new Date(inv.lastAccrualDate)
+                      : null;
+                    const nextMaturity = lastAccrual
+                      ? new Date(
+                          new Date(lastAccrual).setMonth(
+                            lastAccrual.getMonth() + 1,
+                          ),
+                        )
+                      : new Date(
+                          new Date(depositDate).setMonth(
+                            depositDate.getMonth() + 1,
+                          ),
+                        );
+
                     return (
                       <tr key={idx}>
                         <td className="px-4">
@@ -428,9 +402,16 @@ const InvestorDetailsPage = () => {
                           </span>
                         </td>
                         <td className="text-muted small">
-                          {maturityDate.toLocaleDateString()}
+                          {lastAccrual
+                            ? lastAccrual.toLocaleDateString()
+                            : "Initial"}
                         </td>
-                        <td className="text-capitalize">{inv.type}</td>
+                        <td className="fw-bold small text-primary">
+                          {nextMaturity.toLocaleDateString()}
+                        </td>
+                        <td className="text-capitalize">
+                          {inv.type || "deposit"}
+                        </td>
                       </tr>
                     );
                   })}
@@ -440,14 +421,6 @@ const InvestorDetailsPage = () => {
           </div>
         </div>
       </div>
-
-      <InvestorModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleSaveInvestor}
-        investor={investor}
-        editMode={true}
-      />
 
       <ConfirmationModal
         isOpen={confirmModal.isOpen}

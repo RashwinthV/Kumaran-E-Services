@@ -83,11 +83,11 @@ const ReportTable = ({ data, reportType }) => {
                   <th>Branch</th>
                   <th>Customer</th>
                   <th>Payment Mode</th>
+                  <th>CP</th>
+                  <th>Profit/Loss</th>
                   <th>Amount</th>
                   <th>Field Service</th>
                   <th>Status</th>
-                  <th>CP</th>
-                  <th>profit/Loss</th>
                 </tr>
               ) : (
                 <tr>
@@ -113,6 +113,18 @@ const ReportTable = ({ data, reportType }) => {
                           </small>
                         </td>
                         <td>{row.paymentMethod}</td>
+                        <td className="text-secondary fw-bold">
+                          {formatCurrency(row.totalCP)}
+                        </td>
+                        <td
+                          className={`fw-bold ${
+                            row.totalProfit >= 0
+                              ? "text-success"
+                              : "text-danger"
+                          }`}
+                        >
+                          {formatCurrency(row.totalProfit)}
+                        </td>
                         <td>
                           <strong>{formatCurrency(row.amount)}</strong>
                         </td>
@@ -150,7 +162,7 @@ const ReportTable = ({ data, reportType }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={reportType === "sales" ? "7" : "3"}>
+                  <td colSpan={reportType === "sales" ? "10" : "3"}>
                     <div className="empty-state">
                       <i className="bi bi-clipboard-x"></i>
                       <p>No records found matching your criteria.</p>

@@ -235,6 +235,7 @@ exports.getAllCustomers = async (req, res) => {
           city: 1,
           email: 1,
           role: 1,
+          branch: 1,
           branchCode: 1,
           investmentDetails: 1, // Include investment details for investors page
           credits: 1,
@@ -891,20 +892,16 @@ exports.checkMaturity = async (req, res) => {
           investmentDate.setHours(0, 0, 0, 0);
 
           // Determine the last accrual date for this specific investment
-          const lastAccrual = investment.lastAccrualDate
+          let lastAccrual = investment.lastAccrualDate
             ? new Date(investment.lastAccrualDate)
             : investmentDate;
           lastAccrual.setHours(0, 0, 0, 0);
 
-          // Calculate the next accrual date (1 month after last accrual)
-          const nextAccrualDate = new Date(lastAccrual);
+          let nextAccrualDate = new Date(lastAccrual);
           nextAccrualDate.setMonth(nextAccrualDate.getMonth() + 1);
 
-          // Check if this investment has matured for at least 1 month
-          if (today >= nextAccrualDate) {
-            // Ensure isMatured is false once interest is added to the ledger
-            investment.isMatured = false;
-
+          // Process all months that have passed (Catch-up logic)
+          while (today >= nextAccrualDate) {
             // Calculate interest for this specific investment
             const monthlyInterest =
               (investment.amount * details.interestRate) / 100;
@@ -913,11 +910,18 @@ exports.checkMaturity = async (req, res) => {
             details.unpaidInterest =
               (details.unpaidInterest || 0) + monthlyInterest;
 
-            // Update this investment's last accrual date
-            investment.lastAccrualDate = nextAccrualDate;
+            // Update this investment's last accrual date to the month just processed
+            lastAccrual = new Date(nextAccrualDate);
+            investment.lastAccrualDate = lastAccrual;
+
+            // Mark as matured (means interest has accrued and is pending payout/review)
+            investment.isMatured = true;
 
             investorUpdated = true;
             processedCount++;
+
+            // Increment nextAccrualDate for next possible month
+            nextAccrualDate.setMonth(nextAccrualDate.getMonth() + 1);
           }
         }
       }
@@ -1031,6 +1035,11 @@ exports.processPrincipalTransaction = async (req, res) => {
       investment.totalInterestPaid =
         (investment.totalInterestPaid || 0) + transactionAmount;
       investment.lastInterestPaid = date || new Date();
+      if (investment.unpaidInterest <= 0.01) {
+        if (investment.investments) {
+          investment.investments.forEach((inv) => (inv.isMatured = false));
+        }
+      }
 
       if (!investment.interestHistory) investment.interestHistory = [];
       investment.interestHistory.push({

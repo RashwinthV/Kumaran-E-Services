@@ -145,7 +145,7 @@ const InterestPaymentModal = ({
                   <div className="col-md-3">
                     <small className="text-muted">Interest Rate:</small>
                     <div className="fw-bold text-primary">
-                      {investor.interestRate} paise/month
+                      {investor.interestRate} paise/₹1/m
                     </div>
                   </div>
                   <div className="col-md-3">

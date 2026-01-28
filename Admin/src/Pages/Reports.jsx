@@ -115,8 +115,7 @@ const Reports = () => {
               items: (item.items || []).map((p) => ({
                 ...p,
                 costPrice: p.costPrice || 0,
-                // If it's a nested product object from populate, check there too
-                resolvedCP: p.costPrice || p.product?.costPrice || 0,
+                resolvedCP: p.costPrice || 0,
               })),
               cgstTotal: item.totalTax
                 ? Number((item.totalTax / 2).toFixed(2))
@@ -127,6 +126,9 @@ const Reports = () => {
               totalTax: item.totalTax || 0,
               fieldService: item.fieldService || "",
               isService: item.isService,
+              totalCP: item.totalCP || 0,
+              totalProfit: item.totalProfit || 0,
+              gstBillNo: item.gstBillNo,
             };
           });
 
@@ -364,15 +366,14 @@ const Reports = () => {
         { header: "Qty", key: "qty", width: 10 },
         { header: "Rate", key: "price", width: 20 },
         { header: "Taxable Value", key: "taxableValue", width: 40 },
-        { header: "CGST", key: "cgst", width: 12 },
-        { header: "SGST", key: "sgst", width: 12 },
-        { header: "Line Total", key: "lineTotal", width: 18 },
+        { header: "CGST", key: "cgst", width: 18 },
+        { header: "SGST", key: "sgst", width: 18 },
+        { header: "CP", key: "cp", width: 18 },
+        { header: "Line Total", key: "lineTotal", width: 22 },
         { header: "Mode", key: "paymentMode", width: 15 },
         { header: "Status", key: "status", width: 18 },
         { header: "Branch", key: "branch", width: 20 },
         { header: "Field Service", key: "fieldService", width: 20 },
-        { header: "CP", key: "cp", width: 12 },
-        { header: "Profit/Loss", key: "profit", width: 15 },
       ];
       worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
 
@@ -404,12 +405,22 @@ const Reports = () => {
           };
         });
 
+        let totalCP = 0;
+        let totalTax = 0;
+        let grandTotal = 0;
+
         // Data Rows
         rowData.forEach((row) => {
           const excelRow = worksheet.addRow(row);
           excelRow.font = { size: 13 };
-          // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), Total(12), CP(17), Profit(18)
-          [8, 9, 10, 11, 12, 17, 18].forEach((colIndex) => {
+
+          // Summing totals (Indices for row array: CGST=9, SGST=10, CP=11, Total=12)
+          totalTax += (row[9] || 0) + (row[10] || 0);
+          totalCP += row[11] || 0;
+          grandTotal += row[12] || 0;
+
+          // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), CP(12), Total(13)
+          [8, 9, 10, 11, 12, 13].forEach((colIndex) => {
             const cell = excelRow.getCell(colIndex);
             cell.numFmt = `"₹"#,##0.00`;
           });
@@ -422,6 +433,39 @@ const Reports = () => {
             };
           });
         });
+
+        // Add Summary Totals Row (Properly Aligned)
+        const totalsRowData = new Array(13).fill("");
+        totalsRowData[7] = "SECTION TOTALS:";
+        // totalTax at index 10 (SGST column), totalCP at index 11 (CP column), grandTotal at index 12 (Line Total column)
+        totalsRowData[10] = totalTax;
+        totalsRowData[11] = totalCP;
+        totalsRowData[12] = grandTotal;
+
+        const summaryRow = worksheet.addRow(totalsRowData);
+        summaryRow.font = { bold: true, size: 14 };
+
+        // Formatting summary cells (Excel columns are 1-indexed, so add 1 to array indices)
+        // Col 11=SGST, 12=CP, 13=LineTotal
+        [11, 12, 13].forEach((col) => {
+          const cell = summaryRow.getCell(col);
+          cell.numFmt = `"₹"#,##0.00`;
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFE9ECEF" }, // Light grey
+          };
+          cell.border = {
+            top: { style: "medium" },
+            left: { style: "thin" },
+            bottom: { style: "medium" },
+            right: { style: "thin" },
+          };
+        });
+
+        // Label alignment
+        summaryRow.getCell(8).alignment = { horizontal: "right" };
+
         worksheet.addRow([]);
         worksheet.addRow([]);
       };
@@ -429,6 +473,7 @@ const Reports = () => {
       const inclusiveRows = [];
       const exclusiveRows = [];
       const nonGstRows = [];
+      const serviceRows = [];
 
       displayData.forEach((sale) => {
         (sale.items || []).forEach((p) => {
@@ -443,8 +488,7 @@ const Reports = () => {
             itemStatus = "Paid";
           }
 
-          const cpValue = p.resolvedCP * p.qty;
-          const profitValue = p.lineTotal - cpValue;
+          const cpValue = (p.costPrice || 0) * (p.qty || 0);
 
           const rowData = [
             sale.billNumber,
@@ -458,24 +502,29 @@ const Reports = () => {
             p.taxableValue || p.lineTotal - p.taxAmount,
             p.taxAmount / 2,
             p.taxAmount - p.taxAmount / 2,
+            cpValue,
             p.lineTotal,
             sale.paymentMethod,
             itemStatus,
             sale.branchName,
             sale.fieldService || "",
-            cpValue,
-            profitValue,
           ];
-          const gstType = p.product?.gstType || p.gstType;
-          if (gstType === "Included") inclusiveRows.push(rowData);
-          else if (gstType === "NotIncluded") exclusiveRows.push(rowData);
-          else nonGstRows.push(rowData);
+
+          if (sale.isService) {
+            serviceRows.push(rowData);
+          } else {
+            const gstType = p.product?.gstType || p.gstType;
+            if (gstType === "Included") inclusiveRows.push(rowData);
+            else if (gstType === "NotIncluded") exclusiveRows.push(rowData);
+            else nonGstRows.push(rowData);
+          }
         });
       });
 
       addTableSection("=== GST INCLUSIVE SALES ===", inclusiveRows);
       addTableSection("=== GST EXCLUSIVE SALES ===", exclusiveRows);
       addTableSection("=== NON-GST / EXEMPT SALES ===", nonGstRows);
+      addTableSection("=== SERVICE SALES ===", serviceRows);
 
       // === PROFIT & LOSS TABLE (Unified Style) ===
 
@@ -491,9 +540,7 @@ const Reports = () => {
         } else {
           revProductList += saleTotal;
         }
-        (sale.items || []).forEach((p) => {
-          totCOGS += (p.resolvedCP || 0) * (p.qty || 0);
-        });
+        totCOGS += sale.totalCP || 0;
       });
 
       const totalRevenue = revProductList + revServiceList;

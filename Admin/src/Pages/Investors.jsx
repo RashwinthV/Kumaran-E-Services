@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { API_ENDPOINTS } from "../config/api";
@@ -12,7 +13,6 @@ import PrincipalPayoutModal from "../Components/Investors/PrincipalPayoutModal";
 import InvestorHistoryModal from "../Components/Investors/InvestorHistoryModal";
 import ConfirmationModal from "../Components/Modals/ConfirmationModal";
 import { exportInvestorPDF } from "../utils/investorUtils";
-
 
 import { useCustomer } from "../Context/CustomerContext";
 
@@ -28,12 +28,11 @@ const Investors = () => {
     deleteInvestment,
     processPrincipalTransaction,
   } = useCustomer();
-  const [showInvestorModal, setShowInvestorModal] = useState(false);
+  const navigate = useNavigate();
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedInvestor, setSelectedInvestor] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
@@ -46,7 +45,7 @@ const Investors = () => {
 
   useEffect(() => {
     checkMaturity();
-    fetchInvestors()
+    fetchInvestors();
   }, [checkMaturity]);
 
   // Map backend structure to frontend expectations
@@ -175,15 +174,11 @@ const Investors = () => {
   };
 
   const handleAddInvestor = () => {
-    setSelectedInvestor(null);
-    setEditMode(false);
-    setShowInvestorModal(true);
+    navigate("/investor/add");
   };
 
   const handleEditInvestor = (investor) => {
-    setSelectedInvestor(investor);
-    setEditMode(true);
-    setShowInvestorModal(true);
+    navigate("/investor/add", { state: { investor } });
   };
 
   const handleDeleteInvestor = (id) => {
@@ -486,7 +481,7 @@ const Investors = () => {
   };
 
   const handleViewHistoryList = () => {
-    setShowHistoryModal(true);
+    navigate("/investor/history");
   };
 
   if (loading && investors.length === 0) {
@@ -634,13 +629,7 @@ const Investors = () => {
       />
 
       {/* Modals */}
-      <InvestorModal
-        isOpen={showInvestorModal}
-        onClose={() => setShowInvestorModal(false)}
-        onSave={handleSaveInvestor}
-        investor={selectedInvestor}
-        editMode={editMode}
-      />
+      {/* InvestorModal removed as it is now a separate page */}
 
       <InterestPaymentModal
         isOpen={showInterestModal}
@@ -685,11 +674,7 @@ const Investors = () => {
         onSave={handlePrincipalPayout}
       />
 
-      <InvestorHistoryModal
-        isOpen={showHistoryModal}
-        onClose={() => setShowHistoryModal(false)}
-        investors={processedInvestors}
-      />
+      {/* InvestorHistoryModal removed as it is now a separate page */}
 
       <ConfirmationModal
         isOpen={confirmModal.isOpen}

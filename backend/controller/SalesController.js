@@ -68,21 +68,73 @@ exports.createSale = async (req, res) => {
 
     const billNumber = `${req.user.branchCode}-${dateStr}-${branch.lastBillNumber}`;
 
-    const processedItems = items.map((item) => ({
-      ...item,
-      taxableValue:
-        item.taxableValue !== undefined
-          ? item.taxableValue
-          : item.lineTotal - item.taxAmount,
-    }));
+    // 3. Process Inventory, validate stock and collect Cost Prices
+    const finalProcessedItems = [];
+    let totalSaleCP = 0;
+    for (const item of items) {
+      const currentInventory = await Inventory.findOne({
+        product: item.product,
+        branch: branch._id,
+      })
+        .populate("product", "name sku")
+        .session(session);
 
-    // Check if GST is applicable (any tax amount > 0)
+      if (!currentInventory) {
+        throw new Error(
+          `Product not found in inventory. Please add it to branch inventory first.`,
+        );
+      }
+
+      const itemCP = currentInventory.costPrice || 0;
+      totalSaleCP += itemCP * item.qty;
+
+      if (currentInventory.quantity < item.qty) {
+        throw new Error(
+          `Insufficient stock for ${currentInventory.product.name} (SKU: ${currentInventory.product.sku}). Available: ${currentInventory.quantity}, Required: ${item.qty}`,
+        );
+      }
+
+      // Collect CP and other item details
+      finalProcessedItems.push({
+        ...item,
+        taxableValue:
+          item.taxableValue !== undefined
+            ? item.taxableValue
+            : item.lineTotal - item.taxAmount,
+      });
+
+      // Update inventory quantity
+      const inventoryUpdate = await Inventory.findOneAndUpdate(
+        {
+          product: item.product,
+          branch: branch._id,
+          quantity: { $gte: item.qty },
+        },
+        { $inc: { quantity: -item.qty } },
+        { session, new: true },
+      );
+
+      if (!inventoryUpdate) {
+        throw new Error(
+          `Failed to update inventory for ${currentInventory.product.name}`,
+        );
+      }
+
+      if (inventoryUpdate.quantity === 0) {
+        inventoryUpdate.isActive = false;
+        await inventoryUpdate.save({ session });
+      }
+    }
+
+    // 4. Check GST and prepare individual sale object
     const hasGST = totalTax > 0;
+    const netRevenue = grandTotal - totalTax;
+    const profitVal = netRevenue - totalSaleCP;
 
     const individualSale = {
       billNumber,
       customer: customerId,
-      items: processedItems,
+      items: finalProcessedItems,
       subtotal,
       totalTax,
       grandTotal,
@@ -93,7 +145,6 @@ exports.createSale = async (req, res) => {
       createdAt: new Date(),
     };
 
-    // Assign gstBillNo only if GST is applicable with separate counter
     if (hasGST) {
       branch.lastGstBillNumber += 1;
       await branch.save({ session });
@@ -101,7 +152,7 @@ exports.createSale = async (req, res) => {
       individualSale.gstBillNo = gstBillNumber;
     }
 
-    // 3. Update/Create Daily Sale Record
+    // 5. Update/Create Daily Sale Record
     const updateData = {
       $push: { sales: individualSale },
     };
@@ -120,7 +171,7 @@ exports.createSale = async (req, res) => {
       { upsert: true, new: true, session },
     );
 
-    // If payment is "Credits", create a new Credit Document
+    // 6. Create Credit Document if applicable
     if (account.type === "Credits") {
       await Credit.create(
         [
@@ -163,51 +214,7 @@ exports.createSale = async (req, res) => {
 
     await updatedAccount.save({ session });
 
-    // 5. Update Inventory and validate stock
-    for (const item of items) {
-      // First check current inventory
-      const currentInventory = await Inventory.findOne({
-        product: item.product,
-        branch: branch._id,
-      })
-        .populate("product", "name sku")
-        .session(session);
-
-      if (!currentInventory) {
-        throw new Error(
-          `Product not found in inventory. Please add it to branch inventory first.`,
-        );
-      }
-
-      if (currentInventory.quantity < item.qty) {
-        throw new Error(
-          `Insufficient stock for ${currentInventory.product.name} (SKU: ${currentInventory.product.sku}). Available: ${currentInventory.quantity}, Required: ${item.qty}`,
-        );
-      }
-
-      // Update inventory quantity using standard $inc to avoid pipeline error
-      const inventoryUpdate = await Inventory.findOneAndUpdate(
-        {
-          product: item.product,
-          branch: branch._id,
-          quantity: { $gte: item.qty },
-        },
-        { $inc: { quantity: -item.qty } },
-        { session, new: true },
-      );
-
-      if (!inventoryUpdate) {
-        throw new Error(
-          `Failed to update inventory for ${currentInventory.product.name}`,
-        );
-      }
-
-      // If quantity becomes 0, mark as inactive
-      if (inventoryUpdate.quantity === 0) {
-        inventoryUpdate.isActive = false;
-        await inventoryUpdate.save({ session });
-      }
-    }
+    // 7. Update Account Balance & Daily Session
 
     // Populate the newly created sale for cleaner response
     const populatedSaleRecord = await Sale.findById(saleRecord._id)
@@ -277,6 +284,16 @@ exports.getSales = async (req, res) => {
     const creditMap = new Map();
     relatedCredits.forEach((c) => creditMap.set(c.billNumber, c));
 
+    // Fetch all Inventories for the branches involved for dynamic cost calculation
+    const branchIds = [...new Set(dailyRecords.map((r) => r.branch))];
+    const inventories = await Inventory.find({
+      branch: { $in: branchIds },
+    }).lean();
+    const inventoryMap = new Map();
+    inventories.forEach((inv) => {
+      inventoryMap.set(`${inv.branch}_${inv.product}`, inv.costPrice);
+    });
+
     const flattenedSales = dailyRecords.reduce((acc, record) => {
       const recordsToProcess = [];
 
@@ -301,6 +318,17 @@ exports.getSales = async (req, res) => {
       }
 
       const salesWithMeta = recordsToProcess.map((saleObj) => {
+        let totalCP = 0;
+        const itemsWithCP = (saleObj.items || []).map((item) => {
+          const pId = item.product?._id || item.product;
+          const cp = inventoryMap.get(`${record.branch}_${pId}`) || 0;
+          totalCP += cp * (item.qty || 0);
+          return {
+            ...(item.toObject ? item.toObject() : item),
+            costPrice: cp, // Dynamic injection for reporting
+          };
+        });
+
         // Real-time Sync: Calculate paidAmount from Credit collection if it's a credit sale
         let livePaidAmount = saleObj.paidAmount || 0;
 
@@ -328,10 +356,13 @@ exports.getSales = async (req, res) => {
 
         return {
           ...saleObj,
+          items: itemsWithCP,
           status: finalStatus,
           paidAmount: livePaidAmount,
           branchId: record.branch,
           dateStr: record.date, // YYYY-MM-DD from parent record
+          totalCP,
+          totalProfit: (saleObj.grandTotal || 0) - totalCP,
         };
       });
       return acc.concat(salesWithMeta);

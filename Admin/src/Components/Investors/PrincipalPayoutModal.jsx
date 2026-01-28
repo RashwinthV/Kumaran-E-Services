@@ -226,7 +226,7 @@ const PrincipalPayoutModal = ({ isOpen, onClose, investor, onSave }) => {
                     <div className="col-md-4">
                       <small className="text-muted">Interest Rate:</small>
                       <div className="fw-bold text-info">
-                        {investor.interestRate}% p.a.
+                        {investor.interestRate} paise/₹1/m
                       </div>
                     </div>
                   </div>

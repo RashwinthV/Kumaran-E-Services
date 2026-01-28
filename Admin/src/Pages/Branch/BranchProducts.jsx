@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import "../../Styles/Products.css";
 import UniversalDelete from "../../Modals/UniversalDelete";
 import AddInventoryModal from "../../Modals/Inventory/AddInventoryModal";
@@ -18,6 +18,7 @@ const BranchProducts = () => {
     deleteInventory,
     loading,
   } = useBranch();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
@@ -80,7 +81,7 @@ const BranchProducts = () => {
   const categories = [
     "All",
     ...new Set(
-      safeInventory.map((item) => item.product?.category?.name || "General")
+      safeInventory.map((item) => item.product?.category?.name || "General"),
     ),
   ];
 
@@ -381,7 +382,7 @@ const BranchProducts = () => {
       new Blob([buffer]),
       `Stock_Report_${branchName.replace(/\s+/g, "_")}_${
         new Date().toISOString().split("T")[0]
-      }.xlsx`
+      }.xlsx`,
     );
   };
 
@@ -630,6 +631,13 @@ const BranchProducts = () => {
                   )}
                 </div>
                 <div className="product-actions">
+                  <button
+                    className="btn-edit"
+                    style={{ background: "#4a5568", borderColor: "#4a5568" }}
+                    onClick={() => navigate(`/product/${product._id}`)}
+                  >
+                    View
+                  </button>
                   <button
                     className="btn-edit"
                     onClick={() => handleEditClick(item)}

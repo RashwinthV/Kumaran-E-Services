@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../Styles/Products.css";
 import UniversalDelete from "../Modals/UniversalDelete";
 import ProductModal from "../Modals/Product/ProductModal";
-import ProductDetailModal from "../Modals/Product/ProductDetailModal";
 import BackButton from "../Components/BackButton";
 import { useProduct } from "../Context/ProductContext";
 
@@ -15,6 +15,7 @@ const Products = () => {
     getCategories,
     categories,
   } = useProduct();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -27,10 +28,6 @@ const Products = () => {
   // Edit/Add Modal State
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
-
-  // View Modal State
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [productToView, setProductToView] = useState(null);
 
   useEffect(() => {
     getProducts();
@@ -50,7 +47,7 @@ const Products = () => {
         product.tags.some((tag) => tag.toLowerCase().includes(term))) ||
       (product.compatibleModels &&
         product.compatibleModels.some((model) =>
-          model.toLowerCase().includes(term)
+          model.toLowerCase().includes(term),
         ));
 
     const categoryName = product.category?.name || "Uncategorized";
@@ -84,8 +81,7 @@ const Products = () => {
   };
 
   const handleViewClick = (product) => {
-    setProductToView(product);
-    setViewModalOpen(true);
+    navigate(`/product/${product._id}`);
   };
 
   const handleAddClick = () => {
@@ -289,18 +285,10 @@ const Products = () => {
         isLoading={isDeleting}
       />
 
-      {/* Add/Edit Product Modal */}
       <ProductModal
         isOpen={productModalOpen}
         onClose={() => setProductModalOpen(false)}
         productToEdit={productToEdit}
-      />
-
-      {/* View Product Modal */}
-      <ProductDetailModal
-        isOpen={viewModalOpen}
-        onClose={() => setViewModalOpen(false)}
-        product={productToView}
       />
     </div>
   );

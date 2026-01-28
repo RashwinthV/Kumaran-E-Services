@@ -5,6 +5,7 @@ const ReportFilters = ({
   filters,
   onFilterChange,
   onExport,
+  onGstExport,
   hideBranchSelector = false,
   availableTypes = [
     { value: "sales", label: "Sales Report" },
@@ -155,8 +156,17 @@ const ReportFilters = ({
           </select>
         </div>
 
-        {/* Export Action */}
-        <div className="col d-flex align-items-end justify-content-end ms-auto">
+        {/* Export Actions */}
+        <div className="col d-flex align-items-end justify-content-end ms-auto gap-2">
+          {onGstExport && (
+            <button
+              className="btn btn-sm btn-outline-success px-4 fw-bold shadow-none"
+              onClick={onGstExport}
+              style={{ borderRadius: "8px" }}
+            >
+              <i className="bi bi-file-earmark-spreadsheet me-2"></i>Export GST
+            </button>
+          )}
           <button
             className="btn btn-sm btn-outline-primary px-4 fw-bold shadow-none"
             onClick={onExport}
