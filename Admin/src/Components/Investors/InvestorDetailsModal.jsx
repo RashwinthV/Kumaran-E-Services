@@ -139,6 +139,12 @@ const InvestorDetailsModal = ({
                       {investor.preferredPayoutMode || "Cash"}
                     </div>
                   </div>
+                  <div className="col-md-4">
+                    <small className="text-muted">Certificate Number:</small>
+                    <div className="fw-bold text-primary">
+                      {investor.certNo || "N/A"}
+                    </div>
+                  </div>
                   {((investor.bankAccounts &&
                     investor.bankAccounts.length > 0) ||
                     (investor.bankDetails &&

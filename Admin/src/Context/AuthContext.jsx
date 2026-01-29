@@ -87,7 +87,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use(
       (config) => {
-        if (accessToken && config.url?.startsWith(API_URL)) {
+        const isBackendRequest = config.url?.includes(
+          import.meta.env.VITE_BACKEND_BASE_URI,
+        );
+        if (accessToken && isBackendRequest) {
           config.headers.Authorization = `Bearer ${accessToken}`;
         }
         return config;

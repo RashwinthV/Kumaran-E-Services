@@ -103,9 +103,9 @@ export const CustomerProvider = ({ children }) => {
             : "Customer created successfully",
         );
         fetchCustomers(); // Refresh list
-        return true;
+        return response.data.data;
       }
-      return false;
+      return null;
     } catch (err) {
       console.error("Error saving customer:", err);
       toast.error(err.response?.data?.message || "Failed to save customer");

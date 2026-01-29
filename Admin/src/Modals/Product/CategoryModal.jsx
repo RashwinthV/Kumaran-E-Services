@@ -137,11 +137,7 @@ const CategoryModal = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <div
-        className="product-modal-overlay"
-        onClick={onClose}
-        style={{ zIndex: 1100 }}
-      >
+      <div className="product-modal-overlay" style={{ zIndex: 1100 }}>
         <div
           className="product-modal"
           onClick={(e) => e.stopPropagation()}

@@ -49,18 +49,19 @@ const ProductsCatalog = () => {
     getProducts();
     getCategories();
   }, [getProducts, getCategories]);
-
+  if (!products) return;
   const uniqueCategories = ["All", ...categories.map((c) => c.name)];
 
   const filteredProducts = products
     .filter((item) => {
       const product = item.product;
-      if (!product) return false;
+
 
       const term = searchTerm.toLowerCase();
       const matchesSearch =
-        product.name.toLowerCase().includes(term) ||
-        product.sku.toLowerCase().includes(term) ||
+        !term || // If search is empty, match all
+        (product.name && product.name.toLowerCase().includes(term)) ||
+        (product.sku && product.sku.toLowerCase().includes(term)) ||
         (product.brand && product.brand.toLowerCase().includes(term)) ||
         (product.model && product.model.toLowerCase().includes(term)) ||
         (product.tags &&
@@ -79,8 +80,8 @@ const ProductsCatalog = () => {
       const matchesCategory =
         filterCategory === "All" || categoryName === filterCategory;
 
-      // Status logic from inventory item
-      const status = item.isActive ? "Active" : "Inactive";
+      // Status logic - use product's isActive field
+      const status = product.isActive ? "Active" : "Inactive";
       const matchesStatus = filterStatus === "All" || status === filterStatus;
 
       // Stock Level Filter
@@ -93,7 +94,10 @@ const ProductsCatalog = () => {
       else if (filterStock === "In Stock")
         matchesStock = !isLowStock && !isOutOfStock;
 
-      return matchesSearch && matchesCategory && matchesStatus && matchesStock;
+      const passes =
+        matchesSearch && matchesCategory && matchesStatus && matchesStock;
+
+      return passes;
     })
     .sort((a, b) => {
       if (sortBy === "Lowest Stock") {
@@ -105,6 +109,8 @@ const ProductsCatalog = () => {
       }
       return 0;
     });
+
+
 
   const getStockStatus = (item) => {
     if (isServiceProduct(item))
@@ -462,10 +468,10 @@ const ProductsCatalog = () => {
                     <h3>{product.name}</h3>
                     <span
                       className={`status-badge ${
-                        item.isActive ? "active" : "inactive"
+                        product.isActive ? "active" : "inactive"
                       }`}
                     >
-                      {item.isActive ? "Active" : "Inactive"}
+                      {product.isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
 
@@ -475,19 +481,22 @@ const ProductsCatalog = () => {
 
                   <div className="compatible-section">
                     {product.compatibleModels &&
-                      product.compatibleModels.length > 0&&(<p className="compatible-label">Compatible With:</p>)}{" "}
+                      product.compatibleModels.length > 0 && (
+                        <p className="compatible-label">Compatible With:</p>
+                      )}{" "}
                     <div className="compatible-tags">
-                      {product.compatibleModels &&
-                      product.compatibleModels.length > 0
-                        ? product.compatibleModels.map((model, idx) => (
-                            <span key={idx} className="model-tag">
-                              {model}
-                            </span>
-                          ))
-                        : ""
-                          // <span className="model-tag" style={{ opacity: 0.5 }}>
-                          //   No compatible models listed
-                          // </span>
+                      {
+                        product.compatibleModels &&
+                        product.compatibleModels.length > 0
+                          ? product.compatibleModels.map((model, idx) => (
+                              <span key={idx} className="model-tag">
+                                {model}
+                              </span>
+                            ))
+                          : ""
+                        // <span className="model-tag" style={{ opacity: 0.5 }}>
+                        //   No compatible models listed
+                        // </span>
                       }
                     </div>
                   </div>

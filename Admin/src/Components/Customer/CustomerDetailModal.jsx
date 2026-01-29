@@ -83,11 +83,7 @@ const CustomerDetailModal = ({ isOpen, onClose, customer }) => {
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="modal-backdrop fade show"
-        onClick={onClose}
-        style={{ zIndex: 2040 }}
-      ></div>
+      <div className="modal-backdrop fade show" style={{ zIndex: 2040 }}></div>
 
       {/* Modal */}
       <div
@@ -323,7 +319,7 @@ const CustomerDetailModal = ({ isOpen, onClose, customer }) => {
                                                 </div>
                                               </div>
                                             </div>
-                                          )
+                                          ),
                                         )}
                                       </div>
                                     ) : (

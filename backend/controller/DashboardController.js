@@ -388,7 +388,8 @@ exports.getDashboardStats = async (req, res) => {
         },
       },
       { $unwind: { path: "$branchInfo", preserveNullAndEmptyArrays: true } },
-      { $limit: 5 },
+      // Removed limit 5 to show all alerts
+      { $sort: { quantity: 1 } },
       {
         $project: {
           _id: 1,

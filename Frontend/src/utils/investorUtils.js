@@ -1,21 +1,22 @@
-import { getDecrypted } from "./storage";
-import { InvestorTemplate } from "./printTemplates/InvestorTemplate";
 import html2pdf from "html2pdf.js";
+import { InvestorTemplate } from "./printTemplates/InvestorTemplate";
 
 /**
  * exportInvestorPDF generates and downloads a certificate as PDF
- * This is separate from general print utilities to maintain independence.
+ * Matching the frontend implementation for UI parity.
  */
-export const exportInvestorPDF = (investor) => {
-  const storedBranch = getDecrypted("branch");
+export const exportInvestorPDF = (investor, branchData = null) => {
   const brandName = "Kumaran E-Services";
-  const branchName = storedBranch?.name || "Main Branch";
+
+  // Try to get branch details from investor.branch (if populated) or fallbacks
+  const branchInfo = investor.branch || branchData;
+  const branchName =
+    branchInfo?.name || branchInfo?.branchName || "Main Branch";
   const branchDetails = {
     name: brandName,
     branchName: branchName,
-    contact:
-      storedBranch?.contact?.phone || storedBranch?.contact || "0000000000",
-    gstNumber: storedBranch?.gstNumber || "",
+    contact: branchInfo?.contact?.phone || branchInfo?.contact || "0000000000",
+    gstNumber: branchInfo?.gstNumber || "",
   };
 
   const currencySymbol = "₹";
@@ -28,11 +29,12 @@ export const exportInvestorPDF = (investor) => {
 
   // Create a temporary container for rendering the PDF
   const element = document.createElement("div");
-  element.style.width = "800px";
+  element.style.width = "794px";
   element.style.padding = "20px";
   element.innerHTML = `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+      * { box-sizing: border-box; }
       .investor-receipt { font-family: 'Inter', sans-serif; color: #1a1a1a; }
       .text-right { text-align: right; }
       .fw-bold { font-weight: 700; }
@@ -69,10 +71,7 @@ export const exportInvestorPDF = (investor) => {
 
   const opt = {
     margin: [10, 10, 10, 10],
-    filename: `Investment_Certificate_${investor.name.replace(
-      /\s+/g,
-      "_"
-    )}.pdf`,
+    filename: `Investment_Certificate_${investor.name.replace(/\s+/g, "_")}.pdf`,
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, letterRendering: true },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },

@@ -108,6 +108,7 @@ const investorDetailsSchema = new mongoose.Schema(
 
     unpaidInterest: { type: Number, default: 0 },
     lastAccrualDate: { type: Date }, // To track when the last monthly interest was added to unpaidInterest
+    certNo: { type: String },
     isDeleted: { type: Boolean, default: false },
   },
   {

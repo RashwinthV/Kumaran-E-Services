@@ -319,7 +319,7 @@ const Branch = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
+        <div className="modal-overlay" >
           <div
             className="modal-content"
             style={{ backgroundColor: "white" }}

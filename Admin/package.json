@@ -1,9 +1,9 @@
 {
   "name": "kes-admin",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
-    "author": "Zyrix Technologies",
+  "author": "Zyrix Technologies",
   "description": "Admin console for Kumaran E-Services",
   "main": "electron/main.cjs",
   "scripts": {
@@ -23,6 +23,7 @@
     "electron-is-dev": "^3.0.1",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
+    "html2pdf.js": "^0.14.0",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.555.0",

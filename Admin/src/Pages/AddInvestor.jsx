@@ -5,12 +5,16 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 import { exportInvestorPDF } from "../utils/investorUtils";
+import { useBranch } from "../Context/BranchContext";
+import { useAuth } from "../Context/AuthContext";
 
 const AddInvestor = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { accessToken } = useAuth();
   const { customers, upsertCustomer, fetchInvestors, fetchCustomers } =
     useCustomer();
+  const { branches, getBranches } = useBranch();
   const [accounts, setAccounts] = useState([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,38 +56,56 @@ const AddInvestor = () => {
     startDate: new Date().toISOString().split("T")[0],
     status: "active",
     paymentAccountId: "",
+    branchId: "",
   });
 
   useEffect(() => {
     fetchCustomers();
-    const fetchAccounts = async () => {
+    if (!isEditMode) {
+      getBranches();
+    }
+  }, [isEditMode, getBranches, fetchCustomers]);
+
+  useEffect(() => {
+    const fetchBranchAccounts = async () => {
+      if (!formData.branchId || !accessToken) return;
       try {
         setIsLoadingAccounts(true);
-        const token = localStorage.getItem("accessToken");
-        const res = await axios.get(API_ENDPOINTS.BRANCH_ACCOUNTS, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          API_ENDPOINTS.BRANCH_BY_ID_ACCOUNTS(formData.branchId),
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
         if (res.data.success) {
           const validAccounts = res.data.data.filter(
             (acc) => acc.type !== "Credits",
           );
           setAccounts(validAccounts);
+          // Auto-select Cash if current selection is invalid or empty
           const cashAcc = validAccounts.find((a) => a.type === "Cash");
-          if (cashAcc) {
-            setFormData((prev) => ({ ...prev, paymentAccountId: cashAcc._id }));
+          const isStillValid = validAccounts.some(
+            (acc) => acc._id === formData.paymentAccountId,
+          );
+          if (!isStillValid) {
+            setFormData((prev) => ({
+              ...prev,
+              paymentAccountId: cashAcc ? cashAcc._id : "",
+            }));
           }
         }
       } catch (err) {
-        console.error("Failed to fetch accounts", err);
+        console.error("Failed to fetch branch accounts", err);
+        setAccounts([]);
       } finally {
         setIsLoadingAccounts(false);
       }
     };
 
-    if (!isEditMode) {
-      fetchAccounts();
+    if (!isEditMode && formData.branchId) {
+      fetchBranchAccounts();
     }
-  }, [isEditMode]);
+  }, [formData.branchId, isEditMode, accessToken]);
 
   useEffect(() => {
     if (editInvestorData) {
@@ -117,6 +139,7 @@ const AddInvestor = () => {
         interestType: editInvestorData.interestType,
         startDate: editInvestorData.startDate,
         status: editInvestorData.status,
+        branchId: editInvestorData.branchId || editInvestorData.branch || "",
       });
     }
   }, [editInvestorData]);
@@ -209,6 +232,7 @@ const AddInvestor = () => {
         existingDetails.upiAccounts?.length > 0
           ? existingDetails.upiAccounts
           : prev.upiAccounts,
+      branchId: customer.branchId || customer.branch || prev.branchId,
     }));
     setSelectedCustomerId(customer._id);
     setSearchTerm("");
@@ -242,6 +266,7 @@ const AddInvestor = () => {
         email: formData.email || "",
         city: formData.city || "",
         role: "Investor",
+        branchId: formData.branchId,
         initialPaymentAccountId: formData.paymentAccountId,
         investorDetails: {
           ...formData,
@@ -298,7 +323,18 @@ const AddInvestor = () => {
             : "Investor added successfully",
         );
         if (!isEditMode) {
-          exportInvestorPDF(formData);
+          const newInvestment =
+            result.investmentDetails?.[result.investmentDetails.length - 1];
+          const selectedBranch = branches.find(
+            (b) => b._id === formData.branchId,
+          );
+          exportInvestorPDF(
+            {
+              ...formData,
+              certNo: newInvestment?.certNo,
+            },
+            selectedBranch,
+          );
         }
         fetchInvestors();
         navigate("/investors");
@@ -437,6 +473,72 @@ const AddInvestor = () => {
                   </div>
                   <div className="col-md-6">
                     <label className="form-label fw-bold small">
+                      Select Branch <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      className="form-select"
+                      value={formData.branchId}
+                      onChange={(e) => handleChange("branchId", e.target.value)}
+                      required
+                    >
+                      <option value="">Choose Branch...</option>
+                      {branches.map((b) => (
+                        <option key={b._id} value={b._id}>
+                          {b.name} ({b.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {!isEditMode && (
+                    <div className="col-md-6">
+                      <label className="form-label fw-bold small">
+                        Received To Account{" "}
+                        <span className="text-danger">*</span>
+                        {!formData.branchId && (
+                          <span className="text-warning ms-2 small">
+                            (Select branch first)
+                          </span>
+                        )}
+                      </label>
+                      <div className="d-flex flex-wrap gap-2">
+                        {isLoadingAccounts ? (
+                          <div className="text-muted small">
+                            Loading accounts...
+                          </div>
+                        ) : accounts.length > 0 ? (
+                          accounts.map((acc) => (
+                            <button
+                              key={acc._id}
+                              type="button"
+                              disabled={acc.currentStatus === "Closed"}
+                              onClick={() =>
+                                handleChange("paymentAccountId", acc._id)
+                              }
+                              className={`btn btn-sm px-3 fw-bold py-2 transition-all ${
+                                formData.paymentAccountId === acc._id
+                                  ? "btn-success shadow"
+                                  : "btn-light border text-secondary"
+                              }`}
+                            >
+                              <i
+                                className={`bi ${acc.type === "Upi" ? "bi-qr-code" : acc.type === "Cash" ? "bi-cash" : "bi-bank"} me-1`}
+                              ></i>
+                              {acc.type}{" "}
+                              {acc.currentStatus === "Closed" && "(Closed)"}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="text-muted small">
+                            {formData.branchId
+                              ? "No active accounts found for this branch."
+                              : "Please select a branch to view accounts."}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold small">
                       PAN Number
                     </label>
                     <input
@@ -502,38 +604,6 @@ const AddInvestor = () => {
                       disabled={isEditMode}
                     />
                   </div>
-
-                  {!isEditMode && (
-                    <div className="col-md-12">
-                      <label className="form-label fw-bold small">
-                        Received To Account{" "}
-                        <span className="text-danger">*</span>
-                      </label>
-                      <div className="d-flex flex-wrap gap-2">
-                        {accounts.map((acc) => (
-                          <button
-                            key={acc._id}
-                            type="button"
-                            disabled={acc.currentStatus === "Closed"}
-                            onClick={() =>
-                              handleChange("paymentAccountId", acc._id)
-                            }
-                            className={`btn btn-sm px-3 fw-bold py-2 transition-all ${
-                              formData.paymentAccountId === acc._id
-                                ? "btn-success shadow"
-                                : "btn-light border text-secondary"
-                            }`}
-                          >
-                            <i
-                              className={`bi ${acc.type === "Upi" ? "bi-qr-code" : acc.type === "Cash" ? "bi-cash" : "bi-bank"} me-1`}
-                            ></i>
-                            {acc.type}{" "}
-                            {acc.currentStatus === "Closed" && "(Closed)"}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   <div className="col-md-6">
                     <label className="form-label fw-bold small">

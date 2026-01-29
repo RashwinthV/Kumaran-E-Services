@@ -8,7 +8,7 @@ const ProductDetailModal = ({ isOpen, onClose, product }) => {
   const totalGst = (product.gst?.cgst || 0) + (product.gst?.sgst || 0);
 
   return (
-    <div className="product-modal-overlay" onClick={onClose}>
+    <div className="product-modal-overlay">
       <div
         className="product-modal"
         onClick={(e) => e.stopPropagation()}

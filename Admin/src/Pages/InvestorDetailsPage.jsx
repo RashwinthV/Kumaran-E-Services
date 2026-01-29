@@ -11,13 +11,14 @@ const InvestorDetailsPage = () => {
   const {
     investors,
     loading,
+    fetchInvestors,
     deleteInvestment,
     closeInvestment,
     upsertCustomer,
   } = useCustomer();
 
   const [investor, setInvestor] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "",
@@ -26,7 +27,14 @@ const InvestorDetailsPage = () => {
     type: "danger",
   });
 
-  // Replicate the flattening/finding logic from Investors.jsx to ensure consistent ID matching
+  // Fetch investors on mount if not available
+  useEffect(() => {
+    if (investors.length === 0 && !loading) {
+      fetchInvestors();
+    }
+  }, [investors.length, loading, fetchInvestors]);
+
+  // Replicate the flattening/finding logic from Investors.jsx
   useEffect(() => {
     if (investors.length > 0) {
       const processedInvestors = investors.flatMap((inv) => {
@@ -44,10 +52,10 @@ const InvestorDetailsPage = () => {
 
           return {
             ...inv,
-            id: details._id || inv._id, // Use Investment ID if available
+            id: String(details._id || inv._id),
             customerId: inv._id,
             investmentId: details.id || details._id,
-            ...details, // Flatten investment details
+            ...details,
             currentPrincipal,
             totalInterestPaid: details.totalInterestPaid || 0,
           };
@@ -57,15 +65,25 @@ const InvestorDetailsPage = () => {
       const foundInvestor = processedInvestors.find((inv) => inv.id === id);
       if (foundInvestor) {
         setInvestor(foundInvestor);
-      } else {
-        // Only redirect if we're sure we have data and still can't find it
-        if (!loading) {
-          toast.error("Investor not found");
-          navigate("/investors");
-        }
+      } else if (!loading) {
+        toast.error("Investor not found");
+        navigate("/investors");
       }
+      setIsInitialLoad(false);
+    } else if (!loading && isInitialLoad && investors.length === 0) {
+      // Small delay to allow state to settle
+      const timer = setTimeout(() => {
+        if (!loading && investors.length === 0) {
+          setIsInitialLoad(false);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (!loading && !isInitialLoad) {
+      // If we finished loading and still have no investors OR initial load check failed
+      toast.error("Investor not found");
+      navigate("/investors");
     }
-  }, [investors, id, navigate, loading]);
+  }, [investors, id, navigate, loading, isInitialLoad]);
 
   const handleEdit = () => {
     navigate("/investor/add", { state: { investor } });

@@ -28,7 +28,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
 
         if (res.data.success) {
           const validAccounts = res.data.data.filter(
-            (acc) => acc.type !== "Credits"
+            (acc) => acc.type !== "Credits",
           );
           setAccounts(validAccounts);
 
@@ -54,7 +54,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
   useEffect(() => {
     const total = Object.values(billAmounts).reduce(
       (sum, amt) => sum + (parseFloat(amt) || 0),
-      0
+      0,
     );
     setSettleAmount(total.toFixed(2));
   }, [billAmounts]);
@@ -164,11 +164,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
 
   return (
     <>
-      <div
-        className="modal-backdrop fade show"
-        onClick={onClose}
-        style={{ zIndex: 2040 }}
-      ></div>
+      <div className="modal-backdrop fade show" style={{ zIndex: 2040 }}></div>
 
       <div
         className="modal fade show d-block"
@@ -235,7 +231,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   onClick={() =>
                                     handleToggleBill(
                                       credit._id,
-                                      credit.totalAmount
+                                      credit.totalAmount,
                                     )
                                   }
                                 >
@@ -243,7 +239,7 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                     className="form-check-input shadow-none"
                                     type="checkbox"
                                     checked={selectedBillIds.includes(
-                                      credit._id
+                                      credit._id,
                                     )}
                                     readOnly
                                   />
@@ -291,24 +287,23 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   <div className="input-group input-group-sm w-50">
                                     <span className="input-group-text bg-white border-end-0">
                                       ₹
-                                
-                                    <input
-                                      type="number"
-                                      className="form-control border-0 outline-0 text-end fw-bold"
-                                      placeholder="0.00"
-                                      value={billAmounts[credit._id] || ""}
-                                      onChange={(e) =>
-                                        handleAmountChange(
-                                          credit._id,
-                                          e.target.value,
-                                          credit.totalAmount
-                                        )
-                                      }
-                                      onFocus={(e) => e.target.select()}
-                                      step="0.01"
-                                      min="0"
-                                    />
-                                        </span>
+                                      <input
+                                        type="number"
+                                        className="form-control border-0 outline-0 text-end fw-bold"
+                                        placeholder="0.00"
+                                        value={billAmounts[credit._id] || ""}
+                                        onChange={(e) =>
+                                          handleAmountChange(
+                                            credit._id,
+                                            e.target.value,
+                                            credit.totalAmount,
+                                          )
+                                        }
+                                        onFocus={(e) => e.target.select()}
+                                        step="0.01"
+                                        min="0"
+                                      />
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -395,8 +390,8 @@ const SettleCreditModal = ({ isOpen, onClose, customer, onSettle }) => {
                                   acc.type === "Cash"
                                     ? "bi-cash-stack"
                                     : acc.type === "Upi"
-                                    ? "bi-qr-code"
-                                    : "bi-credit-card"
+                                      ? "bi-qr-code"
+                                      : "bi-credit-card"
                                 }`}
                               ></i>
                               <span className="small">

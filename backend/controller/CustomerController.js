@@ -93,7 +93,9 @@ exports.getAllBranchInvestors = async (req, res) => {
   try {
     const result = await Customer.find({
       role: { $in: ["Investor", "Customer & investor"] },
-    }).sort({ name: 1 });
+    })
+      .populate("branch", "name branchCode contact address gstNumber")
+      .sort({ name: 1 });
 
     // Extract all unique saleIds for manual population
     const saleIds = [];
@@ -187,12 +189,27 @@ exports.getMyBranchCustomers = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "branches",
+          localField: "branch",
+          foreignField: "_id",
+          as: "branch",
+        },
+      },
+      {
+        $unwind: {
+          path: "$branch",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           name: 1,
           phone: 1,
           city: 1,
           email: 1,
           role: 1,
+          branch: 1,
           branchCode: 1,
           credits: 1, // Return all credits (Active & Settled)
         },
@@ -226,6 +243,20 @@ exports.getAllCustomers = async (req, res) => {
           localField: "_id",
           foreignField: "customer",
           as: "credits",
+        },
+      },
+      {
+        $lookup: {
+          from: "branches", // Collection name for Branch model
+          localField: "branch",
+          foreignField: "_id",
+          as: "branch",
+        },
+      },
+      {
+        $unwind: {
+          path: "$branch",
+          preserveNullAndEmptyArrays: true,
         },
       },
       {
@@ -271,22 +302,34 @@ exports.upsertCustomer = async (req, res) => {
       email,
       city,
       role,
+      branchId,
       investorDetails,
       initialPaymentAccountId,
     } = req.body;
 
-    // Find branch
-    const branch = await Branch.findOne({ code: req.user.branchCode }).session(
-      session,
-    );
+    // Determine target branch
+    let branch;
+    if (
+      branchId &&
+      (req.user.role === "admin" || req.user.role === "manager")
+    ) {
+      branch = await Branch.findById(branchId).session(session);
+    } else {
+      branch = await Branch.findOne({ code: req.user.branchCode }).session(
+        session,
+      );
+    }
+
     if (!branch) {
       throw new Error("Branch not found");
     }
 
-    // Try to find by phone within the same branch
+    const targetBranchCode = branch.code;
+
+    // Try to find by phone within the target branch
     let customer = await Customer.findOne({
       phone,
-      branchCode: req.user.branchCode,
+      branchCode: targetBranchCode,
     }).session(session);
 
     let isNewInvestment = false;
@@ -326,6 +369,8 @@ exports.upsertCustomer = async (req, res) => {
         }
 
         if (!investmentFound) {
+          // Generate static Certificate Number for new investment
+          investorDetails.certNo = `INV-CERT-${Math.floor(100000 + Math.random() * 900000)}`;
           customer.investmentDetails.push(investorDetails);
           isNewInvestment = true;
           // Use the principal amount from the new details
@@ -341,10 +386,12 @@ exports.upsertCustomer = async (req, res) => {
         city,
         role: role || "customer",
         branch: branch._id,
-        branchCode: req.user.branchCode,
+        branchCode: targetBranchCode,
       };
 
       if (investorDetails) {
+        // Generate static Certificate Number for new investment
+        investorDetails.certNo = `INV-CERT-${Math.floor(100000 + Math.random() * 900000)}`;
         newCustomerData.investmentDetails = [investorDetails];
         isNewInvestment = true;
         transactionAmount = parseFloat(investorDetails.principalAmount || 0);
@@ -385,9 +432,14 @@ exports.upsertCustomer = async (req, res) => {
 
     await session.commitTransaction();
 
+    const populatedCustomer = await Customer.findById(customer._id).populate(
+      "branch",
+      "name branchCode contact address gstNumber",
+    );
+
     res.status(200).json({
       success: true,
-      data: customer,
+      data: populatedCustomer,
     });
   } catch (error) {
     if (session.inTransaction()) {

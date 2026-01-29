@@ -111,7 +111,7 @@ const SubCategoryModal = ({ isOpen, onClose, defaultCategoryId = "" }) => {
   const displayedSubCategories = useMemo(() => {
     if (!categoryId) return [];
     return subCategories.filter(
-      (sub) => sub.category?._id === categoryId || sub.category === categoryId
+      (sub) => sub.category?._id === categoryId || sub.category === categoryId,
     );
   }, [subCategories, categoryId]);
 
@@ -121,7 +121,7 @@ const SubCategoryModal = ({ isOpen, onClose, defaultCategoryId = "" }) => {
     // Ensure the correct category is set if for some reason we edit a sub from a mixed list
     if (!categoryId && sub.category) {
       setCategoryId(
-        typeof sub.category === "object" ? sub.category._id : sub.category
+        typeof sub.category === "object" ? sub.category._id : sub.category,
       );
     }
   };
@@ -187,11 +187,7 @@ const SubCategoryModal = ({ isOpen, onClose, defaultCategoryId = "" }) => {
 
   return (
     <>
-      <div
-        className="product-modal-overlay"
-        onClick={onClose}
-        style={{ zIndex: 1100 }}
-      >
+      <div className="product-modal-overlay" style={{ zIndex: 1100 }}>
         <div
           className="product-modal"
           onClick={(e) => e.stopPropagation()}

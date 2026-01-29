@@ -11,6 +11,8 @@ import { saveAs } from "file-saver";
 const BranchProducts = () => {
   const { id } = useParams();
   const {
+    branches,
+    getBranches,
     branchInventory,
     getInventory,
     addInventory: addInventoryApi,
@@ -22,7 +24,9 @@ const BranchProducts = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterStatus, setFilterStatus] = useState("All"); // Active/Inactive
+  const [filterStock, setFilterStock] = useState("All"); // Stock Level
+  const [sortBy, setSortBy] = useState("Lowest Stock");
 
   // Modal States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -36,10 +40,18 @@ const BranchProducts = () => {
   const [newStockValue, setNewStockValue] = useState("");
 
   useEffect(() => {
+    if (branches.length === 0) {
+      getBranches();
+    }
+  }, [branches.length, getBranches]);
+
+  useEffect(() => {
     if (id) {
       getInventory(id);
     }
   }, [id, getInventory]);
+
+  const currentBranch = branches.find((b) => b._id === id);
 
   // Helper function to determine status
   function getStatus(item) {
@@ -88,32 +100,59 @@ const BranchProducts = () => {
   const filteredProducts = safeInventory
     .filter((item) => {
       // Inventory item structure: { product: { name, ... }, quantity, ... }
-      const productName = item.product?.name || "";
-      const categoryName = item.product?.category?.name || "General";
-      const status = getStatus(item);
+      const product = item.product || {};
+      const productName = product.name || "";
+      const categoryName = product.category?.name || "General";
+      const stockStatus = getStatus(item);
 
-      const matchesSearch = productName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      // Search Logic (Enhanced)
+      const term = searchTerm.toLowerCase();
+      const matchesSearch =
+        productName.toLowerCase().includes(term) ||
+        (product.sku && product.sku.toLowerCase().includes(term)) ||
+        (product.brand && product.brand.toLowerCase().includes(term)) ||
+        (product.model && product.model.toLowerCase().includes(term)) ||
+        (product.tags &&
+          product.tags.some((tag) => tag.toLowerCase().includes(term))) ||
+        (product.compatibleModels &&
+          product.compatibleModels.some((model) =>
+            model.toLowerCase().includes(term),
+          ));
 
       const matchesCategory =
         filterCategory === "All" || categoryName === filterCategory;
 
-      const matchesStatus = filterStatus === "All" || status === filterStatus;
+      // Product Status Filter (Active/Inactive)
+      // Assuming item.product.isActive exists. If not, fallback to true or check data.
+      const prodIsActive =
+        product.isActive !== undefined ? product.isActive : true;
+      const statusStr = prodIsActive ? "Active" : "Inactive";
+      const matchesStatus =
+        filterStatus === "All" || statusStr === filterStatus;
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      // Stock Level Filter
+      const matchesStock = filterStock === "All" || stockStatus === filterStock;
+
+      return matchesSearch && matchesCategory && matchesStatus && matchesStock;
     })
     .sort((a, b) => {
+      if (sortBy === "Lowest Stock") {
+        return (a.quantity || 0) - (b.quantity || 0);
+      } else if (sortBy === "Highest Stock") {
+        return (b.quantity || 0) - (a.quantity || 0);
+      } else if (sortBy === "Newest") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      // Default fallback sort (Status priority)
       const statusA = getStatus(a);
       const statusB = getStatus(b);
-
       const priority = {
         "Out of Stock": 1,
         "Low Stock": 2,
         "In Stock": 3,
         "N/A": 4,
       };
-
       return (priority[statusA] || 5) - (priority[statusB] || 5);
     });
 
@@ -391,9 +430,9 @@ const BranchProducts = () => {
       <div className="products-header">
         <div className="header-left">
           <BackButton />
-          <h1>Products Management</h1>
+          <h1>{currentBranch ? currentBranch.name : "Branch"} Inventory</h1>
           <p className="products-count">
-            {filteredProducts.length} products found
+            {filteredProducts.length} items found
           </p>
         </div>
         <div className="header-right">
@@ -417,7 +456,7 @@ const BranchProducts = () => {
                 strokeLinejoin="round"
               />
             </svg>
-            Add New Product
+            Assign Product
           </button>
         </div>
       </div>
@@ -460,15 +499,36 @@ const BranchProducts = () => {
         </div>
 
         <div className="filter-group">
+          <label>Stock Level:</label>
+          <select
+            value={filterStock}
+            onChange={(e) => setFilterStock(e.target.value)}
+          >
+            <option value="All">All Levels</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Sort By:</label>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="Lowest Stock">Lowest Stock</option>
+            <option value="Highest Stock">Highest Stock</option>
+            <option value="Newest">Newest Added</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
           <label>Status:</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <option value="All">All</option>
-            <option value="In Stock">In Stock</option>
-            <option value="Low Stock">Low Stock</option>
-            <option value="Out of Stock">Out of Stock</option>
+            <option value="All">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
           </select>
         </div>
 
@@ -479,6 +539,8 @@ const BranchProducts = () => {
               setSearchTerm("");
               setFilterCategory("All");
               setFilterStatus("All");
+              setFilterStock("All");
+              setSortBy("Lowest Stock");
             }}
           >
             <svg
@@ -633,7 +695,12 @@ const BranchProducts = () => {
                 <div className="product-actions">
                   <button
                     className="btn-edit"
-                    style={{ background: "#4a5568", borderColor: "#4a5568" }}
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                      borderColor: "#6366f1",
+                      color: "white",
+                    }}
                     onClick={() => navigate(`/product/${product._id}`)}
                   >
                     View

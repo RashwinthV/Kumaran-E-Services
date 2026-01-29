@@ -15,6 +15,7 @@ import ConfirmationModal from "../Components/Modals/ConfirmationModal";
 import { exportInvestorPDF } from "../utils/investorUtils";
 
 import { useCustomer } from "../Context/CustomerContext";
+import { useBranch } from "../Context/BranchContext";
 
 const Investors = () => {
   const {
@@ -28,7 +29,13 @@ const Investors = () => {
     deleteInvestment,
     processPrincipalTransaction,
   } = useCustomer();
+  const { branches, getBranches } = useBranch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getBranches();
+  }, [getBranches]);
+
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -290,7 +297,18 @@ const Investors = () => {
         setSelectedInvestor(null);
         // Generate Certificate for new investor
         if (!editMode) {
-          exportInvestorPDF(investorData);
+          const newInvestment =
+            result.investmentDetails?.[result.investmentDetails.length - 1];
+          const selectedBranch = branches.find(
+            (b) => b._id === investorData.branchId,
+          );
+          exportInvestorPDF(
+            {
+              ...investorData,
+              certNo: newInvestment?.certNo,
+            },
+            selectedBranch,
+          );
         }
       }
     } catch (err) {

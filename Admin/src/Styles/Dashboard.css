@@ -30,7 +30,9 @@
   gap: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
@@ -288,11 +290,33 @@
 
 /* Lists Styling */
 .transaction-list,
-.low-stock-list,
 .staff-leaderboard {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.low-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.low-stock-list::-webkit-scrollbar {
+  width: 5px;
+}
+.low-stock-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.low-stock-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.low-stock-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .transaction-item,

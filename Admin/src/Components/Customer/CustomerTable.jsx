@@ -118,19 +118,38 @@ const CustomerTable = ({ data, onViewCustomer, onSettleCredit }) => {
                   className="d-flex align-items-center justify-content-between mb-3 text-muted"
                   style={{ fontSize: "0.85rem" }}
                 >
-                  <span>
-                    <i className="bi bi-telephone me-2"></i>
-                    {customer.phone}
-                  </span>
-                  {customer.city && (
-                    <span
-                      className="fw-bold text-primary"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      <i className="bi bi-geo-alt-fill me-1"></i>
-                      {customer.city.toUpperCase()}
+                  <div className="d-flex flex-column gap-1">
+                    <span>
+                      <i className="bi bi-telephone me-2"></i>
+                      {customer.phone}
                     </span>
-                  )}
+                    {/* Role Badge */}
+                    <span
+                      className="badge rounded-pill bg-info bg-opacity-10 text-info fw-bold me-auto"
+                      style={{ fontSize: "0.7rem", padding: "0.3em 0.8em" }}
+                    >
+                      {customer.role || "Customer"}
+                    </span>
+                  </div>
+                  <div className="d-flex flex-column gap-1 align-items-end">
+                    {customer.city && (
+                      <span
+                        className="fw-bold text-primary"
+                        style={{ fontSize: "0.75rem" }}
+                      >
+                        <i className="bi bi-geo-alt-fill me-1"></i>
+                        {customer.city.toUpperCase()}
+                      </span>
+                    )}
+                    {/* Branch Badge */}
+                    <span
+                      className="badge bg-secondary bg-opacity-10 text-secondary fw-bold"
+                      style={{ fontSize: "0.7rem", padding: "0.3em 0.8em" }}
+                    >
+                      <i className="bi bi-building me-1"></i>
+                      {customer.branch?.name || customer.branch || "N/A"}
+                    </span>
+                  </div>
                 </div>
 
                 <div

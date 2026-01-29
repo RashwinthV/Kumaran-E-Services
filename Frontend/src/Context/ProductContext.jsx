@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useEffect,
+  useContext,
+  useState,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useAuth } from "./AuthContext";
@@ -48,24 +54,25 @@ export const ProductProvider = ({ children }) => {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
+
         if (response.data.success) {
           setProducts(response.data.data);
           await setCache(
             CACHE_KEYS.INVENTORY_RAW,
             response.data.data,
-            TTL.SHORT
+            TTL.SHORT,
           );
         }
       } catch (error) {
         console.error("Error fetching products:", error);
         toast.error(
-          error.response?.data?.message || "Failed to fetch products"
+          error.response?.data?.message || "Failed to fetch products",
         );
       } finally {
         setLoading(false);
       }
     },
-    [accessToken, baseURL, BranchId]
+    [accessToken, baseURL, BranchId],
   );
 
   // Fetch all categories
@@ -93,7 +100,7 @@ export const ProductProvider = ({ children }) => {
         console.error("Error fetching categories:", error);
       }
     },
-    [accessToken, baseURL]
+    [accessToken, baseURL],
   );
 
   // Fetch all subcategories
@@ -116,14 +123,14 @@ export const ProductProvider = ({ children }) => {
           await setCache(
             CACHE_KEYS.SUBCATEGORIES,
             response.data.data,
-            TTL.LONG
+            TTL.LONG,
           );
         }
       } catch (error) {
         console.error("Error fetching subcategories", error);
       }
     },
-    [accessToken, baseURL]
+    [accessToken, baseURL],
   );
 
   const getSubCategoriesByCategory = async (categoryId) => {
@@ -134,7 +141,7 @@ export const ProductProvider = ({ children }) => {
         `${baseURL}/subcategories/category/${categoryId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       if (response.data.success) {
@@ -146,6 +153,7 @@ export const ProductProvider = ({ children }) => {
       return [];
     }
   };
+
 
   return (
     <ProductContext.Provider

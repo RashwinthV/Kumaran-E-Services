@@ -73,6 +73,10 @@ const Customer = () => {
   const filteredData = useMemo(() => {
     let result = [...customers];
 
+    // Filter out pure "Investor" role
+    // Display "customer" and "Customer & investor"
+    result = result.filter((c) => c.role !== "Investor");
+
     // Type Filter
     if (filters.type === "Credit") {
       result = result.filter(

@@ -74,7 +74,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
       if (productToEdit.category) {
         handleCategoryChange(
           productToEdit.category?._id || productToEdit.category,
-          true
+          true,
         );
       }
     } else {
@@ -101,7 +101,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
 
   const handleCategoryChange = async (
     categoryId,
-    preserveSubCategory = false
+    preserveSubCategory = false,
   ) => {
     const subs = await getSubCategoriesByCategory(categoryId);
     setSubCategories(subs);
@@ -197,7 +197,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
 
   return (
     <>
-      <div className="product-modal-overlay" onClick={onClose}>
+      <div className="product-modal-overlay">
         <div className="product-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2>{productToEdit ? "Edit Product" : "Add New Product"}</h2>
@@ -446,8 +446,8 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
               {loading
                 ? "Saving..."
                 : productToEdit
-                ? "Update Product"
-                : "Add Product"}
+                  ? "Update Product"
+                  : "Add Product"}
             </button>
           </div>
         </div>

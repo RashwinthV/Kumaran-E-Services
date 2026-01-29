@@ -143,14 +143,14 @@ const AddInventoryModal = ({
 
     if (Number(formData.costPrice) > productMRP) {
       alert(
-        `Cost Price (₹${formData.costPrice}) cannot exceed MRP (₹${productMRP})`
+        `Cost Price (₹${formData.costPrice}) cannot exceed MRP (₹${productMRP})`,
       );
       return;
     }
 
     if (Number(formData.finalPrice) > productMRP) {
       alert(
-        `Final Price (₹${formData.finalPrice}) cannot exceed MRP (₹${productMRP})`
+        `Final Price (₹${formData.finalPrice}) cannot exceed MRP (₹${productMRP})`,
       );
       return;
     }
@@ -179,7 +179,7 @@ const AddInventoryModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="product-modal-overlay" onClick={onClose}>
+    <div className="product-modal-overlay">
       <div
         className="product-modal"
         onClick={(e) => e.stopPropagation()}
@@ -190,8 +190,8 @@ const AddInventoryModal = ({
             {editItem
               ? "Edit Inventory"
               : step === 1
-              ? "Select Product to Add"
-              : "Add Inventory Details"}
+                ? "Select Product to Add"
+                : "Add Inventory Details"}
           </h2>
           <button className="close-btn" onClick={onClose}>
             <svg
@@ -421,8 +421,8 @@ const AddInventoryModal = ({
                       Number(formData.costPrice) > selectedProduct.mrp
                         ? "#fff5f5"
                         : isServiceProduct(selectedProduct)
-                        ? "#f8fafc"
-                        : undefined,
+                          ? "#f8fafc"
+                          : undefined,
                   }}
                 />
                 {isServiceProduct(selectedProduct) && (

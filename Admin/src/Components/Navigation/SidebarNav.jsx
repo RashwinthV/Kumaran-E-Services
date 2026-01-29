@@ -58,7 +58,7 @@ const SidebarNav = () => {
           id: "investors-list",
           label: "Investors List",
           icon: "bi-list-ul",
-          path: "/investors",
+          path: "/investor/:id",
         },
         {
           id: "add-investor",

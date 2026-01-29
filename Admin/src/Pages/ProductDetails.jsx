@@ -76,10 +76,10 @@ const ProductDetails = () => {
       <div className="mb-4">
         <button
           className="btn btn-link text-decoration-none p-0 mb-3 d-inline-flex align-items-center"
-          onClick={() => navigate("/products")}
+          onClick={() => navigate(-1)}
           style={{ color: "#7C6FB0", fontSize: "0.95rem", fontWeight: "600" }}
         >
-          <i className="bi bi-arrow-left me-2"></i> Back to Products
+          <i className="bi bi-arrow-left me-2"></i> Back
         </button>
 
         <div className="d-flex justify-content-between align-items-start">

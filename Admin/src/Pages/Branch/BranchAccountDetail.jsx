@@ -566,8 +566,8 @@ const BranchAccountDetail = () => {
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-glass" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay " >
+          <div className="modal-glass overflow-auto" onClick={(e) => e.stopPropagation()} style={{maxHeight:"95vh"}}>
             <div className="modal-header">
               <h3>{editingAccount ? "Edit Account" : "New Account"}</h3>
               <button

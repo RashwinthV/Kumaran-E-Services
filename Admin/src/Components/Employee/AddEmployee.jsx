@@ -696,7 +696,7 @@ const AddEmployeeModal = ({
   if (!isOpen || !branch) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="header-title">
