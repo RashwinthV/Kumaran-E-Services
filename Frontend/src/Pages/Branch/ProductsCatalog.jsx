@@ -49,13 +49,13 @@ const ProductsCatalog = () => {
     getProducts();
     getCategories();
   }, [getProducts, getCategories]);
-  if (!products) return;
+  if (!products || !categories) return null;
   const uniqueCategories = ["All", ...categories.map((c) => c.name)];
 
   const filteredProducts = products
     .filter((item) => {
       const product = item.product;
-
+      if (!product) return false;
 
       const term = searchTerm.toLowerCase();
       const matchesSearch =
@@ -74,7 +74,7 @@ const ProductsCatalog = () => {
       // Handle nested category name (if populated) or find in categories array
       const categoryName =
         product.category?.name ||
-        categories.find((c) => c._id === product.category)?.name ||
+        (categories || []).find((c) => c._id === product.category)?.name ||
         "Uncategorized";
 
       const matchesCategory =
@@ -109,8 +109,6 @@ const ProductsCatalog = () => {
       }
       return 0;
     });
-
-
 
   const getStockStatus = (item) => {
     if (isServiceProduct(item))
@@ -476,7 +474,7 @@ const ProductsCatalog = () => {
                   </div>
 
                   <div className="product-meta">
-                    {/* Placeholder for future SKU/Brand info if needed */}
+                    <p className="meta-text fs-5 small fw-bold">{product.brand} | {product.model}</p>
                   </div>
 
                   <div className="compatible-section">

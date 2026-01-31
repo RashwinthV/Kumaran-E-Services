@@ -61,10 +61,12 @@ exports.createComplaint = async (req, res) => {
 exports.getComplaints = async (req, res) => {
   try {
     const branchCode = req.user.branchCode;
+    
 
     const complaints = await ServiceComplaint.find({
       branchCode: branchCode,
       status: "Pending",
+      isDeleted: false,
     }).sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -97,12 +99,69 @@ exports.deleteComplaint = async (req, res) => {
         .json({ success: false, message: "Unauthorized access" });
     }
 
-    await complaint.deleteOne();
+    complaint.isDeleted = true;
+    complaint.status = "Cancelled";
+    await complaint.save();
 
     res.status(200).json({
       success: true,
       data: {},
       message: "Complaint removed",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Get complaint history (Completed & Cancelled)
+// @route   GET /api/complaints/history
+// @access  Private
+exports.getComplaintHistory = async (req, res) => {
+  try {
+    const branchCode = req.user.branchCode;
+
+    const history = await ServiceComplaint.find({
+      branchCode: branchCode,
+      status: { $in: ["Completed", "Cancelled"] },
+    }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: history,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Update complaint status
+// @route   PATCH /api/complaints/:id/status
+// @access  Private
+exports.updateComplaintStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const complaint = await ServiceComplaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Complaint not found" });
+    }
+
+    if (complaint.branchCode !== req.user.branchCode) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Unauthorized access" });
+    }
+
+    complaint.status = status;
+    await complaint.save();
+
+    res.status(200).json({
+      success: true,
+      data: complaint,
     });
   } catch (error) {
     console.error(error);

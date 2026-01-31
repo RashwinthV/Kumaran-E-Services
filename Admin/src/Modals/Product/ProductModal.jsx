@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useProduct } from "../../Context/ProductContext";
 import CategoryModal from "./CategoryModal";
 import SubCategoryModal from "./SubCategoryModal";
@@ -11,11 +11,11 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
     updateProduct,
     categories,
     getCategories,
-    getSubCategoriesByCategory,
+    subCategories: allSubCategories,
+    getSubCategories,
   } = useProduct();
 
   const [loading, setLoading] = useState(false);
-  const [subCategories, setSubCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -39,12 +39,27 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSubCategoryModalOpen, setIsSubCategoryModalOpen] = useState(false);
 
-  // Fetch categories on mount if not loaded
+  // Fetch categories and subcategories on mount if not loaded
   useEffect(() => {
-    if (isOpen && categories.length === 0) {
-      getCategories();
+    if (isOpen) {
+      if (categories.length === 0) getCategories();
+      if (allSubCategories.length === 0) getSubCategories();
     }
-  }, [isOpen, categories.length, getCategories]);
+  }, [
+    isOpen,
+    categories.length,
+    allSubCategories.length,
+    getCategories,
+    getSubCategories,
+  ]);
+
+  // Derived filtered subcategories
+  const filteredSubCategories = useMemo(() => {
+    if (!formData.category) return [];
+    return allSubCategories.filter(
+      (sub) => (sub.category?._id || sub.category) === formData.category,
+    );
+  }, [allSubCategories, formData.category]);
 
   // Load product data when editing
   useEffect(() => {
@@ -95,17 +110,10 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
       setCompatibleModels([]);
       setTagInput("");
       setModelInput("");
-      setSubCategories([]);
     }
   }, [productToEdit, isOpen]);
 
-  const handleCategoryChange = async (
-    categoryId,
-    preserveSubCategory = false,
-  ) => {
-    const subs = await getSubCategoriesByCategory(categoryId);
-    setSubCategories(subs);
-
+  const handleCategoryChange = (categoryId, preserveSubCategory = false) => {
     if (!preserveSubCategory) {
       setFormData((prev) => ({
         ...prev,
@@ -304,7 +312,7 @@ const ProductModal = ({ isOpen, onClose, productToEdit = null }) => {
                     style={{ flex: 1 }}
                   >
                     <option value="">Select Sub Category</option>
-                    {subCategories.map((sub) => (
+                    {filteredSubCategories.map((sub) => (
                       <option key={sub._id} value={sub._id}>
                         {sub.name}
                       </option>

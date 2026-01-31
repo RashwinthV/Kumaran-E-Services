@@ -34,5 +34,7 @@ export const API_ENDPOINTS = {
   COMPLAINTS: {
     BASE: `${API_BASE}/api/complaints`,
     BY_ID: (id) => `${API_BASE}/api/complaints/${id}`,
+    HISTORY: `${API_BASE}/api/complaints/history`,
+    UPDATE_STATUS: (id) => `${API_BASE}/api/complaints/${id}/status`,
   },
 };

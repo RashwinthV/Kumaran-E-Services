@@ -20,6 +20,7 @@ const ServiceInputForm = ({
   onSelectComplaint,
   onCancelComplaint,
   selectedComplaintId,
+  complaintHistory = [],
 }) => {
   const isRepairService = selectedService === "Mobile Repair";
   const isXeroxPrintScan = ["Xerox", "Printout", "Scan"].includes(
@@ -58,6 +59,7 @@ const ServiceInputForm = ({
           onSelectComplaint={onSelectComplaint}
           onCancelComplaint={onCancelComplaint}
           selectedComplaintId={selectedComplaintId}
+          complaintHistory={complaintHistory}
         />
       );
     }

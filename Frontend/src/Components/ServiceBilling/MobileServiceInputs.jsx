@@ -14,6 +14,7 @@ const MobileServiceInputs = ({
   onSelectComplaint,
   onCancelComplaint,
   selectedComplaintId,
+  complaintHistory = [],
 }) => {
   const isRepair = selectedService === "Mobile Repair";
 
@@ -99,18 +100,11 @@ const MobileServiceInputs = ({
   }
 
   if (selectedService === "Pending Repair List") {
-    if (allComplaints.length === 0) {
-      return (
-        <div className="text-center py-5 text-muted">
-          <i className="bi bi-info-circle fs-2 d-block mb-2"></i>
-          No pending repairs found.
-        </div>
-      );
-    }
     return (
       <div className="flex-grow-1 overflow-auto">
         <PendingRepairsList
           complaints={allComplaints}
+          history={complaintHistory}
           selectedComplaintId={selectedComplaintId}
           onSelectComplaint={onSelectComplaint}
           onCancelComplaint={onCancelComplaint}

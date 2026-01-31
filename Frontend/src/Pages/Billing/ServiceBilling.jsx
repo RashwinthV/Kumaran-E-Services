@@ -104,6 +104,7 @@ const ServiceBilling = () => {
 
   // Complaints / Unpaid Repairs State
   const [complaints, setComplaints] = useState([]);
+  const [complaintHistory, setComplaintHistory] = useState([]);
   const [selectedComplaintId, setSelectedComplaintId] = useState(null);
 
   // Component Suggestions State (For "dropdown" behavior on component names)
@@ -257,6 +258,9 @@ const ServiceBilling = () => {
       const res = await axios.get(API_ENDPOINTS.COMPLAINTS.BASE, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
+
+      console.log(res.data.data);
+      
       if (res.data.success) {
         // Map backend _id to id for frontend compatibility if needed
         const mapped = res.data.data.map((c) => ({
@@ -267,6 +271,26 @@ const ServiceBilling = () => {
       }
     } catch (error) {
       console.error("Error loading complaints", error);
+    }
+  };
+
+  const fetchComplaintHistory = async () => {
+    if (!accessToken) return;
+    try {
+      const res = await axios.get(API_ENDPOINTS.COMPLAINTS.HISTORY, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      console.log(res.data);
+      
+      if (res.data.success) {
+        const mapped = res.data.data.map((c) => ({
+          ...c,
+          id: c._id,
+        }));
+        setComplaintHistory(mapped);
+      }
+    } catch (error) {
+      console.error("Error loading complaint history", error);
     }
   };
 
@@ -327,6 +351,7 @@ const ServiceBilling = () => {
       fetchAccounts();
       fetchCustomers(true);
       fetchComplaints();
+      fetchComplaintHistory();
     }
   }, [accessToken]);
 
@@ -738,6 +763,7 @@ const ServiceBilling = () => {
         }
 
         fetchComplaints(); // Refresh list from server
+        fetchComplaintHistory();
         handleClearForm();
 
         // Save any new component names for future suggestions
@@ -772,6 +798,7 @@ const ServiceBilling = () => {
       if (res.data.success) {
         toast.info("Complaint Removed");
         fetchComplaints();
+        fetchComplaintHistory();
         setSelectedComplaintId(null);
         handleClearForm();
       }
@@ -895,15 +922,17 @@ const ServiceBilling = () => {
         // If it was a saved complaint, remove it from DB
         if (selectedComplaintId) {
           try {
-            await axios.delete(
-              API_ENDPOINTS.COMPLAINTS.BY_ID(selectedComplaintId),
+            await axios.patch(
+              API_ENDPOINTS.COMPLAINTS.UPDATE_STATUS(selectedComplaintId),
+              { status: "Completed" },
               {
                 headers: { Authorization: `Bearer ${accessToken}` },
               },
             );
             fetchComplaints(); // Refresh list
+            fetchComplaintHistory();
           } catch (err) {
-            console.error("Error removing processed complaint", err);
+            console.error("Error updating processed complaint", err);
           }
           setSelectedComplaintId(null);
         }
@@ -1091,6 +1120,7 @@ const ServiceBilling = () => {
                   onSelectComplaint={handleSelectComplaint}
                   onCancelComplaint={handleCancelComplaint}
                   selectedComplaintId={selectedComplaintId}
+                  complaintHistory={complaintHistory}
                 />
 
                 {/* Add to Cart / Save Complaint Buttons */}

@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Operations Guide | Kumaran E-Services</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-light: #818cf8;
+        --secondary: #10b981;
+        --bg: #f8fafc;
+        --sidebar: #0f172a;
+        --card-white: #ffffff;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg);
+        color: var(--text-dark);
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar Navigation */
+      .sidebar {
+        width: 300px;
+        background: var(--sidebar);
+        color: #fff;
+        padding: 40px 20px;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      .sidebar h1 {
+        font-family: "Outfit", sans-serif;
+        font-size: 1.5rem;
+        margin-bottom: 40px;
+        background: linear-gradient(to right, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .nav-group {
+        margin-bottom: 30px;
+      }
+
+      .nav-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #94a3b8;
+        margin-bottom: 15px;
+        font-weight: 700;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 12px 15px;
+        color: #cbd5e1;
+        text-decoration: none;
+        border-radius: 10px;
+        margin-bottom: 5px;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+      }
+
+      .nav-link:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+      }
+
+      .nav-link.active {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      /* Main Content */
+      .main-content {
+        margin-left: 300px;
+        flex: 1;
+        padding: 60px 80px;
+      }
+
+      header {
+        margin-bottom: 60px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+
+      h2 {
+        font-family: "Outfit", sans-serif;
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+      }
+
+      .intro-text {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 800px;
+      }
+
+      section {
+        margin-bottom: 80px;
+        scroll-margin-top: 60px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 15px;
+      }
+
+      .section-header h3 {
+        font-family: "Outfit", sans-serif;
+        font-size: 1.8rem;
+      }
+
+      .icon-box {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        color: #fff;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+
+      /* Guide Cards */
+      .guide-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+
+      .step-card {
+        background: var(--card-white);
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        display: flex;
+        gap: 25px;
+      }
+
+      .step-num {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        color: var(--text-dark);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        flex-shrink: 0;
+        border: 2px solid var(--border);
+      }
+
+      .step-content h4 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        color: var(--text-dark);
+      }
+
+      .step-content p {
+        color: var(--text-muted);
+        margin-bottom: 15px;
+        line-height: 1.6;
+      }
+
+      .feature-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-right: 5px;
+      }
+
+      .pro-tip {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 15px;
+        border-radius: 0 10px 10px 0;
+        margin-top: 15px;
+        font-size: 0.9rem;
+        color: #92400e;
+      }
+
+      .pro-tip strong {
+        color: #78350f;
+      }
+
+      /* Module Table */
+      .module-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: #fff;
+        border-radius: 15px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+
+      .module-table th {
+        text-align: left;
+        padding: 15px 20px;
+        background: #f8fafc;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .module-table td {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.95rem;
+      }
+
+      /* Image Placeholder Style */
+      .img-mock {
+        width: 100%;
+        height: 200px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-style: italic;
+        border: 2px dashed #cbd5e1;
+      }
+
+      @media (max-width: 1000px) {
+        .sidebar {
+          width: 80px;
+          padding: 40px 10px;
+        }
+        .sidebar h1,
+        .nav-title,
+        .nav-link span {
+          display: none;
+        }
+        .main-content {
+          margin-left: 80px;
+          padding: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Sidebar -->
+    <div class="sidebar">
+      <h1>KES Ecosystem</h1>
+
+      <div class="nav-group">
+        <div class="nav-title">Admin Console</div>
+        <a href="#admin-overview" class="nav-link active"
+          ><span>Overview</span></a
+        >
+        <a href="#admin-inventory" class="nav-link"
+          ><span>Inventory & Branches</span></a
+        >
+        <a href="#admin-investors" class="nav-link"
+          ><span>Investor Management</span></a
+        >
+        <a href="#admin-reports" class="nav-link"
+          ><span>Global Reporting</span></a
+        >
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Billing Terminal</div>
+        <a href="#billing-pos" class="nav-link"
+          ><span>Product & Service POS</span></a
+        >
+        <a href="#billing-stock" class="nav-link"
+          ><span>Local Stock Check</span></a
+        >
+        <a href="#billing-expenses" class="nav-link"
+          ><span>Daily Expenses</span></a
+        >
+        <a href="#billing-invoices" class="nav-link"
+          ><span>Printing Invoices</span></a
+        >
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <header>
+        <span class="badge">Comprehensive Operations Guide</span>
+        <h2>Ecosystem User Manual</h2>
+        <p class="intro-text">
+          Welcome to the Kumaran E-Services unified guide. This document
+          provides clear, step-by-step instructions for managing both the Admin
+          Control Center and the Branch Billing Terminals.
+        </p>
+      </header>
+
+      <!-- ADMIN SECTION -->
+      <section id="admin-console">
+        <div class="section-header">
+          <div class="icon-box">🛡️</div>
+          <h3>Section I: Admin Console (Electron)</h3>
+        </div>
+
+        <div
+          id="admin-overview"
+          class="step-card"
+          style="
+            width: 100%;
+            margin-bottom: 30px;
+            background: #eff6ff;
+            border-color: #bfdbfe;
+          "
+        >
+          <div class="step-content">
+            <h4>The Global View</h4>
+            <p>
+              Upon launching the Admin App, you are greeted with the Global
+              Dashboard. Here you can see the aggregated revenue from all
+              branches, monitor high-level stock alerts, and track investor
+              growth.
+            </p>
+          </div>
+        </div>
+
+        <div id="admin-inventory" class="guide-grid">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <h4>Universal Product Creation</h4>
+              <p>
+                Go to <strong>Products > Add New</strong>. Enter the base
+                details (Name, SKU, Brand). This catalog serves as the "Master
+                List" for the entire organization.
+              </p>
+              <div class="pro-tip">
+                <strong>Pro Tip:</strong> Use high-quality tags to make
+                searching easier for your branch staff.
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <h4>Branch Allocation</h4>
+              <p>
+                After creating a product, go to
+                <strong>Branch Management</strong>. Select a branch and click
+                <strong>Assign Product</strong>. Specify the initial quantity to
+                be shipped to that location.
+              </p>
+              <span class="feature-tag">Stock Sync</span
+              ><span class="feature-tag">Audit Trail</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="admin-investors" style="margin-top: 40px">
+          <div class="section-header">
+            <h3>Investor & Wealth Management</h3>
+          </div>
+          <div class="step-card" style="margin-bottom: 20px">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <h4>Investor Lifecycle</h4>
+              <p>
+                Registration: Enter Personal Details + Aadhar/PAN for KYC. Once
+                active, record the <strong>Principal Amount</strong>.
+              </p>
+              <p>
+                Yield Generation: The system automatically calculates interest
+                based on the "Paise per ₹1" rate you set. You can view
+                <strong>Monthly Yield</strong> and
+                <strong>Annum Yield</strong> instantly.
+              </p>
+              <p>
+                Certificate Issuance: Click
+                <strong>"Generate Certificate"</strong> to produce a
+                professional branded PDF for the investor.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="admin-reports" style="margin-top: 40px">
+          <div class="section-header">
+            <h3>Global Auditing</h3>
+          </div>
+          <table class="module-table">
+            <thead>
+              <tr>
+                <th>Report Type</th>
+                <th>Purpose</th>
+                <th>Target Format</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Revenue Audit</strong></td>
+                <td>Analyze branch performance vs projections.</td>
+                <td>Excel / PDF</td>
+              </tr>
+              <tr>
+                <td><strong>Investor Payouts</strong></td>
+                <td>Detailed history of interest disbursed.</td>
+                <td>Excel</td>
+              </tr>
+              <tr>
+                <td><strong>Stock Reconciliation</strong></td>
+                <td>Comparing Master stock vs Branch stock levels.</td>
+                <td>Excel</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- BILLING SECTION -->
+      <section id="billing-terminal">
+        <div class="section-header">
+          <div class="icon-box" style="background: var(--secondary)">🛒</div>
+          <h3>Section II: Billing Terminal (Vite/Web)</h3>
+        </div>
+
+        <div id="billing-pos" class="guide-grid">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <h4>Selling Products vs Services</h4>
+              <p>
+                <strong>Product Mode:</strong> Best for physical stock like
+                Mobiles or Cables. Search by name/sku, add to cart, and
+                checkout. Stock is automatically decremented.
+              </p>
+              <p>
+                <strong>Service Mode:</strong> Ideal for Xerox/Printing. Set the
+                volume (number of pages), select the rate, and bill instantly.
+                No physical stock required.
+              </p>
+              <div class="pro-tip">
+                <strong>Quick Action:</strong> Use the "Switch Mode" toggle at
+                the top of the billing screen for instant transition.
+              </div>
+            </div>
+          </div>
+
+          <div id="billing-stock" class="step-card">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <h4>Managing Local Inventory</h4>
+              <p>
+                Access the <strong>Products Catalog</strong> to see only the
+                items assigned to YOUR branch. Items highlighted in
+                <span style="color: #ef4444; font-weight: 700">RED</span>
+                indicate low stock.
+              </p>
+              <p>
+                Notify your Admin immediately if items fall below the
+                <strong>Low Stock Threshold</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div id="billing-expenses" class="step-card">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <h4>Daily Expense Entry</h4>
+              <p>
+                Every shop expense must be recorded under the
+                <strong>Expenses</strong> module. Select Category (Tea,
+                Electricity, Travel), enter Amount, and add a brief description.
+              </p>
+              <p>
+                This ensures your "End of Day" cash reconciles perfectly with
+                your sales.
+              </p>
+            </div>
+          </div>
+
+          <div id="billing-invoices" class="step-card">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <h4>Finalizing the Sale & Printing</h4>
+              <p>
+                Upon clicking <strong>Checkout</strong>, a summary appears.
+                Collect payment, select the
+                <strong>Invoice Template</strong> (Professional is recommended
+                for large orders), and click <strong>Print</strong>.
+              </p>
+              <div class="pro-tip">
+                <strong>Network Hint:</strong> If internet is slow, the app uses
+                cached data. Don't worry, the billing function will still work!
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer
+        style="
+          margin-top: 100px;
+          padding: 40px 0;
+          border-top: 1px solid var(--border);
+          text-align: center;
+          color: var(--text-muted);
+        "
+      >
+        <p>
+          &copy; 2026 Zyrix Technologies | Dedicated Support for Kumaran
+          E-Services
+        </p>
+        <p style="font-size: 0.8rem; margin-top: 10px">
+          For technical support, contact the system administrator at your
+          headquarters.
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      // Simple scroll spy effect for sidebar links
+      window.addEventListener("scroll", () => {
+        let fromTop = window.scrollY + 100;
+        const links = document.querySelectorAll(".nav-link");
+        const sections = document.querySelectorAll("section, div[id]");
+
+        sections.forEach((sec) => {
+          if (
+            sec.id &&
+            sec.offsetTop <= fromTop &&
+            sec.offsetTop + sec.offsetHeight > fromTop
+          ) {
+            links.forEach((link) => {
+              link.classList.remove("active");
+              if (link.getAttribute("href") === "#" + sec.id) {
+                link.classList.add("active");
+              }
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

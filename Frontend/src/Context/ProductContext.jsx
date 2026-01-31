@@ -153,6 +153,7 @@ export const ProductProvider = ({ children }) => {
       return [];
     }
   };
+console.log(products);
 
 
   return (
