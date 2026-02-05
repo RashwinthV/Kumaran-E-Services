@@ -14,6 +14,7 @@ const addInventory = async (req, res) => {
       sellingPrice,
       FinalPrice,
       lowStockThreshold,
+      imei,
     } = req.body;
 
     // Fetch the product to get MRP
@@ -59,6 +60,10 @@ const addInventory = async (req, res) => {
       inventory.FinalPrice = FinalPrice;
       inventory.lowStockThreshold = lowStockThreshold;
 
+      if (imei && Array.isArray(imei)) {
+        inventory.imei = [...(inventory.imei || []), ...imei];
+      }
+
       // Auto-reactivate if stock is added
       if (inventory.quantity > 0) {
         inventory.isActive = true;
@@ -84,6 +89,7 @@ const addInventory = async (req, res) => {
       sellingPrice,
       FinalPrice,
       lowStockThreshold,
+      imei: imei || [],
       isActive: quantity > 0,
     });
 
@@ -168,8 +174,14 @@ const getInventoryByBranchStaff = async (req, res) => {
 // @access  Private/Admin
 const updateInventory = async (req, res) => {
   try {
-    const { quantity, costPrice, sellingPrice, FinalPrice, lowStockThreshold } =
-      req.body;
+    const {
+      quantity,
+      costPrice,
+      sellingPrice,
+      FinalPrice,
+      lowStockThreshold,
+      imei,
+    } = req.body;
 
     const inventory = await Inventory.findById(req.params.id).populate(
       "product",
@@ -217,6 +229,7 @@ const updateInventory = async (req, res) => {
       lowStockThreshold !== undefined
         ? lowStockThreshold
         : inventory.lowStockThreshold;
+    inventory.imei = imei !== undefined ? imei : inventory.imei;
 
     // Auto-manage isActive based on quantity
     if (inventory.quantity > 0) {

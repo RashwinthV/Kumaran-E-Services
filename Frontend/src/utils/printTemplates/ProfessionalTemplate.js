@@ -45,7 +45,12 @@ export const ProfessionalTemplate = ({
           <p>${sale.formattedDate}</p>
           <p>${sale.time}</p>
           <p style="margin-top: 10px;"><strong>Billed By:</strong> ${staffName}</p>
+              <div class="pro-payment-info">
+          <h4 class="pro-label">PAYMENT METHOD</h4>
+          <p>${sale.paymentMode || "Cash"} - ${sale.status || "Paid"}</p>
         </div>
+        </div>
+        
       </div>
 
       <table class="pro-table">
@@ -65,6 +70,11 @@ export const ProfessionalTemplate = ({
               <td>
                 <div class="pro-item-name">${p.name || "Item"}</div>
                 ${
+                  p.imei
+                    ? `<div style="font-size: 0.75rem; color: #444; font-weight: 600;">IMEI: ${p.imei}</div>`
+                    : ""
+                }
+                ${
                   p.details?.photoId
                     ? `<div style="font-size: 0.7rem; color: #444; font-weight: 600;">PHOTO ID: ${p.details.photoId}</div>`
                     : ""
@@ -77,7 +87,6 @@ export const ProfessionalTemplate = ({
                       )}</div>`
                     : ""
                 }
-                ${p.sku ? `<small class="pro-item-sku">${p.sku}</small>` : ""}
               </td>
               <td class="text-center">${p.qty || 0}</td>
               <td class="text-right">${currencySymbol}${Number(
@@ -94,10 +103,7 @@ export const ProfessionalTemplate = ({
       </table>
 
       <div class="pro-footer">
-        <div class="pro-payment-info">
-          <h4 class="pro-label">PAYMENT METHOD</h4>
-          <p>${sale.paymentMode || "Cash"} - ${sale.status || "Paid"}</p>
-        </div>
+    
         <div class="pro-terms" style="margin-top: 15px; grid-column: span 1;">
           <h4 class="pro-label" style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">TERMS & CONDITIONS</h4>
           <p style="font-size: 0.7rem; color: #444; line-height: 1.4; margin: 0;">

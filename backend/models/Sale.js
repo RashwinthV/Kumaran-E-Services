@@ -95,6 +95,7 @@ const saleItemSchema = new Schema({
   taxableValue: { type: Number, default: 0 }, // New: for GST reporting
   lineTotal: { type: Number, required: true },
   refundedQty: { type: Number, default: 0 },
+  imei: { type: String }, // For mobile products
 });
 
 const individualSaleSchema = new Schema({

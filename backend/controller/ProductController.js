@@ -80,7 +80,6 @@ exports.createProduct = async (req, res) => {
       model,
       isActive,
     } = req.body;
-console.log("body",req.body);
 
     // Validate required fields
     if (!name || !sku || !category || !subCategory || !unit || !mrp) {
@@ -115,7 +114,6 @@ console.log("body",req.body);
       isActive,
     });
 
-    console.log("product added: ", JSON.stringify(product));
 
     res.status(201).json({
       success: true,
@@ -233,7 +231,6 @@ exports.GetProdctBYBranch = async (req, res) => {
     const InventoProducts = await Inventory.find({ branch: BranchId }).populate(
       "product",
     );
-    //  console.log(InventoProducts);
 
     res.status(200).json({
       success: true,

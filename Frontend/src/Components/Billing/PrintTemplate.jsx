@@ -212,7 +212,21 @@ const StandardInvoice = ({
       <tbody>
         {sale.products?.map((p, i) => (
           <tr key={i}>
-            <td>{p.name}</td>
+            <td>
+              <div>{p.name}</div>
+              {p.imei && (
+                <small
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#666",
+                    display: "block",
+                    marginTop: "2px",
+                  }}
+                >
+                  IMEI: {p.imei}
+                </small>
+              )}
+            </td>
             <td className="text-center">{p.qty}</td>
             <td className="text-right">
               {currencySymbol}
@@ -393,6 +407,17 @@ const ProfessionalInvoice = ({
           <tr key={i}>
             <td>
               <div className="pro-item-name">{p.name}</div>
+              {p.imei && (
+                <div
+                  style={{
+                    fontSize: "0.7rem",
+                    color: "#555",
+                    marginTop: "2px",
+                  }}
+                >
+                  IMEI: {p.imei}
+                </div>
+              )}
               {p.sku && <small className="pro-item-sku">{p.sku}</small>}
             </td>
             <td className="text-center">{p.qty}</td>
@@ -557,7 +582,20 @@ const ModernPreviewInvoice = ({
           <tbody>
             {sale.products?.map((p, i) => (
               <tr key={i}>
-                <td>{p.name}</td>
+                <td>
+                  <div>{p.name}</div>
+                  {p.imei && (
+                    <small
+                      style={{
+                        fontSize: "0.7rem",
+                        opacity: 0.8,
+                        display: "block",
+                      }}
+                    >
+                      IMEI: {p.imei}
+                    </small>
+                  )}
+                </td>
                 <td className="text-center">{p.qty}</td>
                 <td className="text-right">
                   {currencySymbol}
@@ -740,6 +778,11 @@ const ThermalReceipt = ({
           <tr key={i}>
             <td className="text-left">
               <div className="item-name">{p.name}</div>
+              {p.imei && (
+                <div style={{ fontSize: "10px", marginTop: "2px" }}>
+                  IMEI: {p.imei}
+                </div>
+              )}
               {detailed && p.sku && (
                 <small className="item-sku">SKU: {p.sku}</small>
               )}

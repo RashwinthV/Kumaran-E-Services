@@ -143,7 +143,11 @@ const ProductBilling = () => {
     }
 
     setCart((prev) => {
-      const existing = prev.find((item) => item._id === product._id);
+      const isMobile = product.category === "Mobiles";
+      const existing = !isMobile
+        ? prev.find((item) => item._id === product._id)
+        : null;
+
       if (existing) {
         if (existing.qty + 1 > product.availableQty) {
           toast.error(
@@ -155,16 +159,25 @@ const ProductBilling = () => {
           item._id === product._id ? { ...item, qty: item.qty + 1 } : item,
         );
       }
-      return [...prev, { ...product, qty: 1, discount: 0 }];
+      return [
+        ...prev,
+        {
+          ...product,
+          qty: 1,
+          discount: 0,
+          selectedImei: "", // For mobiles
+          cartId: Date.now() + Math.random(), // Unique ID for each row to allow duplicates of Mobiles
+        },
+      ];
     });
     setRemovedItems([]); // Clear redo stack on new action
   };
 
-  const setQty = (id, val) => {
+  const setQty = (cartId, val) => {
     const requestedQty = Math.max(1, parseInt(val) || 0);
     setCart((prev) =>
       prev.map((item) => {
-        if (item._id === id) {
+        if (item.cartId === cartId) {
           if (requestedQty > item.availableQty) {
             toast.error(
               `Only ${item.availableQty} units available for ${item.name}`,
@@ -178,17 +191,17 @@ const ProductBilling = () => {
     );
   };
 
-  const updatePrice = (id, val) => {
+  const updatePrice = (cartId, val) => {
     const newPrice = parseFloat(val) || 0;
     setCart((prev) =>
       prev.map((item) =>
-        item._id === id ? { ...item, price: newPrice } : item,
+        item.cartId === cartId ? { ...item, price: newPrice } : item,
       ),
     );
   };
 
-  const updateDiscount = (id, val, shouldCap = false) => {
-    const item = cart.find((i) => i._id === id);
+  const updateDiscount = (cartId, val, shouldCap = false) => {
+    const item = cart.find((i) => i.cartId === cartId);
     if (!item) return;
 
     let discount = Math.min(100, Math.max(0, parseFloat(val) || 0));
@@ -222,12 +235,14 @@ const ProductBilling = () => {
     }
 
     setCart((prev) =>
-      prev.map((item) => (item._id === id ? { ...item, discount } : item)),
+      prev.map((item) =>
+        item.cartId === cartId ? { ...item, discount } : item,
+      ),
     );
   };
 
-  const updateLineTotal = (id, val, shouldCap = false) => {
-    const item = cart.find((i) => i._id === id);
+  const updateLineTotal = (cartId, val, shouldCap = false) => {
+    const item = cart.find((i) => i.cartId === cartId);
     if (!item) return;
 
     const newLineTotal = parseFloat(val) || 0;
@@ -247,15 +262,23 @@ const ProductBilling = () => {
 
     if (maxLineTotal > 0) {
       const newDiscount = ((maxLineTotal - newLineTotal) / maxLineTotal) * 100;
-      updateDiscount(id, Math.max(0, newDiscount), shouldCap);
+      updateDiscount(cartId, Math.max(0, newDiscount), shouldCap);
     }
   };
 
-  const removeItem = (id) => {
-    const itemToRemove = cart.find((item) => item._id === id);
+  const updateImei = (cartId, imei) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.cartId === cartId ? { ...item, selectedImei: imei } : item,
+      ),
+    );
+  };
+
+  const removeItem = (cartId) => {
+    const itemToRemove = cart.find((item) => item.cartId === cartId);
     if (itemToRemove) {
       setRemovedItems((prev) => [...prev, itemToRemove]);
-      setCart((prev) => prev.filter((item) => item._id !== id));
+      setCart((prev) => prev.filter((item) => item.cartId !== cartId));
     }
   };
 
@@ -361,6 +384,14 @@ const ProductBilling = () => {
       );
     }
 
+    // IMEI Validation for Mobiles
+    const imeiError = cart.find(
+      (item) => item.category === "Mobiles" && !item.selectedImei,
+    );
+    if (imeiError) {
+      return toast.error(`Please select an IMEI for ${imeiError.name}`);
+    }
+
     const selectedAccount = accounts.find((a) => a._id === selectedAccountId);
     if (selectedAccount?.currentStatus === "Closed") {
       return toast.error(
@@ -411,6 +442,7 @@ const ProductBilling = () => {
             taxAmount: Number(taxAmount.toFixed(2)),
             lineTotal: Number(lineTotal.toFixed(2)),
             taxableValue: Number(taxableValue.toFixed(2)),
+            imei: item.selectedImei, // Include IMEI for backend
           };
         }),
         subtotal: Number(subtotal.toFixed(2)),
@@ -450,6 +482,7 @@ const ProductBilling = () => {
                 price: item.price,
                 lineTotal: item.lineTotal,
                 sku: item.sku,
+                imei: item.selectedImei, // Include IMEI for printing
               })),
             },
             { silent: true, branchInfo },
@@ -516,7 +549,7 @@ const ProductBilling = () => {
         e.preventDefault();
         if (cart.length > 0) {
           const lastItem = cart[cart.length - 1];
-          discountRefs.current[lastItem._id]?.focus();
+          discountRefs.current[lastItem.cartId]?.focus();
         }
       } else if (e.key === "F9") {
         e.preventDefault();
@@ -541,7 +574,7 @@ const ProductBilling = () => {
       if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
         if (cart.length > 0) {
-          removeItem(cart[cart.length - 1]._id);
+          removeItem(cart[cart.length - 1].cartId);
         }
       }
       if (e.ctrlKey && e.key === "y") {
@@ -770,7 +803,7 @@ const ProductBilling = () => {
                       ) : (
                         cartWithTotals.map((item, idx) => (
                           <tr
-                            key={item._id}
+                            key={item.cartId}
                             className="align-middle border-bottom"
                           >
                             <td className="text-center small ps-3 text-muted">
@@ -784,21 +817,46 @@ const ProductBilling = () => {
                                 {item.name}
                               </div>
                               <div
-                                className="d-flex gap-2 align-items-center"
+                                className="d-flex flex-column gap-1"
                                 style={{ fontSize: "0.7rem" }}
                               >
-                                {/* <span className="text-muted">#{item.sku}</span> */}
-                                <span
-                                  className={`badge ${
-                                    item.availableQty <=
-                                    (item.lowStockThreshold || 5)
-                                      ? "bg-danger-subtle text-danger"
-                                      : "bg-success-subtle text-success"
-                                  } px-1`}
-                                  style={{ fontSize: "0.65rem" }}
-                                >
-                                  Stock: {item.availableQty} {item.unit}
-                                </span>
+                                <div className="d-flex gap-2 align-items-center">
+                                  <span
+                                    className={`badge ${
+                                      item.availableQty <=
+                                      (item.lowStockThreshold || 5)
+                                        ? "bg-danger-subtle text-danger"
+                                        : "bg-success-subtle text-success"
+                                    } px-1`}
+                                    style={{ fontSize: "0.65rem" }}
+                                  >
+                                    Stock: {item.availableQty} {item.unit}
+                                  </span>
+                                </div>
+                                {item.category === "Mobiles" && (
+                                  <div className="mt-1">
+                                    <select
+                                      className="form-select form-select-sm p-0 ps-1"
+                                      style={{
+                                        fontSize: "0.75rem",
+                                        height: "auto",
+                                        minHeight: "24px",
+                                      }}
+                                      value={item.selectedImei}
+                                      onChange={(e) =>
+                                        updateImei(item.cartId, e.target.value)
+                                      }
+                                      required
+                                    >
+                                      <option value="">Select IMEI</option>
+                                      {(item.imei || []).map((imei, i) => (
+                                        <option key={i} value={imei}>
+                                          {imei}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                )}
                               </div>
                             </td>
                             <td className="text-center">
@@ -835,7 +893,7 @@ const ProductBilling = () => {
                                   className="form-control form-control-sm text-end border-0 bg-transparent p-0"
                                   value={item.price}
                                   onChange={(e) =>
-                                    updatePrice(item._id, e.target.value)
+                                    updatePrice(item.cartId, e.target.value)
                                   }
                                   step="0.01"
                                   style={{
@@ -856,13 +914,18 @@ const ProductBilling = () => {
                                   className="form-control form-control-sm text-center small border-0 bg-transparent p-0"
                                   value={item.qty}
                                   onChange={(e) =>
-                                    setQty(item._id, e.target.value)
+                                    setQty(item.cartId, e.target.value)
                                   }
                                   min="1"
+                                  readOnly={item.category === "Mobiles"}
                                   style={{
                                     width: "100%",
                                     fontSize: "0.85rem",
                                     boxShadow: "none",
+                                    backgroundColor:
+                                      item.category === "Mobiles"
+                                        ? "#f8f9fa"
+                                        : "transparent",
                                   }}
                                 />
                               </div>
@@ -886,18 +949,18 @@ const ProductBilling = () => {
                                     className="form-control form-control-sm text-end small border-0 bg-transparent p-0"
                                     value={item.discount}
                                     ref={(el) =>
-                                      (discountRefs.current[item._id] = el)
+                                      (discountRefs.current[item.cartId] = el)
                                     }
                                     onChange={(e) =>
                                       updateDiscount(
-                                        item._id,
+                                        item.cartId,
                                         e.target.value,
                                         false,
                                       )
                                     }
                                     onBlur={(e) =>
                                       updateDiscount(
-                                        item._id,
+                                        item.cartId,
                                         e.target.value,
                                         true,
                                       )
@@ -944,14 +1007,14 @@ const ProductBilling = () => {
                                   value={item.lineTotal.toFixed(2)}
                                   onChange={(e) =>
                                     updateLineTotal(
-                                      item._id,
+                                      item.cartId,
                                       e.target.value,
                                       false,
                                     )
                                   }
                                   onBlur={(e) =>
                                     updateLineTotal(
-                                      item._id,
+                                      item.cartId,
                                       e.target.value,
                                       true,
                                     )
@@ -969,7 +1032,7 @@ const ProductBilling = () => {
                             <td className="text-center">
                               <button
                                 className="btn btn-link text-danger p-0"
-                                onClick={() => removeItem(item._id)}
+                                onClick={() => removeItem(item.cartId)}
                               >
                                 <i className="bi bi-trash fs-6"></i>
                               </button>

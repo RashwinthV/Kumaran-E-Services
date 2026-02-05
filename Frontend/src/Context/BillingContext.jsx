@@ -70,6 +70,7 @@ export const BillingProvider = ({ children }) => {
               brand: item.product.brand || "",
               model: item.product.model || "",
               tags: item.product.tags || [],
+              imei: item.imei || [],
             }));
           setProducts(mappedProducts);
           await setCache(CACHE_KEYS.PRODUCTS_FLAT, mappedProducts, TTL.SHORT);

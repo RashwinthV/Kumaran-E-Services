@@ -474,29 +474,77 @@ const ProductsCatalog = () => {
                   </div>
 
                   <div className="product-meta">
-                    <p className="meta-text fs-5 small fw-bold">{product.brand} | {product.model}</p>
+                    <p className="meta-text fs-5 small fw-bold">
+                      {product.brand} | {product.model}
+                    </p>
                   </div>
 
                   <div className="compatible-section">
-                    {product.compatibleModels &&
-                      product.compatibleModels.length > 0 && (
-                        <p className="compatible-label">Compatible With:</p>
-                      )}{" "}
-                    <div className="compatible-tags">
-                      {
-                        product.compatibleModels &&
-                        product.compatibleModels.length > 0
-                          ? product.compatibleModels.map((model, idx) => (
-                              <span key={idx} className="model-tag">
-                                {model}
-                              </span>
-                            ))
-                          : ""
-                        // <span className="model-tag" style={{ opacity: 0.5 }}>
-                        //   No compatible models listed
-                        // </span>
+                    {(() => {
+                      const categoryName =
+                        product.category?.name ||
+                        (categories || []).find(
+                          (c) =>
+                            c._id ===
+                            (product.category?._id || product.category),
+                        )?.name ||
+                        "Uncategorized";
+
+                      if (categoryName === "Mobiles") {
+                        return (
+                          <>
+                            {item.imei && item.imei.length > 0 && (
+                              <p className="compatible-label">IMEI Numbers:</p>
+                            )}
+                            <div className="compatible-tags">
+                              {item.imei && item.imei.length > 0 ? (
+                                item.imei.map((imei, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="model-tag"
+                                    style={{
+                                      background: "#ebf8ff",
+                                      color: "#2b6cb0",
+                                      borderColor: "#bee3f8",
+                                    }}
+                                  >
+                                    {imei}
+                                  </span>
+                                ))
+                              ) : (
+                                <span
+                                  className="model-tag"
+                                  style={{ opacity: 0.5 }}
+                                >
+                                  No IMEIs recorded
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        );
                       }
-                    </div>
+
+                      return (
+                        <>
+                          {product.compatibleModels &&
+                            product.compatibleModels.length > 0 && (
+                              <p className="compatible-label">
+                                Compatible With:
+                              </p>
+                            )}
+                          <div className="compatible-tags">
+                            {product.compatibleModels &&
+                            product.compatibleModels.length > 0
+                              ? product.compatibleModels.map((model, idx) => (
+                                  <span key={idx} className="model-tag">
+                                    {model}
+                                  </span>
+                                ))
+                              : null}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="product-stock">

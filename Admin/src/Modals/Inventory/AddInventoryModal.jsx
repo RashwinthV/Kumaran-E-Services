@@ -23,7 +23,9 @@ const AddInventoryModal = ({
     sellingPrice: 20, // Default margin 20%
     finalPrice: 0,
     lowStockThreshold: 5,
+    imei: [],
   });
+  const [currentImei, setCurrentImei] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -37,6 +39,7 @@ const AddInventoryModal = ({
           sellingPrice: editItem.sellingPrice,
           finalPrice: editItem.FinalPrice,
           lowStockThreshold: editItem.lowStockThreshold,
+          imei: editItem.imei || [],
         });
       } else {
         if (products.length === 0) getProducts();
@@ -50,7 +53,9 @@ const AddInventoryModal = ({
           sellingPrice: 20,
           finalPrice: 0,
           lowStockThreshold: 5,
+          imei: [],
         });
+        setCurrentImei("");
       }
     }
   }, [isOpen, editItem]);
@@ -104,6 +109,21 @@ const AddInventoryModal = ({
     setStep(2);
   };
 
+  const handleChangeproduct=()=>{
+    setStep(1);
+    setSelectedProduct(null);
+    setSearchTerm("");
+    setFormData({
+      quantity: 0,
+      costPrice: 0,
+      sellingPrice: 20,
+      finalPrice: 0,
+      lowStockThreshold: 5,
+      imei: [],
+    });
+    setCurrentImei("");
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     let newFormData = { ...formData, [name]: value };
@@ -133,6 +153,34 @@ const AddInventoryModal = ({
     }
 
     setFormData(newFormData);
+  };
+
+  const handleImeiAdd = (e) => {
+    if (e.key === "Enter" || e.type === "click") {
+      e.preventDefault();
+      if (currentImei.trim()) {
+        if (formData.imei.includes(currentImei.trim())) {
+          alert("IMEI already added");
+          return;
+        }
+        const updatedImei = [...formData.imei, currentImei.trim()];
+        setFormData({
+          ...formData,
+          imei: updatedImei,
+          quantity: updatedImei.length,
+        });
+        setCurrentImei("");
+      }
+    }
+  };
+
+  const handleImeiRemove = (index) => {
+    const updatedImei = formData.imei.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      imei: updatedImei,
+      quantity: updatedImei.length,
+    });
   };
 
   const handleSubmit = (e) => {
@@ -165,6 +213,7 @@ const AddInventoryModal = ({
       sellingPrice: Number(formData.sellingPrice),
       FinalPrice: Number(formData.finalPrice),
       lowStockThreshold: isService ? 0 : Number(formData.lowStockThreshold),
+      imei: formData.imei,
     };
 
     if (editItem && onUpdate) {
@@ -177,6 +226,7 @@ const AddInventoryModal = ({
   };
 
   if (!isOpen) return null;
+  console.log(selectedProduct);
 
   return (
     <div className="product-modal-overlay">
@@ -350,7 +400,7 @@ const AddInventoryModal = ({
                 {!editItem && (
                   <button
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={handleChangeproduct}
                     className="btn border border-primary w-10 align-self-center text-primary fw-bold"
                   >
                     Change Product
@@ -371,7 +421,20 @@ const AddInventoryModal = ({
                       onChange={handleChange}
                       min="0"
                       required
+                      readOnly={selectedProduct.category.name === "Mobiles"}
+                      style={{
+                        backgroundColor:
+                          selectedProduct.category.name === "Mobiles"
+                            ? "#f7fafc"
+                            : "inherit",
+                      }}
                     />
+                    {selectedProduct.category.name === "Mobiles" && (
+                      <small style={{ color: "#718096" }}>
+                        Quantity is automatically set based on IMEI numbers
+                        added below.
+                      </small>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -388,6 +451,76 @@ const AddInventoryModal = ({
                 </>
               )}
 
+              {selectedProduct.category.name === "Mobiles" && (
+                <div className="form-group full-width">
+                  <div className="section-divider text-center">IMEI DATA:</div>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <div style={{ flex: 1 }} className="full-width">
+                      <label className="text-start mx-4">Enter IMEI No:</label>
+                      <input
+                      style={{width:"600px"}}
+                        type="text"
+                        value={currentImei}
+                        onChange={(e) => setCurrentImei(e.target.value)}
+                        onKeyDown={handleImeiAdd}
+                        placeholder="Scan or Enter IMEI and press Enter"
+                        autoFocus
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleImeiAdd}
+                      className="btn btn-primary"
+                      style={{ marginTop: "1.8rem", height: "38px" }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {formData.imei.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                      }}
+                    >
+                      {formData.imei.map((imei, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            background: "#edf2f7",
+                            padding: "4px 10px",
+                            borderRadius: "15px",
+                            fontSize: "0.85rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            border: "1px solid #cbd5e0",
+                          }}
+                        >
+                          <span>{imei}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleImeiRemove(index)}
+                            style={{
+                              border: "none",
+                              background: "none",
+                              color: "#e53e3e",
+                              cursor: "pointer",
+                              padding: "0",
+                              fontSize: "1rem",
+                              lineHeight: "1",
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="section-divider">
                 Pricing ({selectedProduct.unit}) - MRP: ₹{selectedProduct.mrp}
               </div>

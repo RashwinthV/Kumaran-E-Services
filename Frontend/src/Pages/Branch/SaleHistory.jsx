@@ -146,6 +146,7 @@ const SaleHistory = () => {
               gstType: item.product?.gstType || "NotIncluded",
               refundedQty: item.refundedQty || 0,
               discount: item.discount || 0,
+              imei: item.imei || "",
             };
           }) || [],
         isService: sale.isService,

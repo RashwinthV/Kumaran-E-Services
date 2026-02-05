@@ -43,8 +43,13 @@ const inventorySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    imei: [
+      {
+        type: String,
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Ensure unique combination of product and branch

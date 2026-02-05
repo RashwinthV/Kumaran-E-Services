@@ -64,6 +64,11 @@ export const ModernTemplate = ({
                 <td style="padding-left: 15px;">
                   <div style="font-weight: 700;">${p.name || "Item"}</div>
                   ${
+                    p.imei
+                      ? `<div style="font-size: 0.7rem; color: #444;">IMEI: ${p.imei}</div>`
+                      : ""
+                  }
+                  ${
                     p.details?.photoId
                       ? `<div style="font-size: 0.7rem; color: #444;">ID: ${p.details.photoId}</div>`
                       : ""

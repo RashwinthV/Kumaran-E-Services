@@ -633,6 +633,24 @@ const BranchProducts = () => {
                   <p className="product-price">
                     ₹{item.FinalPrice}/{product.unit}
                   </p>
+                  {categoryName === "Mobiles" &&
+                    item.imei &&
+                    item.imei.length > 0 && (
+                      <div className="mt-2">
+                        <p className="small text-muted mb-1 fw-bold">IMEIs:</p>
+                        <div className="d-flex flex-wrap gap-1">
+                          {item.imei.map((imei, idx) => (
+                            <span
+                              key={idx}
+                              className="badge bg-light text-dark border"
+                              style={{ fontSize: "0.7rem" }}
+                            >
+                              {imei}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
                 <div className="product-stock">
                   <div className="stock-info-row">

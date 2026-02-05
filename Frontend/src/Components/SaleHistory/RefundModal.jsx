@@ -23,7 +23,7 @@ const RefundModal = ({
     0,
     Number(sale?.amount || 0) -
       Number(sale?.totalRefundedAmount || 0) -
-      totalRefundAmount
+      totalRefundAmount,
   );
   const surplus = Math.max(0, Number(sale?.paidAmount || 0) - remainingValue);
   const hasSurplus = surplus > 0.01;
@@ -41,6 +41,7 @@ const RefundModal = ({
         qtyToRefund: 0,
         price: item.price,
         lineTotal: item.lineTotal,
+        imei: item.imei,
       }));
       setItemsToRefund(initialItems);
       setReason("");
@@ -152,7 +153,7 @@ const RefundModal = ({
                     .map((item, idx) => {
                       // Find the original index in itemsToRefund for handleQtyChange
                       const originalIndex = itemsToRefund.findIndex(
-                        (i) => i.itemId === item.itemId
+                        (i) => i.itemId === item.itemId,
                       );
                       return (
                         <tr key={item.itemId}>
@@ -164,6 +165,14 @@ const RefundModal = ({
                             >
                               {item.sku}
                             </div>
+                            {item.imei && (
+                              <div
+                                className="text-primary fw-bold"
+                                style={{ fontSize: "0.7rem" }}
+                              >
+                                IMEI: {item.imei}
+                              </div>
+                            )}
                           </td>
                           <td className="text-center small">
                             {item.availableQty}

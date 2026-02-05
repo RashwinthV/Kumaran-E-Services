@@ -103,14 +103,19 @@ exports.createSale = async (req, res) => {
             : item.lineTotal - item.taxAmount,
       });
 
-      // Update inventory quantity
+      // Update inventory quantity and remove IMEI if applicable
+      const updateQuery = { $inc: { quantity: -item.qty } };
+      if (item.imei) {
+        updateQuery.$pull = { imei: item.imei };
+      }
+
       const inventoryUpdate = await Inventory.findOneAndUpdate(
         {
           product: item.product,
           branch: branch._id,
           quantity: { $gte: item.qty },
         },
-        { $inc: { quantity: -item.qty } },
+        updateQuery,
         { session, new: true },
       );
 

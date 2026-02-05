@@ -62,6 +62,11 @@ export const StandardTemplate = ({
               <td>
                 <div style="font-weight: bold;">${p.name || "Item"}</div>
                 ${
+                  p.imei
+                    ? `<div style="font-size: 0.75rem; color: #444;">IMEI: ${p.imei}</div>`
+                    : ""
+                }
+                ${
                   p.details?.photoId
                     ? `<div style="font-size: 0.75rem; color: #444;">Photo ID: ${p.details.photoId}</div>`
                     : ""

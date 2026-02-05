@@ -147,13 +147,13 @@ const LocalServiceInputs = ({
             />
           </div>
         </div>
-        <div className="col-md-3">                      <label className="small text-muted fw-bold">Price Per Page</label>
-
+        <div className="col-md-3">
+          {" "}
+          <label className="small text-muted fw-bold">Price Per Page</label>
           <div
             className="d-flex align-items-center bg-light rounded-2 px-1"
             style={{ height: "35px" }}
           >
-
             <div
               className="d-flex align-items-center justify-content-center bg-white rounded px-2 ms-1"
               style={{ height: "25px", minWidth: "25px" }}
@@ -314,6 +314,12 @@ const LocalServiceInputs = ({
                 </div>
               </div>
               <div className="col-md-4">
+                <label
+                  className="small text-muted"
+                  style={{ fontSize: "0.7rem" }}
+                >
+                  Price Per copy
+                </label>
                 <div
                   className="d-flex align-items-center bg-light rounded-2 px-2"
                   style={{ height: "30px" }}

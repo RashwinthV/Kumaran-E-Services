@@ -172,6 +172,14 @@ const SaleHistoryDetailModal = ({
                           >
                             {item.sku}
                           </small>
+                          {item.imei && (
+                            <div
+                              className="text-primary fw-bold"
+                              style={{ fontSize: "0.7rem" }}
+                            >
+                              IMEI: {item.imei}
+                            </div>
+                          )}
                         </td>
                         <td className="text-center align-middle">
                           <span className={isFullyRefunded ? "text-muted" : ""}>
