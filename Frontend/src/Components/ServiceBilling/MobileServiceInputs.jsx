@@ -119,7 +119,7 @@ const MobileServiceInputs = ({
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Mobile Number</label>
           <div
-            className="d-flex align-items-center bg-light rounded-2 px-2"
+            className="d-flex align-items-center bg-light rounded-2 border border-dark px-2"
             style={{ height: "35px" }}
           >
             <input
@@ -138,7 +138,7 @@ const MobileServiceInputs = ({
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Plan Type</label>
           <select
-            className="form-select form-select-sm"
+            className="form-select form-select-sm border border-dark"
             value={formData.planType || "Prepaid"}
             onChange={(e) => handleInputChange("planType", e.target.value)}
           >
@@ -149,7 +149,7 @@ const MobileServiceInputs = ({
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Operator & Circle</label>
           <select
-            className="form-select form-select-sm"
+            className="form-select form-select-sm border border-dark"
             value={formData.providerName}
             onChange={(e) => handleInputChange("providerName", e.target.value)}
           >
@@ -181,7 +181,7 @@ const MobileServiceInputs = ({
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Plan Details</label>
           <div
-            className="d-flex align-items-center bg-light rounded-2 px-2"
+            className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
             style={{ height: "35px" }}
           >
             <input

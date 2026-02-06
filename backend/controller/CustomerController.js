@@ -979,7 +979,7 @@ exports.checkMaturity = async (req, res) => {
       }
 
       if (investorUpdated) {
-        // investor.markModified('investmentDetails'); // Mongoose usually handles subdoc updates
+        investor.markModified("investmentDetails");
         await investor.save();
       }
     }

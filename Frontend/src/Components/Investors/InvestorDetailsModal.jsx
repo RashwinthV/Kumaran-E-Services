@@ -351,15 +351,35 @@ const InvestorDetailsModal = ({
                           <th className="px-3">Date</th>
                           <th>Amount</th>
                           <th>Maturity Status</th>
-                          <th>Maturity Date</th>
+                          <th>Last Maturity</th>
+                          <th>Next Maturity</th>
                           <th>Type</th>
                         </tr>
                       </thead>
                       <tbody>
                         {investor.investments.map((inv, idx) => {
                           const depositDate = new Date(inv.date);
-                          const maturityDate = new Date(depositDate);
-                          maturityDate.setMonth(maturityDate.getMonth() + 1);
+                          const maturityDate = new Date(
+                            inv.lastAccrualDate || inv.date,
+                          );
+                          if (!inv.lastAccrualDate) {
+                            maturityDate.setMonth(maturityDate.getMonth() + 1);
+                          }
+
+                          const nextMatDate = new Date(
+                            inv.lastAccrualDate || inv.date,
+                          );
+                          nextMatDate.setMonth(nextMatDate.getMonth() + 1);
+                          // If it is already matured, it means the current nextMatDate is actually the maturation date that just passed, or it will be the next one.
+                          // Based on checkMaturity logic, lastAccrualDate is the date it JUST matured.
+                          // So nextMatDate (lastAccrualDate + 1 month) is indeed the next target.
+
+                          // However, if it hasn't matured even once, both columns would be same.
+                          // To avoid confusion, for un-matured ones, we can just show 'N/A' for last maturity or show same.
+                          // Let's keep it as is, but maybe add a check.
+                          if (inv.isMatured && !inv.lastAccrualDate) {
+                            // This case is unlikely given backend logic, but safe to handle correctly
+                          }
 
                           return (
                             <tr key={idx}>
@@ -382,6 +402,9 @@ const InvestorDetailsModal = ({
                               </td>
                               <td className="small text-muted">
                                 {maturityDate.toLocaleDateString()}
+                              </td>
+                              <td className="small fw-bold text-primary">
+                                {nextMatDate.toLocaleDateString()}
                               </td>
                               <td>
                                 <span

@@ -238,6 +238,7 @@ const BranchProducts = () => {
       { header: "Value (Cost)", key: "totalCost", width: 20 },
       { header: "Value (Sale)", key: "totalSelling", width: 20 },
       { header: "Status", key: "status", width: 18 },
+      { header: "IMEI", key: "imei", width: 30 },
     ];
     worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
 
@@ -245,7 +246,7 @@ const BranchProducts = () => {
     const bNameRow = worksheet.addRow([branchName.toUpperCase()]);
     bNameRow.font = { bold: true, size: 16 };
     bNameRow.height = 30;
-    worksheet.mergeCells(`A${bNameRow.number}:L${bNameRow.number}`);
+    worksheet.mergeCells(`A${bNameRow.number}:M${bNameRow.number}`);
     bNameRow.alignment = { horizontal: "center", vertical: "middle" };
     bNameRow.eachCell((cell) => {
       cell.border = {
@@ -261,7 +262,7 @@ const BranchProducts = () => {
     }`;
     const bContactRow = worksheet.addRow([contactStr]);
     bContactRow.font = { size: 10 };
-    worksheet.mergeCells(`A${bContactRow.number}:L${bContactRow.number}`);
+    worksheet.mergeCells(`A${bContactRow.number}:M${bContactRow.number}`);
     bContactRow.alignment = { horizontal: "center", vertical: "middle" };
 
     worksheet.addRow([]); // Spacer
@@ -299,7 +300,7 @@ const BranchProducts = () => {
       const sectionHeader = worksheet.addRow([
         `=== ${statusName.toUpperCase()} ITEMS ===`,
       ]);
-      worksheet.mergeCells(`A${sectionHeader.number}:L${sectionHeader.number}`);
+      worksheet.mergeCells(`A${sectionHeader.number}:M${sectionHeader.number}`);
       sectionHeader.font = {
         bold: true,
         size: 12,
@@ -352,6 +353,7 @@ const BranchProducts = () => {
           totalCost: rowTotalCost,
           totalSelling: rowTotalSelling,
           status: statusName,
+          imei: (item.imei || []).join(", "),
         });
 
         row.eachCell((cell, colNumber) => {
@@ -385,7 +387,7 @@ const BranchProducts = () => {
     });
     summaryRow.font = { bold: true, size: 12 };
     summaryRow.height = 25;
-    worksheet.mergeCells(`B${summaryRow.number}:I${summaryRow.number}`);
+    worksheet.mergeCells(`B${summaryRow.number}:J${summaryRow.number}`);
     summaryRow.getCell("name").alignment = {
       horizontal: "right",
       vertical: "middle",

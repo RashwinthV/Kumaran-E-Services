@@ -327,6 +327,7 @@ const BranchReport = () => {
       { header: "Phone", key: "customerPhone", width: 15 },
       { header: "Product Code", key: "sku", width: 15 },
       { header: "Product Name", key: "name", width: 30 },
+      { header: "IMEI", key: "imei", width: 22 },
       { header: "Qty", key: "qty", width: 10 },
       { header: "Rate", key: "price", width: 20 },
       { header: "Taxable Value", key: "taxableValue", width: 40 },
@@ -345,7 +346,7 @@ const BranchReport = () => {
 
       const sTitleRow = worksheet.addRow([title]);
       sTitleRow.font = { bold: true, size: 16, color: { argb: "FF1F4E78" } };
-      worksheet.mergeCells(`A${sTitleRow.number}:P${sTitleRow.number}`);
+      worksheet.mergeCells(`A${sTitleRow.number}:Q${sTitleRow.number}`);
       sTitleRow.alignment = { horizontal: "center" };
       worksheet.addRow([]); // Spacer
 
@@ -374,13 +375,13 @@ const BranchReport = () => {
         const excelRow = worksheet.addRow(row);
         excelRow.font = { size: 13 };
 
-        // Indices: CGST=9, SGST=10, CP=11, LineTotal=12
-        totalTax += (row[9] || 0) + (row[10] || 0);
-        totalCP += row[11] || 0;
-        grandTotal += row[12] || 0;
+        // Indices: CGST=10, SGST=11, CP=12, LineTotal=13
+        totalTax += (row[10] || 0) + (row[11] || 0);
+        totalCP += row[12] || 0;
+        grandTotal += row[13] || 0;
 
-        // Currency formatting for Rate(8), Taxable(9), CGST(10), SGST(11), CP(12), Total(13)
-        [8, 9, 10, 11, 12, 13].forEach((colIndex) => {
+        // Currency formatting for Rate(9), Taxable(10), CGST(11), SGST(12), CP(13), Total(14)
+        [9, 10, 11, 12, 13, 14].forEach((colIndex) => {
           const cell = excelRow.getCell(colIndex);
           cell.numFmt = `"₹"#,##0.00`;
         });
@@ -395,16 +396,16 @@ const BranchReport = () => {
       });
 
       // Add Summary Totals Row (Properly Aligned)
-      const totalsRowData = new Array(16).fill("");
-      totalsRowData[7] = "SECTION TOTALS:";
-      totalsRowData[10] = totalTax;
-      totalsRowData[11] = totalCP;
-      totalsRowData[12] = grandTotal;
+      const totalsRowData = new Array(17).fill("");
+      totalsRowData[8] = "SECTION TOTALS:";
+      totalsRowData[11] = totalTax;
+      totalsRowData[12] = totalCP;
+      totalsRowData[13] = grandTotal;
 
       const summaryRow = worksheet.addRow(totalsRowData);
       summaryRow.font = { bold: true, size: 14 };
 
-      [11, 12, 13].forEach((col) => {
+      [12, 13, 14].forEach((col) => {
         const cell = summaryRow.getCell(col);
         cell.numFmt = `"₹"#,##0.00`;
         cell.fill = {
@@ -451,6 +452,7 @@ const BranchReport = () => {
           sale.customerPhone,
           p.product?.sku || p.sku || (sale.isService ? "Service" : "N/A"),
           p.name || p.product?.name || "N/A",
+          p.imei || p.details?.consumerId || p.details?.imei || "",
           p.qty,
           p.price,
           p.taxableValue || p.lineTotal - p.taxAmount,

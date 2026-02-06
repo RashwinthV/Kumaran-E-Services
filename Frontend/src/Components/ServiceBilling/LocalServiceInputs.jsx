@@ -101,7 +101,7 @@ const LocalServiceInputs = ({
         <div className="col-md-3">
           <label className="small text-muted fw-bold">Paper Type/Size</label>
           <select
-            className="form-select form-select-sm"
+            className="form-select form-select-sm border border-dark"
             value={formData.type || ""}
             onChange={(e) => handleInputChange("type", e.target.value)}
           >
@@ -117,7 +117,7 @@ const LocalServiceInputs = ({
           {formData.type === "Other" && (
             <input
               type="text"
-              className="form-control form-control-sm mt-1"
+              className="form-control form-control-sm mt-1 border border-gray"
               placeholder="Specify type..."
               value={formData.customType || ""}
               onChange={(e) => {
@@ -130,7 +130,7 @@ const LocalServiceInputs = ({
         <div className="col-md-3">
           <label className="small text-muted fw-bold">No. of Pages</label>
           <div
-            className="d-flex align-items-center bg-light rounded-2 px-2"
+            className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
             style={{ height: "35px" }}
           >
             <input
@@ -151,7 +151,7 @@ const LocalServiceInputs = ({
           {" "}
           <label className="small text-muted fw-bold">Price Per Page</label>
           <div
-            className="d-flex align-items-center bg-light rounded-2 px-1"
+            className="d-flex align-items-center bg-light rounded-2 px-1 border border-dark"
             style={{ height: "35px" }}
           >
             <div
@@ -296,7 +296,7 @@ const LocalServiceInputs = ({
                   Qty
                 </label>
                 <div
-                  className="d-flex align-items-center bg-light rounded-2 px-2"
+                  className="d-flex align-items-center bg-light border border-dark rounded-2 px-2"
                   style={{ height: "30px" }}
                 >
                   <input
@@ -321,7 +321,7 @@ const LocalServiceInputs = ({
                   Price Per copy
                 </label>
                 <div
-                  className="d-flex align-items-center bg-light rounded-2 px-2"
+                  className="d-flex align-items-center border border-dark bg-light rounded-2 px-2"
                   style={{ height: "30px" }}
                 >
                   <span

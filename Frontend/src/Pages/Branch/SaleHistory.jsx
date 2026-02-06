@@ -146,7 +146,11 @@ const SaleHistory = () => {
               gstType: item.product?.gstType || "NotIncluded",
               refundedQty: item.refundedQty || 0,
               discount: item.discount || 0,
-              imei: item.imei || "",
+              imei:
+                item.imei ||
+                item.details?.consumerId ||
+                item.details?.imei ||
+                "",
             };
           }) || [],
         isService: sale.isService,
@@ -242,7 +246,7 @@ const SaleHistory = () => {
     if (branchInfo) {
       const bNameRow = worksheet.addRow([branchInfo.name?.toUpperCase()]);
       bNameRow.font = { bold: true, size: 18 };
-      worksheet.mergeCells(`A${bNameRow.number}:N${bNameRow.number}`);
+      worksheet.mergeCells(`A${bNameRow.number}:O${bNameRow.number}`);
       bNameRow.alignment = { horizontal: "center" };
 
       const bAddrRow = worksheet.addRow([
@@ -251,14 +255,14 @@ const SaleHistory = () => {
         }`,
       ]);
       bAddrRow.font = { size: 12 };
-      worksheet.mergeCells(`A${bAddrRow.number}:N${bAddrRow.number}`);
+      worksheet.mergeCells(`A${bAddrRow.number}:O${bAddrRow.number}`);
       bAddrRow.alignment = { horizontal: "center" };
 
       const bContactRow = worksheet.addRow([
         `Contact: ${branchInfo.contact?.phone || branchInfo.contact || "N/A"}`,
       ]);
       bContactRow.font = { size: 12 };
-      worksheet.mergeCells(`A${bContactRow.number}:N${bContactRow.number}`);
+      worksheet.mergeCells(`A${bContactRow.number}:O${bContactRow.number}`);
       bContactRow.alignment = { horizontal: "center" };
 
       worksheet.addRow([]); // Spacer
@@ -272,7 +276,8 @@ const SaleHistory = () => {
       { header: "Phone", key: "customerPhone", width: 15 },
       { header: "Product Code", key: "sku", width: 15 },
       { header: "Product Name", key: "name", width: 30 },
-      { header: "Qty", key: "qty", width: 10 },
+      { header: "IMEI", key: "imei", width: 20 },
+      { header: "Qty", key: "qty", width: 20 },
       { header: "Rate", key: "price", width: 15 },
       { header: "Taxable Value", key: "taxableValue", width: 40 },
       { header: "CGST", key: "cgst", width: 12 },
@@ -289,7 +294,7 @@ const SaleHistory = () => {
       // Section Title
       const titleRow = worksheet.addRow([title]);
       titleRow.font = { bold: true, size: 16, color: { argb: "FF1F4E78" } };
-      worksheet.mergeCells(`A${titleRow.number}:N${titleRow.number}`);
+      worksheet.mergeCells(`A${titleRow.number}:O${titleRow.number}`);
       titleRow.alignment = { horizontal: "center" };
       worksheet.addRow([]); // Spacer
 
@@ -319,7 +324,7 @@ const SaleHistory = () => {
         row.font = { size: 13 };
 
         // Style numerical cells
-        [8, 9, 10, 11, 12].forEach((colIndex) => {
+        [9, 10, 11, 12, 13].forEach((colIndex) => {
           const cell = row.getCell(colIndex);
           cell.numFmt = `"${currencySymbol}"#,##0.00`;
         });
@@ -363,6 +368,7 @@ const SaleHistory = () => {
           sale.customerPhone,
           p.sku,
           p.name,
+          p.imei || "N/A",
           p.qty,
           p.price,
           p.taxableValue,

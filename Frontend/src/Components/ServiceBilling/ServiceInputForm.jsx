@@ -82,7 +82,7 @@ const ServiceInputForm = ({
           <div className="col-md-2">
             <label className="small text-muted fw-bold">PNR / Ref</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -100,7 +100,7 @@ const ServiceInputForm = ({
           <div className="col-md-3">
             <label className="small text-muted fw-bold">Travel Date</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -117,7 +117,7 @@ const ServiceInputForm = ({
           <div className="col-md-2">
             <label className="small text-muted fw-bold">From</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -133,7 +133,7 @@ const ServiceInputForm = ({
           <div className="col-md-2">
             <label className="small text-muted fw-bold">To</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -149,7 +149,7 @@ const ServiceInputForm = ({
           <div className="col-md-3">
             <label className="small text-muted fw-bold">Trans. Name</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -167,7 +167,7 @@ const ServiceInputForm = ({
           <div className="col-md-4">
             <label className="small text-muted fw-bold">Passenger Name</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -185,7 +185,7 @@ const ServiceInputForm = ({
           <div className="col-md-2">
             <label className="small text-muted fw-bold">Age</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -241,7 +241,7 @@ const ServiceInputForm = ({
             {svcConfig.description}
           </label>
           <div
-            className="d-flex align-items-center bg-light rounded-2 px-2"
+            className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
             style={{ height: "40px" }}
           >
             <input
@@ -340,7 +340,7 @@ const ServiceInputForm = ({
           <div className={`col-md-${showName ? "3" : "4"}`}>
             <label className="small text-muted fw-bold">{labelConsumer}</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -361,7 +361,7 @@ const ServiceInputForm = ({
           <div className={`col-md-${showName ? "3" : "4"}`}>
             <label className="small text-muted fw-bold">{labelProvider}</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -382,7 +382,7 @@ const ServiceInputForm = ({
           <div className="col-md-3">
             <label className="small text-muted fw-bold">{labelName}</label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -409,7 +409,7 @@ const ServiceInputForm = ({
               {labelPlan || "Reference / Detail"}
             </label>
             <div
-              className="d-flex align-items-center bg-light rounded-2 px-2"
+              className="d-flex align-items-center bg-light rounded-2 px-2 border border-dark"
               style={{ height: "35px" }}
             >
               <input
@@ -450,7 +450,7 @@ const ServiceInputForm = ({
               style={{ height: "50px" }}
             >
               <div
-                className="d-flex align-items-center justify-content-center bg-white rounded-2 px-2 ms-1"
+                className="d-flex align-items-center justify-content-center bg-white rounded-2 px-2 ms-1 "
                 style={{ height: "38px", minWidth: "40px" }}
               >
                 <span className="fw-bold text-primary">
