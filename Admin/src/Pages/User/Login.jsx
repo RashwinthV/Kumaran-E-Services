@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../Context/AuthContext";
 import Powered from "../../Components/Loading/Powered";
+import ForgotPasswordModal from "../../Components/Modals/ForgotPasswordModal";
 import "../../Styles/Login.css";
 
 const Login = () => {
@@ -14,6 +15,7 @@ const Login = () => {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -221,9 +223,19 @@ const Login = () => {
             </div>
 
             <div className="form-options">
-              <Link to="/forgot-password" className="forgot-password">
+              <button
+                type="button"
+                className="forgot-password"
+                onClick={() => setIsForgotPasswordOpen(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                }}
+              >
                 Forgot Password?
-              </Link>
+              </button>
             </div>
 
             <button type="submit" className="login-button" disabled={loading}>
@@ -264,6 +276,10 @@ const Login = () => {
           </div>
         </div>
       </div>
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+      />
     </div>
   );
 };

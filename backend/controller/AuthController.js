@@ -319,7 +319,7 @@ exports.updatePassword = async (req, res) => {
 
     // Invalidate all existing tokens
     user.credentials.tokenVersion += 1;
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
     // Generate new tokens
     const accessToken = generateAccessToken(user._id);
@@ -587,7 +587,7 @@ exports.resetPassword = async (req, res) => {
 
     user.password = newPassword;
     user.credentials.tokenVersion += 1; // Revoke old tokens
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
     // Clear OTP from store
     otpStore.delete(email.toLowerCase());
