@@ -10,6 +10,7 @@ const ReportFilters = ({
   availableTypes = [
     { value: "sales", label: "Sales Report" },
     { value: "branch-performance", label: "Branch Performance" },
+    { value: "gst", label: "GST Report" },
   ],
 }) => {
   const { branches, getBranches } = useBranch();

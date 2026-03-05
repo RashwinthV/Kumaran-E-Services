@@ -30,7 +30,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [isChartReady, setIsChartReady] = useState(false);
-  const { investors, fetchInvestors } =useCustomer();
+  const { investors, fetchInvestors } = useCustomer();
 
   useEffect(() => {
     // Small delay to ensure grid layout is finished before rendering Recharts
@@ -290,45 +290,36 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Unified Secondary Stats Grid (4x2) */}
-            <div className="row row-cols-1 row-cols-md-4 g-3 mb-4">
+            {/* Unified Secondary Stats Grid (3x3) */}
+            <div className="row row-cols-1 row-cols-md-3 g-3 mb-4">
               {/* 1. Total Investors */}
               <div className="col">
-                <div className="card border-0 shadow-sm bg-primary bg-opacity-10 h-100">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">Total Investors</p>
-                        <h3 className="fw-bold text-primary mb-0">
-                          {processedInvestors.length}
-                        </h3>
-                      </div>
-                      <i className="bi bi-people fs-2 text-primary opacity-25"></i>
+                <div className="card secondary-stat-card bg-primary bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Total Investors</p>
+                      <h4 className="stat-value">
+                        {processedInvestors.length}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-people fs-2 text-primary"></i>
                     </div>
                   </div>
                 </div>
               </div>
 
-
               {/* 2. Total Branches */}
               <div className="col">
-                <div
-                  className="card border-0 shadow-sm bg-purple bg-opacity-10 h-100"
-                  style={{ backgroundColor: "rgba(111, 66, 193, 0.1)" }}
-                >
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">Total Branches</p>
-                        <h3
-                          className="fw-bold text-purple mb-0"
-                          style={{ color: "#6f42c1" }}
-                        >
-                          {branches?.length || 0}
-                        </h3>
-                      </div>
+                <div className="card secondary-stat-card bg-purple-soft border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Total Branches</p>
+                      <h4 className="stat-value">{branches?.length || 0}</h4>
+                    </div>
+                    <div className="stat-icon-box">
                       <i
-                        className="bi bi-shop-window fs-2 opacity-25"
+                        className="bi bi-shop-window fs-2"
                         style={{ color: "#6f42c1" }}
                       ></i>
                     </div>
@@ -338,16 +329,16 @@ const Dashboard = () => {
 
               {/* 3. Total Employees */}
               <div className="col">
-                <div className="card border-0 shadow-sm bg-danger bg-opacity-10 h-100">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">Total Employees</p>
-                        <h3 className="fw-bold text-danger mb-0">
-                          {stats?.totalEmployees || 0}
-                        </h3>
-                      </div>
-                      <i className="bi bi-person-badge fs-2 text-danger opacity-25"></i>
+                <div className="card secondary-stat-card bg-danger bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Total Employees</p>
+                      <h4 className="stat-value">
+                        {stats?.totalEmployees || 0}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-person-badge fs-2 text-danger"></i>
                     </div>
                   </div>
                 </div>
@@ -355,23 +346,17 @@ const Dashboard = () => {
 
               {/* 4. Total Products */}
               <div className="col">
-                <div
-                  className="card border-0 shadow-sm bg-indigo bg-opacity-10 h-100"
-                  style={{ backgroundColor: "rgba(102, 16, 242, 0.1)" }}
-                >
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">Total Products</p>
-                        <h3
-                          className="fw-bold text-indigo mb-0"
-                          style={{ color: "#6610f2" }}
-                        >
-                          {stats?.totalProducts || 0}
-                        </h3>
-                      </div>
+                <div className="card secondary-stat-card bg-indigo-soft border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Total Products</p>
+                      <h4 className="stat-value">
+                        {stats?.totalProducts || 0}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
                       <i
-                        className="bi bi-box-seam fs-2 opacity-25"
+                        className="bi bi-box-seam fs-2"
                         style={{ color: "#6610f2" }}
                       ></i>
                     </div>
@@ -379,51 +364,46 @@ const Dashboard = () => {
                 </div>
               </div>
 
-                  {/* 5. Total Investment */}
+              {/* 5. Total Investment */}
               <div className="col">
-                <div className="card border-0 shadow-sm bg-success bg-opacity-10 h-100">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">
-                          Total Investment
-                        </p>
-                        <h3 className="fw-bold text-success mb-0">
-                          ₹
-                          {processedInvestors
-                            .reduce(
-                              (sum, inv) => sum + (inv.currentPrincipal || 0),
-                              0,
-                            )
-                            .toLocaleString()}
-                        </h3>
-                      </div>
-                      <i className="bi bi-cash-stack fs-2 text-success opacity-25"></i>
+                <div className="card secondary-stat-card bg-success bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Total Investment</p>
+                      <h4 className="stat-value">
+                        ₹
+                        {processedInvestors
+                          .reduce(
+                            (sum, inv) => sum + (inv.currentPrincipal || 0),
+                            0,
+                          )
+                          .toLocaleString()}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-cash-stack fs-2 text-success"></i>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 6. Pending Interest */}
               <div className="col">
-                <div className="card border-0 shadow-sm bg-info bg-opacity-10 h-100">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">
-                          Pending Interest
-                        </p>
-                        <h3 className="fw-bold text-info mb-0">
-                          ₹
-                          {processedInvestors
-                            .reduce(
-                              (sum, inv) => sum + calculateUnpaidInterest(inv),
-                              0,
-                            )
-                            .toFixed(2)}
-                        </h3>
-                      </div>
-                      <i className="bi bi-clock-history fs-2 text-info opacity-25"></i>
+                <div className="card secondary-stat-card bg-info bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Pending Interest</p>
+                      <h4 className="stat-value">
+                        ₹
+                        {processedInvestors
+                          .reduce(
+                            (sum, inv) => sum + calculateUnpaidInterest(inv),
+                            0,
+                          )
+                          .toFixed(2)}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-clock-history fs-2 text-info"></i>
                     </div>
                   </div>
                 </div>
@@ -431,18 +411,16 @@ const Dashboard = () => {
 
               {/* 7. Credit Customers */}
               <div className="col">
-                <div className="card border-0 shadow-sm bg-primary bg-opacity-10 h-100">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">
-                          Credit Customers
-                        </p>
-                        <h3 className="fw-bold text-primary mb-0">
-                          {stats?.totalCreditCustomers || 0}
-                        </h3>
-                      </div>
-                      <i className="bi bi-people-fill fs-2 text-primary opacity-25"></i>
+                <div className="card secondary-stat-card bg-primary bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Credit Customers</p>
+                      <h4 className="stat-value">
+                        {stats?.totalCreditCustomers || 0}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-people-fill fs-2 text-primary"></i>
                     </div>
                   </div>
                 </div>
@@ -450,117 +428,88 @@ const Dashboard = () => {
 
               {/* 8. Total Credit Amt */}
               <div className="col">
-                <div className="card border-0 shadow-sm bg-warning bg-opacity-10 h-100">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="text-muted small mb-1">
-                          Total Credit Amt
-                        </p>
-                        <h4 className="fw-bold text-warning mb-0">
-                          {formatCurrency(stats?.totalCreditAmount)}
-                        </h4>
-                      </div>
-                      <i className="bi bi-currency-rupee fs-2 text-warning opacity-25"></i>
+                <div className="card secondary-stat-card bg-warning bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                      <p className="stat-label">Total Credit Amt</p>
+                      <h4 className="stat-value">
+                        {formatCurrency(stats?.totalCreditAmount)}
+                      </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-currency-rupee fs-2 text-warning"></i>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Expense Stats Row */}
-            <div className="row row-cols-1 row-cols-md-4 g-3 mb-4">
+              {/* Expense Stats Section */}
+              {/* Expense Stats Section */}
               <div className="col">
-                <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div
-                      className="stat-icon-box rounded-4 p-3 me-3 bg-purple bg-opacity-10"
-                      style={{ backgroundColor: "rgba(111, 66, 193, 0.1)" }}
-                    >
-                      <i
-                        className="bi bi-currency-rupee fs-3"
-                        style={{ color: "#6f42c1" }}
-                      ></i>
-                    </div>
+                <div className="card secondary-stat-card bg-purple-soft border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
                     <div>
-                      <p
-                        className="text-muted small fw-bold mb-1 text-uppercase"
-                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
-                      >
-                        Total Spent
-                      </p>
-                      <h4 className="fw-bold text-dark mb-0">
+                      <p className="stat-label">Total Spent</p>
+                      <h4 className="stat-value">
                         {formatCurrency(stats?.expenseStats?.total)}
                       </h4>
                     </div>
+                    <div className="stat-icon-box">
+                      <i
+                        className="bi bi-currency-rupee fs-2"
+                        style={{ color: "#6f42c1" }}
+                      ></i>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="col">
-                <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div
-                      className="stat-icon-box rounded-4 p-3 me-3 bg-indigo bg-opacity-10"
-                      style={{ backgroundColor: "rgba(102, 16, 242, 0.1)" }}
-                    >
-                      <i
-                        className="bi bi-box-seam fs-3"
-                        style={{ color: "#6610f2" }}
-                      ></i>
-                    </div>
+                <div className="card secondary-stat-card bg-indigo-soft border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
                     <div>
-                      <p
-                        className="text-muted small fw-bold mb-1 text-uppercase"
-                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
-                      >
-                        Product Cost
-                      </p>
-                      <h4 className="fw-bold text-dark mb-0">
+                      <p className="stat-label">Product Cost</p>
+                      <h4 className="stat-value">
                         {formatCurrency(stats?.expenseStats?.product)}
                       </h4>
                     </div>
+                    <div className="stat-icon-box">
+                      <i
+                        className="bi bi-box-seam fs-2"
+                        style={{ color: "#6610f2" }}
+                      ></i>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="col">
-                <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div className="stat-icon-box rounded-4 p-3 me-3 bg-success bg-opacity-10">
-                      <i className="bi bi-people fs-3 text-success"></i>
-                    </div>
+                <div className="card secondary-stat-card bg-success bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
                     <div>
-                      <p
-                        className="text-muted small fw-bold mb-1 text-uppercase"
-                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
-                      >
-                        Employee Pay
-                      </p>
-                      <h4 className="fw-bold text-dark mb-0">
+                      <p className="stat-label">Employee Pay</p>
+                      <h4 className="stat-value">
                         {formatCurrency(stats?.expenseStats?.employee)}
                       </h4>
                     </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-people fs-2 text-success"></i>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="col">
-                <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div className="stat-icon-box rounded-4 p-3 me-3 bg-danger bg-opacity-10">
-                      <i className="bi bi-building fs-3 text-danger"></i>
-                    </div>
+                <div className="card secondary-stat-card bg-danger bg-opacity-10 border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex align-items-center justify-content-between">
                     <div>
-                      <p
-                        className="text-muted small fw-bold mb-1 text-uppercase"
-                        style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
-                      >
-                        Operational
-                      </p>
-                      <h4 className="fw-bold text-dark mb-0">
+                      <p className="stat-label">Operational</p>
+                      <h4 className="stat-value">
                         {formatCurrency(stats?.expenseStats?.operational)}
                       </h4>
+                    </div>
+                    <div className="stat-icon-box">
+                      <i className="bi bi-building fs-2 text-danger"></i>
                     </div>
                   </div>
                 </div>

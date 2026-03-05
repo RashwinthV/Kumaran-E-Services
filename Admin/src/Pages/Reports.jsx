@@ -77,7 +77,11 @@ const Reports = () => {
       }
 
       // Fetch sales data
-      if (filters.type === "sales" || filters.type === "branch-performance") {
+      if (
+        filters.type === "sales" ||
+        filters.type === "branch-performance" ||
+        filters.type === "gst"
+      ) {
         const [salesRes, expenseRes] = await Promise.all([
           axios.get(`${baseURL}/sales`, {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -316,11 +320,27 @@ const Reports = () => {
     }, 0);
     const uniqueCustomers = new Set(uniqueSales.map((i) => i.customerName))
       .size;
+    let totalTaxable = 0;
+    let totalTax = 0;
+
+    uniqueSales.forEach((sale) => {
+      totalTax += sale.totalTax || 0;
+      (sale.items || []).forEach((item) => {
+        if ((item.taxAmount || 0) > 0) {
+          totalTaxable +=
+            item.taxableValue || item.lineTotal - (item.taxAmount || 0);
+        }
+      });
+    });
+
     setStats({
       totalSales: totalSales - totalRefunded,
       totalBills: uniqueSales.length,
       totalCustomers: uniqueCustomers,
       totalRefunds: totalRefunded,
+      totalCGST: totalTax / 2,
+      totalSGST: totalTax / 2,
+      totalTaxable: totalTaxable,
     });
   };
 
@@ -338,6 +358,170 @@ const Reports = () => {
       formattedDate: formatDateStr(item.date, "DD/MM/YYYY"), // Default admin format
     }));
   }, [filteredData, branches]);
+
+  const handleGstExport = async () => {
+    if (displayData.length === 0) {
+      return alert("No data to export");
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("GST Taxable Report");
+
+    const selectedBranchName =
+      filters.branch === "all"
+        ? "ALL BRANCHES"
+        : branches.find((b) => b._id === filters.branch)?.name || "BRANCH";
+
+    // 1. Add Main Title
+    const titleRow = worksheet.addRow([
+      `GST TAXABLE REPORT - ${selectedBranchName.toUpperCase()}`,
+    ]);
+    titleRow.font = { bold: true, size: 18 };
+    worksheet.mergeCells(`A${titleRow.number}:J${titleRow.number}`);
+    titleRow.alignment = { horizontal: "center" };
+    worksheet.addRow([]);
+
+    // 2. Prepare Data
+    const taxableRows = [];
+    displayData.forEach((sale) => {
+      (sale.items || []).forEach((item) => {
+        const taxableVal =
+          item.taxableValue || item.lineTotal - (item.taxAmount || 0);
+        const tax = item.taxAmount || 0;
+
+        if (tax > 0) {
+          taxableRows.push([
+            sale.gstBillNo || "N/A",
+            sale.formattedDate || new Date(sale.createdAt).toLocaleDateString(),
+            sale.customerName || "Walk-in",
+            item.name || item.product?.name || "Product/Service",
+            item.qty || 0,
+            item.price || 0,
+            taxableVal,
+            tax / 2,
+            tax / 2,
+            item.lineTotal || 0,
+          ]);
+        }
+      });
+    });
+
+    if (taxableRows.length === 0) {
+      return alert(
+        "No taxable transactions found in the current filtered data.",
+      );
+    }
+
+    // 3. Add Summary Block at Top
+    const totalTaxable = taxableRows.reduce((sum, row) => sum + row[6], 0);
+    const totalCGST = taxableRows.reduce((sum, row) => sum + row[7], 0);
+    const totalSGST = taxableRows.reduce((sum, row) => sum + row[8], 0);
+    const grandTotal = taxableRows.reduce((sum, row) => sum + row[9], 0);
+
+    const summaryHeader = worksheet.addRow(["GST FILING SUMMARY"]);
+    summaryHeader.font = { bold: true, size: 14, color: { argb: "FF1F4E78" } };
+    worksheet.addRow(["Total Taxable Value:", totalTaxable]).getCell(2).numFmt =
+      `"₹"#,##0.00`;
+    worksheet.addRow(["Total CGST:", totalCGST]).getCell(2).numFmt =
+      `"₹"#,##0.00`;
+    worksheet.addRow(["Total SGST:", totalSGST]).getCell(2).numFmt =
+      `"₹"#,##0.00`;
+    const summaryTotalRw = worksheet.addRow(["GRAND TOTAL:", grandTotal]);
+    summaryTotalRw.getCell(2).numFmt = `"₹"#,##0.00`;
+    summaryTotalRw.font = { bold: true, size: 12 };
+
+    worksheet.addRow([]); // Spacer
+    worksheet.addRow(["DETAILED TRANSACTION LIST"]).font = { bold: true };
+    worksheet.addRow([]); // Spacer
+
+    // 4. Detailed Table
+    const columns = [
+      { header: "GST Bill No", key: "gstBillNo", width: 25 },
+      { header: "Date", key: "date", width: 15 },
+      { header: "Customer", key: "customerName", width: 20 },
+      { header: "Product/Service", key: "name", width: 35 },
+      { header: "Qty", key: "qty", width: 10 },
+      { header: "Rate", key: "price", width: 15 },
+      { header: "Taxable Value", key: "taxableValue", width: 20 },
+      { header: "CGST", key: "cgst", width: 15 },
+      { header: "SGST", key: "sgst", width: 15 },
+      { header: "Total Amount", key: "amount", width: 20 },
+    ];
+    worksheet.columns = columns.map((c) => ({ key: c.key, width: c.width }));
+
+    const headerRow = worksheet.addRow(columns.map((c) => c.header));
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 12 };
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4F81BD" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    taxableRows.forEach((row) => {
+      const excelRow = worksheet.addRow(row);
+      excelRow.font = { size: 12 };
+      [6, 7, 8, 9, 10].forEach((idx) => {
+        const cell = excelRow.getCell(idx);
+        cell.numFmt = `"₹"#,##0.00`;
+      });
+      excelRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    });
+
+    // 5. Footer Totals
+    const footerRow = worksheet.addRow([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "TOTALS",
+      totalTaxable,
+      totalCGST,
+      totalSGST,
+      grandTotal,
+    ]);
+    footerRow.font = { bold: true, size: 12 };
+    [7, 8, 9, 10].forEach((idx) => {
+      const cell = footerRow.getCell(idx);
+      cell.numFmt = `"₹"#,##0.00`;
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE9ECEF" },
+      };
+      cell.border = {
+        top: { style: "medium" },
+        left: { style: "thin" },
+        bottom: { style: "medium" },
+        right: { style: "thin" },
+      };
+    });
+    footerRow.getCell(6).alignment = { horizontal: "right" };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer]),
+      `GST_Export_${selectedBranchName.replace(/\s+/g, "_")}_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`,
+    );
+  };
 
   const handleExport = async () => {
     if (displayData.length === 0) {
@@ -897,8 +1081,8 @@ const Reports = () => {
       <ReportFilters
         filters={filters}
         onFilterChange={handleFilterChange}
-        onGenerate={handleGenerate}
         onExport={handleExport}
+        onGstExport={handleGstExport}
       />
 
       {loading ? (

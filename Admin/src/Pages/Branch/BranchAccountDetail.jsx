@@ -70,6 +70,7 @@ const PaginatedHistoryTable = ({
             <th>Date</th>
             {isAggregated ? <th>Account</th> : <th>Particulars</th>}
             <th>Opening</th>
+             <th>Expected Closing</th>
             <th>Closing</th>
           </tr>
         </thead>
@@ -87,6 +88,9 @@ const PaginatedHistoryTable = ({
                 </td>
                 <td className="td-amount dim">
                   {formatCurrency(item.openingBalance || 0)}
+                </td>
+                 <td className="td-amount dim">
+                  {formatCurrency(item.expectedClosingBalance|| 0)}
                 </td>
                 <td className="td-amount bold">
                   {formatCurrency(

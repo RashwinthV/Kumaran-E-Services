@@ -48,11 +48,51 @@ const ReportStats = ({ stats }) => {
           <h3>Avg. Order Value</h3>
           <div className="value">
             {formatCurrency(
-              stats.totalBills > 0 ? stats.totalSales / stats.totalBills : 0
+              stats.totalBills > 0 ? stats.totalSales / stats.totalBills : 0,
             )}
           </div>
         </div>
       </div>
+
+      {stats.totalTaxable > 0 && (
+        <>
+          <div className="report-stat-card border-success">
+            <div className="stat-icon-box green">
+              <i className="bi bi-percent"></i>
+            </div>
+            <div className="stat-details">
+              <h3>Total Taxable</h3>
+              <div className="value text-success">
+                {formatCurrency(stats.totalTaxable)}
+              </div>
+            </div>
+          </div>
+
+          <div className="report-stat-card">
+            <div className="stat-icon-box orange">
+              <i className="bi bi-bank"></i>
+            </div>
+            <div className="stat-details">
+              <h3>Total CGST</h3>
+              <div className="value text-primary">
+                {formatCurrency(stats.totalCGST)}
+              </div>
+            </div>
+          </div>
+
+          <div className="report-stat-card">
+            <div className="stat-icon-box orange">
+              <i className="bi bi-bank"></i>
+            </div>
+            <div className="stat-details">
+              <h3>Total SGST</h3>
+              <div className="value text-primary">
+                {formatCurrency(stats.totalSGST)}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

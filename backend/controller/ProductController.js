@@ -82,7 +82,7 @@ exports.createProduct = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!name || !sku || !category || !subCategory || !unit || !mrp) {
+    if (!name  || !category || !subCategory || !unit || !mrp) {
       return res.status(400).json({
         success: false,
         message: "Please provide all required fields",

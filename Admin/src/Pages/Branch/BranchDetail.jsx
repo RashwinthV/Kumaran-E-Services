@@ -172,6 +172,7 @@ const BranchDetail = () => {
                 <i className="bi bi-person"></i>
                 Employee
               </Link>
+              
               <Link
                 to={`/branch/${id}/products`}
                 className="add-product-button "

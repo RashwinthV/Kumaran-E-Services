@@ -116,9 +116,7 @@ const Profile = () => {
                     >
                       {user?.role}
                     </span>
-                    <span className="text-muted small">
-                      ID: {user?.id}
-                    </span>
+                    <span className="text-muted small">ID: {user?.id}</span>
                   </div>
                 </div>
               </div>
@@ -140,18 +138,18 @@ const Profile = () => {
                     <div className="input-group shadow-sm border rounded-3 overflow-hidden">
                       <span className="input-group-text bg-white border-0 px-3">
                         <i className="bi bi-envelope-at text-muted"></i>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          className="form-control border-0 py-2"
+                          value={formData.email}
+                          onChange={handleChange}
+                          placeholder="Enter your email"
+                          required
+                          style={{ backgroundColor: "#fcfcfc" }}
+                        />{" "}
                       </span>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        className="form-control border-0 py-2"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Enter your email"
-                        required
-                        style={{ backgroundColor: "#fcfcfc" }}
-                      />
                     </div>
                   </div>
                 </div>
@@ -159,49 +157,49 @@ const Profile = () => {
                 <div className="mb-4">
                   <h5 className="fw-bold mb-3 border-bottom pb-2">Security</h5>
 
-                     <div
-                  className="mb-4 p-4 rounded-4"
-                  style={{
-                    backgroundColor: "#fff9f2",
-                    border: "1px solid #ffedd5",
-                  }}
-                >
-                  <div className="mb-0">
-                    <label
-                      htmlFor="currentPassword"
-                      className="form-label fw-bold small text-warning-emphasis"
-                    >
-                      Current Password (Required to save changes)
-                    </label>
-                    <div className="input-group shadow-sm border rounded-3 overflow-hidden">
-                      <span className="input-group-text bg-white border-0 px-3">
-                        <i className="bi bi-shield-check text-warning"></i>
-                      </span>
-                      <input
-                        type={showCurrentPassword ? "text" : "password"}
-                        id="currentPassword"
-                        name="currentPassword"
-                        className="form-control border-0 py-2"
-                        value={formData.currentPassword}
-                        onChange={handleChange}
-                        placeholder="Enter current password"
-                        required
-                        style={{ backgroundColor: "#ffffff" }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-white border-0 px-3 text-muted"
-                        onClick={() =>
-                          setShowCurrentPassword(!showCurrentPassword)
-                        }
+                  <div
+                    className="mb-4 p-4 rounded-4"
+                    style={{
+                      backgroundColor: "#fff9f2",
+                      border: "1px solid #ffedd5",
+                    }}
+                  >
+                    <div className="mb-0">
+                      <label
+                        htmlFor="currentPassword"
+                        className="form-label fw-bold small text-warning-emphasis"
                       >
-                        <i
-                          className={`bi ${showCurrentPassword ? "bi-eye-slash" : "bi-eye"}`}
-                        ></i>
-                      </button>
+                        Current Password (Required to save changes)
+                      </label>
+                      <div className="input-group shadow-sm border rounded-3 overflow-hidden">
+                        <span className="input-group-text bg-white border-0 px-3">
+                          <i className="bi bi-shield-check text-warning"></i>
+                          <input
+                            type={showCurrentPassword ? "text" : "password"}
+                            id="currentPassword"
+                            name="currentPassword"
+                            className="form-control border-0 py-2"
+                            value={formData.currentPassword}
+                            onChange={handleChange}
+                            placeholder="Enter current password"
+                            required
+                            style={{ backgroundColor: "#ffffff" }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-white border-0 px-3 text-muted"
+                            onClick={() =>
+                              setShowCurrentPassword(!showCurrentPassword)
+                            }
+                          >
+                            <i
+                              className={`bi ${showCurrentPassword ? "bi-eye-slash" : "bi-eye"}`}
+                            ></i>
+                          </button>{" "}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
                   <div className="mb-3">
                     <label
                       htmlFor="newPassword"
@@ -212,26 +210,26 @@ const Profile = () => {
                     <div className="input-group shadow-sm border rounded-3 overflow-hidden">
                       <span className="input-group-text bg-white border-0 px-3">
                         <i className="bi bi-lock text-muted"></i>
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          id="newPassword"
+                          name="newPassword"
+                          className="form-control border-0 py-2"
+                          value={formData.newPassword}
+                          onChange={handleChange}
+                          placeholder="Minimum 6 characters"
+                          style={{ backgroundColor: "#fcfcfc" }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-white border-0 px-3 text-muted"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                        >
+                          <i
+                            className={`bi ${showNewPassword ? "bi-eye-slash" : "bi-eye"}`}
+                          ></i>
+                        </button>{" "}
                       </span>
-                      <input
-                        type={showNewPassword ? "text" : "password"}
-                        id="newPassword"
-                        name="newPassword"
-                        className="form-control border-0 py-2"
-                        value={formData.newPassword}
-                        onChange={handleChange}
-                        placeholder="Minimum 6 characters"
-                        style={{ backgroundColor: "#fcfcfc" }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-white border-0 px-3 text-muted"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        <i
-                          className={`bi ${showNewPassword ? "bi-eye-slash" : "bi-eye"}`}
-                        ></i>
-                      </button>
                     </div>
                   </div>
 
@@ -246,23 +244,21 @@ const Profile = () => {
                       <div className="input-group shadow-sm border rounded-3 overflow-hidden animate__animated animate__fadeIn">
                         <span className="input-group-text bg-white border-0 px-3">
                           <i className="bi bi-shield-lock text-muted"></i>
+                          <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            className="form-control border-0 py-2"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            placeholder="Repeat new password"
+                            style={{ backgroundColor: "#fcfcfc" }}
+                          />{" "}
                         </span>
-                        <input
-                          type="password"
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          className="form-control border-0 py-2"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          placeholder="Repeat new password"
-                          style={{ backgroundColor: "#fcfcfc" }}
-                        />
                       </div>
                     </div>
                   )}
                 </div>
-
-             
 
                 <div className="d-grid pt-2">
                   <button

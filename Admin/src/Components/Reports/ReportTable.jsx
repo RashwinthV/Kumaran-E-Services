@@ -51,7 +51,47 @@ const ReportTable = ({ data, reportType }) => {
   };
 
   // Common Layout for both reports
-  if (reportType === "sales" || reportType === "branch-performance") {
+  if (
+    reportType === "sales" ||
+    reportType === "branch-performance" ||
+    reportType === "gst"
+  ) {
+    const isGstReport = reportType === "gst";
+
+    // Flatten data for GST report (one row per item)
+    const gstData = isGstReport
+      ? data.flatMap((sale) =>
+          (sale.items || [])
+            .filter((item) => (item.taxAmount || 0) > 0)
+            .map((item) => ({
+              ...item,
+              gstBillNo: sale.gstBillNo || "N/A",
+              date: sale.date,
+              formattedDate: sale.formattedDate || formatDate(sale.date),
+              customerName: sale.customerName,
+              taxableVal:
+                item.taxableValue || item.lineTotal - (item.taxAmount || 0),
+              cgst: (item.taxAmount || 0) / 2,
+              sgst: (item.taxAmount || 0) / 2,
+            })),
+        )
+      : [];
+
+    const tableData = isGstReport ? gstData : paginatedData;
+
+    // GST Totals
+    const gstTotals = isGstReport
+      ? gstData.reduce(
+          (acc, item) => ({
+            taxable: acc.taxable + item.taxableVal,
+            cgst: acc.cgst + item.cgst,
+            sgst: acc.sgst + item.sgst,
+            total: acc.total + item.lineTotal,
+          }),
+          { taxable: 0, cgst: 0, sgst: 0, total: 0 },
+        )
+      : null;
+
     return (
       <div className="report-table-section">
         <div className="table-header-tools">
@@ -62,7 +102,9 @@ const ReportTable = ({ data, reportType }) => {
               placeholder={
                 reportType === "sales"
                   ? "Search by Bill No, Customer, or Branch..."
-                  : "Search by Branch Name..."
+                  : reportType === "gst"
+                    ? "Search by GST Bill No, Customer..."
+                    : "Search by Branch Name..."
               }
               value={searchTerm}
               onChange={(e) => {
@@ -89,6 +131,19 @@ const ReportTable = ({ data, reportType }) => {
                   <th>Field Service</th>
                   <th>Status</th>
                 </tr>
+              ) : reportType === "gst" ? (
+                <tr>
+                  <th>GST Bill No</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Product/Service</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th className="text-end">Taxable Value</th>
+                  <th className="text-end">CGST</th>
+                  <th className="text-end">SGST</th>
+                  <th className="text-end">Total Amount</th>
+                </tr>
               ) : (
                 <tr>
                   <th>Branch Name</th>
@@ -98,8 +153,8 @@ const ReportTable = ({ data, reportType }) => {
               )}
             </thead>
             <tbody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((row, index) => (
+              {(isGstReport ? tableData : paginatedData).length > 0 ? (
+                (isGstReport ? tableData : paginatedData).map((row, index) => (
                   <tr key={index}>
                     {reportType === "sales" ? (
                       <>
@@ -147,6 +202,29 @@ const ReportTable = ({ data, reportType }) => {
                           )}
                         </td>
                       </>
+                    ) : reportType === "gst" ? (
+                      <>
+                        <td className="fw-bold text-primary">
+                          {row.gstBillNo}
+                        </td>
+                        <td>{row.formattedDate}</td>
+                        <td>{row.customerName}</td>
+                        <td style={{ maxWidth: "250px" }}>{row.name}</td>
+                        <td>{row.qty}</td>
+                        <td>{formatCurrency(row.price)}</td>
+                        <td className="text-end fw-bold">
+                          {formatCurrency(row.taxableVal)}
+                        </td>
+                        <td className="text-end text-secondary">
+                          {formatCurrency(row.cgst)}
+                        </td>
+                        <td className="text-end text-secondary">
+                          {formatCurrency(row.sgst)}
+                        </td>
+                        <td className="text-end fw-bold text-dark">
+                          {formatCurrency(row.lineTotal)}
+                        </td>
+                      </>
                     ) : (
                       <>
                         <td>
@@ -162,7 +240,15 @@ const ReportTable = ({ data, reportType }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={reportType === "sales" ? "10" : "3"}>
+                  <td
+                    colSpan={
+                      reportType === "sales"
+                        ? "10"
+                        : reportType === "gst"
+                          ? "10"
+                          : "3"
+                    }
+                  >
                     <div className="empty-state">
                       <i className="bi bi-clipboard-x"></i>
                       <p>No records found matching your criteria.</p>
@@ -171,6 +257,33 @@ const ReportTable = ({ data, reportType }) => {
                 </tr>
               )}
             </tbody>
+            {isGstReport && gstData.length > 0 && (
+              <tfoot className="table-light">
+                <tr
+                  className="fw-bold"
+                  style={{ borderTop: "2px solid #dee2e6" }}
+                >
+                  <td colSpan="6" className="text-end">
+                    TOTALS:
+                  </td>
+                  <td className="text-end text-primary">
+                    {formatCurrency(gstTotals.taxable)}
+                  </td>
+                  <td className="text-end text-secondary">
+                    {formatCurrency(gstTotals.cgst)}
+                  </td>
+                  <td className="text-end text-secondary">
+                    {formatCurrency(gstTotals.sgst)}
+                  </td>
+                  <td
+                    className="text-end text-success"
+                    style={{ fontSize: "1.1rem" }}
+                  >
+                    {formatCurrency(gstTotals.total)}
+                  </td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
 
